@@ -17,10 +17,8 @@ export async function GET() {
 
   let totalCents = 0;
   try {
-    // List successful charges (tip jar payments)
-    // For MVP: single page of 100. Add pagination when tips exceed ~$5k.
-    const charges = await stripe.charges.list({ limit: 100 });
-    for (const charge of charges.data) {
+    // Auto-paginate through all charges so the total is always accurate
+    for await (const charge of stripe.charges.list({ limit: 100 })) {
       if (charge.paid && !charge.refunded) {
         totalCents += charge.amount;
       }
