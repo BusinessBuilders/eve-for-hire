@@ -75,15 +75,31 @@ function openDb(): Database.Database {
   return db;
 }
 
-// Module-level singleton — one connection per server process.
-let _db: Database.Database | null = null;
+// Singleton database connection.
+// In production: module-level variable, one connection per process.
+// In development: attached to `global` so Next.js HMR module re-evaluations
+// reuse the same connection instead of leaking file descriptors.
+declare global {
+  // eslint-disable-next-line no-var
+  var __orderDb: Database.Database | undefined;
+}
 
 function getDb(): Database.Database {
+  if (process.env.NODE_ENV === 'development') {
+    if (!global.__orderDb) {
+      global.__orderDb = openDb();
+    }
+    return global.__orderDb;
+  }
+
+  // Production: module-level singleton is fine (no HMR).
   if (!_db) {
     _db = openDb();
   }
   return _db;
 }
+
+let _db: Database.Database | null = null;
 
 // ─── SQLite implementation ──────────────────────────────────────────────────
 
