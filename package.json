@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.64",
     "@ai-sdk/react": "^3.0.143",
     "@types/ssh2": "^1.15.5",
     "ai": "^6.0.141",
@@ -20,6 +21,7 @@
     "remark-gfm": "^4.0.1",
     "ssh2": "^1.17.0",
     "stripe": "^14.25.0",
+    "ws": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -27,6 +29,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.0.0"
   }
 }

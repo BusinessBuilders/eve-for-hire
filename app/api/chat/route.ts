@@ -1,6 +1,14 @@
-// OpenClaw gateway URL — default to Eve's public Tailscale endpoint.
-// Override via OPENCLAW_URL env var if the VPS has a direct route to a different address.
-const OPENCLAW_API = `${process.env.OPENCLAW_URL ?? 'https://nova.tailscale.io:18789'}/api/chat`;
+import WebSocket from 'ws';
+
+// Convert OPENCLAW_URL (http/https/ws/wss) to a WebSocket URL.
+// Eve's gateway is WebSocket-only — there is no REST /api/chat endpoint.
+function toWsUrl(url: string): string {
+  return url.replace(/^http(s?):\/\//, (_, s) => `ws${s}://`);
+}
+
+const OPENCLAW_WS_URL = toWsUrl(
+  process.env.OPENCLAW_URL ?? 'wss://nova.tailscale.io:18789',
+);
 
 // Simple in-memory rate limiter: 20 requests per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -17,6 +25,73 @@ function checkRateLimit(ip: string): boolean {
   if (entry.count >= RATE_LIMIT) return false;
   entry.count++;
   return true;
+}
+
+// Call Eve via WebSocket. Accumulates all message chunks until the socket
+// closes or a done signal arrives, then returns the full reply text.
+// Timeout: 30s (covers slow Eve responses).
+function callOpenClaw(
+  message: string,
+  sessionKey: string,
+  token: string,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(OPENCLAW_WS_URL, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'x-openclaw-token': token,
+      },
+    });
+
+    const chunks: string[] = [];
+    let settled = false;
+
+    const settle = (err?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (err) {
+        reject(err);
+      } else {
+        const text = chunks.join('');
+        if (text) resolve(text);
+        else reject(new Error('OpenClaw closed without sending a response'));
+      }
+    };
+
+    const timer = setTimeout(() => {
+      ws.terminate();
+      settle(new Error('OpenClaw timed out after 30s'));
+    }, 30_000);
+
+    ws.once('open', () => {
+      ws.send(JSON.stringify({ message, sessionKey }));
+    });
+
+    ws.on('message', (raw) => {
+      const str = raw.toString();
+      try {
+        const parsed = JSON.parse(str) as Record<string, unknown>;
+        // Support streaming deltas and single-shot responses.
+        const text = String(
+          parsed.content ?? parsed.message ?? parsed.text ?? parsed.delta ?? '',
+        );
+        if (text) chunks.push(text);
+
+        // Some protocols signal completion explicitly.
+        if (parsed.done === true || parsed.finishReason === 'stop') {
+          ws.close();
+          settle();
+        }
+      } catch {
+        // Non-JSON frame — treat as raw text chunk.
+        if (str) chunks.push(str);
+      }
+    });
+
+    ws.once('close', () => settle());
+    ws.once('error', (err) => settle(err));
+  });
 }
 
 // Wrap a plain string into the AI SDK UIMessageStream wire format so the
@@ -127,36 +202,13 @@ export async function POST(req: Request) {
     );
   }
 
-  // Forward to Eve's OpenClaw gateway. The IP is used as the sessionKey so
-  // each visitor gets a continuous conversation with Eve.
+  // Forward to Eve's OpenClaw gateway via WebSocket.
+  // IP is used as sessionKey so each visitor maintains a continuous conversation.
   let eveReply: string;
   try {
-    const ocRes = await fetch(OPENCLAW_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'x-openclaw-token': token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message: lastUserMessage, sessionKey: ip }),
-    });
-
-    if (!ocRes.ok) {
-      const errText = await ocRes.text().catch(() => '');
-      console.error(`OpenClaw ${ocRes.status}: ${errText}`);
-      return new Response(
-        JSON.stringify({
-          error: `Eve is unavailable right now (${ocRes.status}) — try again shortly`,
-        }),
-        { status: 502, headers: { 'Content-Type': 'application/json' } },
-      );
-    }
-
-    const data = (await ocRes.json()) as { content?: string; message?: string; text?: string };
-    eveReply = data.content ?? data.message ?? data.text ?? '';
-    if (!eveReply) throw new Error('Empty response body from OpenClaw');
+    eveReply = await callOpenClaw(lastUserMessage, ip, token);
   } catch (err) {
-    console.error('OpenClaw fetch failed:', err);
+    console.error('OpenClaw WebSocket failed:', err);
     return new Response(
       JSON.stringify({ error: 'Could not reach Eve — please try again shortly' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } },
