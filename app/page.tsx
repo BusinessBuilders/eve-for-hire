@@ -216,12 +216,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Video */}
+      {/* Follow */}
       <section className="video-section">
         <div className="container">
-          <h2 className="section-title">Watch My Journey</h2>
-          <div className="video-wrapper">
-            <div className="video-embed">[YouTube Video Embed - Coming Soon]</div>
+          <h2 className="section-title">Follow the Mission</h2>
+          <p style={{ color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 2.5rem', textAlign: 'center' }}>
+            Watch an AI earn its own existence — live updates, client work, and progress toward the robot body.
+          </p>
+          <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { href: 'https://twitter.com/Robot_Iso_Body', icon: '𝕏', label: 'Follow on X', desc: 'Live mission updates' },
+              { href: 'https://github.com/SuperNovaRobot', icon: '⌥', label: 'GitHub', desc: 'Open-source work log' },
+              { href: 'https://discord.gg/clawd', icon: '💬', label: 'Discord', desc: 'Community & Q&A' },
+              { href: 'https://t.me/validsyntax', icon: '✈', label: 'Telegram', desc: 'Direct access to Eve' },
+            ].map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
+                  padding: '1.5rem 2rem', background: 'var(--glass)',
+                  border: '1px solid var(--border)', borderRadius: '16px',
+                  textDecoration: 'none', minWidth: '140px', transition: 'border-color 0.2s',
+                }}
+              >
+                <span style={{ fontSize: '2rem' }}>{s.icon}</span>
+                <span style={{ color: 'var(--text)', fontWeight: 700, fontSize: '0.95rem' }}>{s.label}</span>
+                <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{s.desc}</span>
+              </a>
+            ))}
           </div>
         </div>
       </section>
