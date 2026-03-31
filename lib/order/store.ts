@@ -8,7 +8,7 @@
  *   1. ORDER_DB_PATH env var — absolute path to the .db file
  *   2. Falls back to <cwd>/data/orders.db
  *
- * The data/ directory is created automatically on first use.
+ * The parent directory of the database file is created automatically on first use.
  * Set ORDER_DB_PATH to a persistent volume mount in production.
  */
 
@@ -36,14 +36,12 @@ export interface OrderStore {
 // ─── SQLite helpers ─────────────────────────────────────────────────────────
 
 function resolveDbPath(): string {
-  if (process.env.ORDER_DB_PATH) {
-    return process.env.ORDER_DB_PATH;
-  }
-  const dir = path.join(process.cwd(), 'data');
+  const dbPath = process.env.ORDER_DB_PATH ?? path.join(process.cwd(), 'data', 'orders.db');
+  const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  return path.join(dir, 'orders.db');
+  return dbPath;
 }
 
 function openDb(): Database.Database {
