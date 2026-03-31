@@ -56,7 +56,8 @@ export type DomainProcessResult =
  */
 export async function suggestAvailableDomains(
   keyword: string,
-  tlds = ['.com', '.co', '.io', '.net', '.org'],
+  // Default to 3 TLDs — Porkbun checks are rate-limited to 1/10s, so 3 checks ≈ 20s max.
+  tlds = ['.com', '.co', '.io'],
 ): Promise<DomainSearchResult[]> {
   const slug = keyword
     .toLowerCase()
@@ -76,8 +77,7 @@ export async function suggestAvailableDomains(
  */
 export async function checkDomainAvailability(domain: string): Promise<DomainSearchResult> {
   const client = createPorkbunClient();
-  const [result] = await client.checkDomains([domain]);
-  if (!result) return { domain, available: false };
+  const result = await client.checkDomain(domain);
   return { domain: result.domain, available: result.available, price: result.price };
 }
 

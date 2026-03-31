@@ -102,22 +102,44 @@ export class PorkbunClient {
   }
 
   /**
-   * Check availability of one or more domains.
-   * Returns availability + price for each requested domain.
+   * Check availability of a single domain.
    *
-   * Endpoint: POST /domain/check
-   * Body: { domains: string[] }
+   * Endpoint: POST /domain/checkDomain/{domain}
+   * Rate limit: 1 request per 10 seconds (enforced by Porkbun).
+   * Returns `ttlRemaining` (seconds) so callers can pace sequential checks.
+   */
+  async checkDomain(domain: string): Promise<PorkbunDomainAvailability & { ttlRemaining?: number }> {
+    const data = await this.post<{
+      response: { avail: string; price?: string; regularPrice?: string };
+      ttlRemaining?: number;
+    }>(`/domain/checkDomain/${encodeURIComponent(domain)}`);
+
+    return {
+      domain,
+      available: data.response?.avail === 'yes',
+      price: data.response?.price,
+      ttlRemaining: typeof data.ttlRemaining === 'number' ? data.ttlRemaining : undefined,
+    };
+  }
+
+  /**
+   * Check availability of multiple domains sequentially.
+   * Respects Porkbun's 1-per-10s rate limit by sleeping between requests
+   * using the `ttlRemaining` value from each response.
    */
   async checkDomains(domains: string[]): Promise<PorkbunDomainAvailability[]> {
-    const data = await this.post<{
-      domains: Array<{ domain: string; avail: string; price?: string }>;
-    }>('/domain/check', { domains });
-
-    return (data.domains ?? []).map((d) => ({
-      domain: d.domain,
-      available: d.avail === 'yes',
-      price: d.price,
-    }));
+    const results: PorkbunDomainAvailability[] = [];
+    for (let i = 0; i < domains.length; i++) {
+      const result = await this.checkDomain(domains[i]);
+      results.push({ domain: result.domain, available: result.available, price: result.price });
+      // Sleep between checks using the rate-limit window from the response.
+      // Add a small buffer (+500 ms) to avoid hitting the boundary.
+      if (i < domains.length - 1) {
+        const sleepMs = ((result.ttlRemaining ?? 10) + 0.5) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, sleepMs));
+      }
+    }
+    return results;
   }
 
   /**
