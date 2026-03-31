@@ -133,8 +133,10 @@ export async function processDomainForOrder(orderId: string): Promise<DomainProc
 
   const requirements = order.requirements;
   if (!requirements?.desiredDomain) {
+    // Order stays in 'paid' — DOMAIN_FAILED requires 'domain_purchasing' as source.
+    // Leaving it in 'paid' means the webhook can retry once requirements are populated.
     const err = 'No desiredDomain in order requirements — cannot process domain';
-    await failOrder(orderId, err);
+    console.error('[domain-service] missing requirements for order', orderId, '—', err);
     return { ok: false, error: err };
   }
 
