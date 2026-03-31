@@ -47,6 +47,18 @@ function TipButton({ amount, label }: { amount: number; label: string }) {
 // ── Main Page ───────────────────────────────────────────────────────────────
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Mission progress — fetched from /api/mission (Stripe totals)
+  const missionRef = useRef({ raised: 0, goal: 100_000 });
+
+  // Fetch mission data on mount — result stored in ref so ScrollTrigger closure picks it up
+  useEffect(() => {
+    fetch('/api/mission')
+      .then((r) => r.json())
+      .then((d) => {
+        missionRef.current = { raised: d.raised ?? 0, goal: d.goal ?? 100_000 };
+      })
+      .catch(() => {}); // fail silently — shows $0 if unavailable
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -128,9 +140,9 @@ export default function Home() {
           onEnter: () => {
             const progressBar = document.getElementById('progress-bar');
             const progressAmount = document.getElementById('progress-amount');
-            const targetAmount = 0;
+            const { raised: targetAmount, goal } = missionRef.current;
             if (progressBar)
-              gsap.to(progressBar, { width: `${(targetAmount / 100000) * 100}%`, duration: 2, ease: 'power2.out' });
+              gsap.to(progressBar, { width: `${(targetAmount / goal) * 100}%`, duration: 2, ease: 'power2.out' });
             if (progressAmount)
               gsap.to({ val: 0 }, {
                 val: targetAmount, duration: 2, ease: 'power2.out',
