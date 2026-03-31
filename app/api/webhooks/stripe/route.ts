@@ -17,6 +17,7 @@ import { NextRequest, NextResponse, after } from 'next/server';
 import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
 import { processDomainForOrder } from '@/lib/porkbun/domain-service';
+import { buildAndDeployOrder } from '@/lib/site/build-service';
 import type { PaymentInfo } from '@/lib/order/types';
 
 export async function POST(req: NextRequest) {
@@ -110,16 +111,32 @@ async function handleEvent(stripe: Stripe, event: Stripe.Event): Promise<void> {
         after(async () => {
           console.log('[webhook/stripe] starting domain processing for order', orderId);
           const domainResult = await processDomainForOrder(orderId);
-          if (domainResult.ok) {
-            console.log(
-              '[webhook/stripe] domain processing complete for order', orderId,
-              '— domain:', domainResult.domain,
-              '— path:', domainResult.path,
-            );
-          } else {
+          if (!domainResult.ok) {
             console.error(
               '[webhook/stripe] domain processing failed for order', orderId,
               '—', domainResult.error,
+            );
+            return;
+          }
+
+          console.log(
+            '[webhook/stripe] domain processing complete for order', orderId,
+            '— domain:', domainResult.domain,
+            '— path:', domainResult.path,
+          );
+
+          // Domain secured — kick off site build & deploy pipeline.
+          console.log('[webhook/stripe] starting site build for order', orderId);
+          const buildResult = await buildAndDeployOrder(orderId);
+          if (buildResult.ok) {
+            console.log(
+              '[webhook/stripe] site live for order', orderId,
+              '—', buildResult.siteUrl,
+            );
+          } else {
+            console.error(
+              '[webhook/stripe] site build failed for order', orderId,
+              `(phase=${buildResult.phase}):`, buildResult.error,
             );
           }
         });
