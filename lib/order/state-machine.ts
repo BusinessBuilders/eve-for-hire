@@ -120,15 +120,7 @@ export function createOrder(params: {
     ...(params.customerName ? { customerName: params.customerName } : {}),
     state: 'new',
     idempotencyKey: params.idempotencyKey,
-    auditTrail: [
-      {
-        at: now,
-        from: 'new',
-        to: 'new',
-        event: 'START_QUALIFYING', // Placeholder — initial entry records creation
-        note: 'Order created',
-      },
-    ],
+    auditTrail: [],
     createdAt: now,
     updatedAt: now,
   };
