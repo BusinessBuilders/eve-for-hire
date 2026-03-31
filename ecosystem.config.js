@@ -22,9 +22,10 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
 
-        // Required: Anthropic AI — Eve's chat interface
-        // Get key at https://console.anthropic.com/settings/keys
-        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+        // Required: OpenClaw gateway — Eve's AI conversation interface
+        // Obtain token from Eve or the board; set URL if VPS is on Eve's Tailscale network
+        OPENCLAW_TOKEN: process.env.OPENCLAW_TOKEN || '',
+        OPENCLAW_URL: process.env.OPENCLAW_URL || 'https://nova.tailscale.io:18789',
 
         // Required: Stripe — payments and webhook verification
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
