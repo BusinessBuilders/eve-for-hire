@@ -45,13 +45,13 @@ export async function POST(req: NextRequest) {
     '[domains/verify] result for order', orderId,
     '— verified:', result.verified,
     '— domain:', result.domain,
-    ...(!result.verified ? ['— reason:', (result as { reason?: string }).reason] : []),
+    ...(!result.verified ? ['— reason:', result.reason] : []),
   );
 
   // Return 200 for both verified and not-yet-verified — the client polls and retries.
   // Only genuine errors (missing order, misconfiguration) return non-200.
-  if (!result.verified && (result as { reason?: string }).reason?.includes('not found')) {
-    return NextResponse.json({ error: (result as { reason?: string }).reason }, { status: 404 });
+  if (!result.verified && result.reason.includes('not found')) {
+    return NextResponse.json({ error: result.reason }, { status: 404 });
   }
 
   return NextResponse.json(result);

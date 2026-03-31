@@ -53,8 +53,7 @@ export async function checkDnsARecord(domain: string, expectedIp: string): Promi
 
 export type DnsVerifyResult =
   | { verified: true; domain: string; resolvedIps: string[] }
-  | { verified: false; domain: string; resolvedIps: string[]; reason: string }
-  | { verified: false; domain: string; resolvedIps: []; reason: string };
+  | { verified: false; domain: string; resolvedIps: string[]; reason: string };
 
 /**
  * Check DNS propagation for an order's existing domain and — if the A record
