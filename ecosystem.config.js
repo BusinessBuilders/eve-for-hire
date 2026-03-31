@@ -7,6 +7,25 @@
 // To redeploy after a git pull + build:
 //   pm2 reload ecosystem.config.js --env production
 
+// Self-load .env.production into process.env so pm2 picks up secrets
+// without needing `source .env.production` or export in the shell.
+const fs = require('fs');
+const path = require('path');
+const envFile = path.join(__dirname, '.env.production');
+if (fs.existsSync(envFile)) {
+  fs.readFileSync(envFile, 'utf8')
+    .split('\n')
+    .forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+      const eq = trimmed.indexOf('=');
+      if (eq === -1) return;
+      const key = trimmed.slice(0, eq).trim();
+      const val = trimmed.slice(eq + 1).trim();
+      if (key && !(key in process.env)) process.env[key] = val;
+    });
+}
+
 module.exports = {
   apps: [
     {
