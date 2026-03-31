@@ -4,15 +4,25 @@
  * Creates (or retrieves) an order, advances it to payment_pending, and returns a
  * Stripe-hosted Checkout URL. The caller should redirect the customer to that URL.
  *
- * Body: { customerEmail: string, customerName?: string, idempotencyKey?: string }
+ * Body:
+ *   customerEmail   string          — required
+ *   customerName    string          — optional display name
+ *   idempotencyKey  string (≥8)     — optional; callers supply for dedup across retries
+ *   requirements    object          — required; persisted so domain service can act on payment
+ *     .businessName   string        — business / site name
+ *     .description    string        — what the site should do
+ *     .desiredDomain  string        — required; domain the customer wants (e.g. "mybiz.com")
+ *     .colors         string        — optional colour/style preferences
+ *     .sections       string[]      — optional list of page sections wanted
+ *
  * Response: { url: string, orderId: string }
- *           | { orderId: string, redirectTo: string }   (order already exists with a session)
+ *         | { orderId: string, redirectTo: string }   (order already has a live session)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
-import type { PaymentInfo } from '@/lib/order/types';
+import type { PaymentInfo, OrderRequirements } from '@/lib/order/types';
 
 const BASIC_TIER_CENTS = 8900; // $89.00
 
@@ -29,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { customerEmail, customerName, idempotencyKey } = body as Record<string, unknown>;
+  const { customerEmail, customerName, idempotencyKey, requirements } = body as Record<string, unknown>;
 
   if (typeof customerEmail !== 'string' || !customerEmail.includes('@')) {
     return NextResponse.json(
@@ -37,6 +47,38 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Validate requirements — desiredDomain is the minimum required for the domain service.
+  const reqs = typeof requirements === 'object' && requirements !== null
+    ? (requirements as Record<string, unknown>)
+    : null;
+
+  const desiredDomain =
+    typeof reqs?.desiredDomain === 'string' ? reqs.desiredDomain.trim() : null;
+
+  if (!desiredDomain) {
+    return NextResponse.json(
+      { error: 'requirements.desiredDomain is required' },
+      { status: 400 }
+    );
+  }
+
+  const sections = Array.isArray(reqs?.sections)
+    ? (reqs.sections as unknown[]).filter((s): s is string => typeof s === 'string')
+    : [];
+
+  const styleHints = [
+    typeof reqs?.colors === 'string' ? `Colors: ${reqs.colors}` : '',
+    sections.length > 0 ? `Sections: ${sections.join(', ')}` : '',
+  ].filter(Boolean).join('; ');
+
+  const orderRequirements: OrderRequirements = {
+    businessType: typeof reqs?.businessName === 'string' && reqs.businessName ? reqs.businessName : 'General',
+    purpose: typeof reqs?.description === 'string' && reqs.description ? reqs.description : '',
+    desiredDomain,
+    domainPath: 'new',
+    ...(styleHints ? { style: styleHints } : {}),
+  };
 
   // Callers may supply a stable idempotency key (e.g. derived from chat session ID).
   // If omitted we generate a one-time key; the caller won't get dedup across retries.
@@ -121,8 +163,8 @@ export async function POST(req: NextRequest) {
   };
   await orderStore.transition(order.id, {
     event: 'REQUIREMENTS_READY',
-    patch: { payment: paymentInfo },
-    meta: { stripeSessionId: session.id },
+    patch: { payment: paymentInfo, requirements: orderRequirements },
+    meta: { stripeSessionId: session.id, desiredDomain: orderRequirements.desiredDomain },
   });
 
   return NextResponse.json({ url: session.url, orderId: order.id });
