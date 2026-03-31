@@ -2,8 +2,13 @@
  * POST /api/webhooks/stripe — process Stripe webhook events.
  *
  * Verifies the Stripe-Signature header and drives order state transitions:
- *   checkout.session.completed    → PAYMENT_SUCCEEDED  (payment_pending → paid)
+ *   payment_intent.succeeded      → PAYMENT_SUCCEEDED  (payment_pending → paid)
  *   payment_intent.payment_failed → PAYMENT_FAILED     (payment_pending → payment_failed)
+ *
+ * payment_intent.succeeded is the hard gate — it fires only when funds are guaranteed.
+ * checkout.session.completed fires on session completion (including free/discounted orders)
+ * and is deliberately NOT used here. orderId is embedded in payment_intent_data.metadata
+ * at Checkout Session creation so it travels with the PaymentIntent with no secondary lookup.
  *
  * Returns 200 for all valid, verified requests — including unhandled event types —
  * so Stripe does not retry unnecessarily.
@@ -56,42 +61,36 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-async function handleEvent(stripe: Stripe, event: Stripe.Event): Promise<void> {
+async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> {
   switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
+    case 'payment_intent.succeeded': {
+      const pi = event.data.object as Stripe.PaymentIntent;
 
-      // client_reference_id is set to orderId when creating the Checkout Session.
-      const orderId = session.client_reference_id ?? session.metadata?.orderId;
+      // orderId is embedded in payment_intent_data.metadata at Checkout Session creation.
+      const orderId = pi.metadata?.orderId;
       if (!orderId) {
-        console.warn('[webhook/stripe] checkout.session.completed has no orderId', session.id);
+        console.warn('[webhook/stripe] payment_intent.succeeded has no orderId in metadata', pi.id);
         return;
       }
 
       const order = await orderStore.findById(orderId);
       if (!order) {
-        console.warn('[webhook/stripe] order not found', orderId, 'session', session.id);
+        console.warn('[webhook/stripe] order not found', orderId, 'pi', pi.id);
         return;
       }
 
-      const piId =
-        typeof session.payment_intent === 'string' ? session.payment_intent : undefined;
-
       const paymentInfo: PaymentInfo = {
-        // Preserve existing fields (stripeSessionId, amountCents) set during checkout creation.
-        stripeSessionId: order.payment?.stripeSessionId ?? session.id,
-        amountCents: order.payment?.amountCents ?? session.amount_total ?? 8900,
-        ...(piId ? { stripePaymentIntentId: piId } : {}),
+        // Preserve stripeSessionId + amountCents already stored on the order.
+        stripeSessionId: order.payment?.stripeSessionId ?? '',
+        amountCents: order.payment?.amountCents ?? pi.amount ?? 8900,
+        stripePaymentIntentId: pi.id,
         paidAt: new Date().toISOString(),
       };
 
       const result = await orderStore.transition(orderId, {
         event: 'PAYMENT_SUCCEEDED',
-        note: 'checkout.session.completed webhook',
-        meta: {
-          stripeSessionId: session.id,
-          ...(piId ? { stripePaymentIntentId: piId } : {}),
-        },
+        note: 'payment_intent.succeeded webhook',
+        meta: { stripePaymentIntentId: pi.id },
         patch: { payment: paymentInfo },
       });
 
@@ -147,17 +146,11 @@ async function handleEvent(stripe: Stripe, event: Stripe.Event): Promise<void> {
     case 'payment_intent.payment_failed': {
       const pi = event.data.object as Stripe.PaymentIntent;
 
-      // Retrieve the Checkout Session that owns this PaymentIntent to get the orderId.
-      const sessions = await stripe.checkout.sessions.list({
-        payment_intent: pi.id,
-        limit: 1,
-      });
-      const session = sessions.data[0];
-      const orderId = session?.client_reference_id ?? session?.metadata?.orderId;
-
+      // orderId is embedded in payment_intent_data.metadata at Checkout Session creation.
+      const orderId = pi.metadata?.orderId;
       if (!orderId) {
         console.warn(
-          '[webhook/stripe] payment_intent.payment_failed — could not resolve orderId for pi',
+          '[webhook/stripe] payment_intent.payment_failed — no orderId in metadata for pi',
           pi.id
         );
         return;

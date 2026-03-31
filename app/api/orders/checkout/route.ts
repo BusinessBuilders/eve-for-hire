@@ -121,6 +121,12 @@ export async function POST(req: NextRequest) {
         mode: 'payment',
         client_reference_id: order.id,
         customer_email: customerEmail,
+        // Embed orderId in the PaymentIntent metadata so payment_intent.succeeded
+        // and payment_intent.payment_failed webhooks can resolve the order directly
+        // without a secondary Stripe API call.
+        payment_intent_data: {
+          metadata: { orderId: order.id },
+        },
         line_items: [
           {
             quantity: 1,
