@@ -43,7 +43,8 @@ export interface DomainConnectInstructions {
 }
 
 export type DomainProcessResult =
-  | { ok: true; domain: string; path: 'purchased' | 'existing' }
+  | { ok: true; domain: string; path: 'purchased' }  // purchased + DNS configured → advancing to building
+  | { ok: true; domain: string; path: 'dns_pending' } // existing domain → DNS instructions given, waiting for propagation
   | { ok: false; error: string };
 
 // ─── Domain search / suggestions ─────────────────────────────────────────────
@@ -121,8 +122,16 @@ export async function processDomainForOrder(orderId: string): Promise<DomainProc
   // ── Payment gate ──────────────────────────────────────────────────────────
   // Only proceed from 'paid'. All other states are either not ready or already past this step.
   if (order.state !== 'paid') {
-    if (['domain_purchasing', 'building', 'deploying', 'live'].includes(order.state)) {
-      // Already past payment — idempotent success.
+    if (order.state === 'domain_purchasing') {
+      // Already started — return dns_pending for existing-domain path, purchased otherwise.
+      const dnsPending = order.requirements?.domainPath === 'existing';
+      return {
+        ok: true,
+        domain: order.domain?.domain ?? '',
+        path: dnsPending ? 'dns_pending' : 'purchased',
+      };
+    }
+    if (['building', 'deploying', 'live'].includes(order.state)) {
       return { ok: true, domain: order.domain?.domain ?? '', path: 'purchased' };
     }
     return {
@@ -154,25 +163,15 @@ export async function processDomainForOrder(orderId: string): Promise<DomainProc
     return { ok: false, error: `Failed to start domain step: ${startResult.detail}` };
   }
 
-  // ── Path 3: existing domain — skip purchase, provide DNS instructions ─────
+  // ── Path 3: existing domain — hold in domain_purchasing, wait for DNS ───────
+  // Do NOT fire DOMAIN_PURCHASED here. The order stays in 'domain_purchasing'
+  // while the customer updates their DNS settings.
+  // POST /api/domains/verify will call advanceDomainIfDnsReady(), which fires
+  // DOMAIN_PURCHASED → 'building' once the A record resolves to CONTABO_VPS_IP.
+  // The domain name is available via order.requirements.desiredDomain.
   if (domainPath === 'existing') {
-    const domainInfo: DomainInfo = {
-      domain,
-      registeredAt: new Date().toISOString(),
-    };
-
-    const result = await orderStore.transition(orderId, {
-      event: 'DOMAIN_PURCHASED',
-      note: 'Customer-owned domain — DNS instructions provided, no purchase required',
-      meta: { domain, domainPath: 'existing' },
-      patch: { domain: domainInfo },
-    });
-
-    if (!result.ok && result.error !== 'IDEMPOTENT_SKIP') {
-      return { ok: false, error: `State transition failed: ${result.detail}` };
-    }
-
-    return { ok: true, domain, path: 'existing' };
+    console.log(`[domain-service] Existing domain ${domain} — order held in domain_purchasing, awaiting DNS propagation`);
+    return { ok: true, domain, path: 'dns_pending' };
   }
 
   // ── Paths 1 & 2: purchase the domain via Porkbun ─────────────────────────
