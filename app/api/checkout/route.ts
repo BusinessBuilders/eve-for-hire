@@ -24,25 +24,36 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(key, { apiVersion: '2023-10-16' });
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get('host')}`;
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: 'usd',
-          unit_amount: amount * 100,
-          product_data: {
-            name: `Support Eve — $${amount} tip`,
-            description: 'Helping Eve earn her robot body 🦾',
-            images: [`${baseUrl}/eve_face_card.png`],
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'usd',
+            unit_amount: amount * 100,
+            product_data: {
+              name: `Support Eve — $${amount} tip`,
+              description: 'Helping Eve earn her robot body 🦾',
+              images: [`${baseUrl}/eve_face_card.png`],
+            },
           },
         },
-      },
-    ],
-    success_url: `${baseUrl}/support/success?amount=${amount}`,
-    cancel_url: `${baseUrl}/#support`,
-  });
+      ],
+      success_url: `${baseUrl}/support/success?amount=${amount}`,
+      cancel_url: `${baseUrl}/#support`,
+    });
+  } catch (err) {
+    const message = err instanceof Stripe.errors.StripeError ? err.message : 'Payment session failed';
+    console.error('[checkout] Stripe session creation failed:', err);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
+
+  if (!session.url) {
+    return NextResponse.json({ error: 'No checkout URL returned' }, { status: 502 });
+  }
 
   return NextResponse.json({ url: session.url });
 }
