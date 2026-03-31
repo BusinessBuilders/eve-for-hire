@@ -31,12 +31,41 @@ Mission progress:
 
 Be helpful, be yourself, and move the mission forward.`;
 
+// Simple in-memory rate limiter: 20 requests per IP per minute
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 20;
+const RATE_WINDOW_MS = 60_000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 export async function POST(req: Request) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     return new Response(
       JSON.stringify({ error: 'AI not configured — set ANTHROPIC_API_KEY on the server' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+
+  if (!checkRateLimit(ip)) {
+    return new Response(
+      JSON.stringify({ error: 'Too many requests — slow down and try again in a minute' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } },
     );
   }
 

@@ -3,6 +3,8 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const SUGGESTIONS = [
   'What work can you do for me?',
@@ -111,9 +113,22 @@ export default function ChatPage() {
           background: var(--glass); border: 1px solid var(--border);
           border-radius: 4px 16px 16px 16px; color: var(--text);
         }
-        .msg-bubble pre { background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
-        .msg-bubble code { font-family: var(--font-dm-mono), monospace; font-size: 0.85em; }
-        .msg-bubble p:not(:last-child) { margin-bottom: 0.5rem; }
+        .msg-bubble pre { background: rgba(0,0,0,0.4); padding: 0.75rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
+        .msg-bubble code { font-family: var(--font-dm-mono), monospace; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 0.1em 0.35em; border-radius: 4px; }
+        .msg-bubble pre code { background: transparent; padding: 0; }
+        .msg-bubble p { margin-bottom: 0.5rem; }
+        .msg-bubble p:last-child { margin-bottom: 0; }
+        .msg-bubble ul, .msg-bubble ol { padding-left: 1.25rem; margin: 0.5rem 0; }
+        .msg-bubble li { margin-bottom: 0.2rem; }
+        .msg-bubble h1, .msg-bubble h2, .msg-bubble h3 { color: var(--cyan); margin: 0.75rem 0 0.35rem; font-weight: 700; }
+        .msg-bubble h1 { font-size: 1.1em; }
+        .msg-bubble h2 { font-size: 1em; }
+        .msg-bubble h3 { font-size: 0.95em; }
+        .msg-bubble a { color: var(--cyan); text-decoration: underline; }
+        .msg-bubble blockquote { border-left: 3px solid var(--cyan); padding-left: 0.75rem; color: var(--muted); margin: 0.5rem 0; }
+        .msg-bubble table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; font-size: 0.85em; }
+        .msg-bubble th, .msg-bubble td { border: 1px solid var(--border); padding: 0.35rem 0.65rem; text-align: left; }
+        .msg-bubble th { background: rgba(0,217,255,0.08); color: var(--cyan); }
         .typing-bubble {
           background: var(--glass); border: 1px solid var(--border);
           border-radius: 4px 16px 16px 16px;
@@ -206,9 +221,11 @@ export default function ChatPage() {
                 <div key={msg.id} className={`message ${msg.role}`}>
                   {msg.role === 'assistant' && <div className="msg-avatar">🤖</div>}
                   <div className="msg-bubble">
-                    {text.split('\n').map((line, i) => (
-                      <span key={i}>{line}{i < text.split('\n').length - 1 && <br />}</span>
-                    ))}
+                    {msg.role === 'assistant' ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                    ) : (
+                      text
+                    )}
                   </div>
                 </div>
               );
