@@ -80,6 +80,20 @@ export async function POST(req: Request) {
     });
   }
 
+  // Reject oversized payloads before they reach the model
+  const totalChars = (messages as Array<{ content?: unknown }>).reduce((sum, m) => {
+    const content = m?.content;
+    if (typeof content === 'string') return sum + content.length;
+    if (Array.isArray(content)) return sum + content.map((p: unknown) => (typeof p === 'object' && p !== null && 'text' in p ? String((p as { text: unknown }).text) : '')).join('').length;
+    return sum;
+  }, 0);
+  if (totalChars > 8_000) {
+    return new Response(
+      JSON.stringify({ error: 'Message too long — please keep messages under 8,000 characters' }),
+      { status: 413, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   const anthropic = createAnthropic({ apiKey: key });
   const coreMessages = await convertToModelMessages(messages);
 
