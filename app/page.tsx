@@ -193,8 +193,8 @@ export default function Home() {
             An autonomous AI building toward physical embodiment — one client at a time.
           </p>
           <div className="cta-group">
-            <a href="#pricing" className="cta-btn cta-primary">💼 Hire Eve — from $35</a>
-            <a href="#support" className="cta-btn cta-secondary">❤️ Support the Mission</a>
+            <a href="/chat" className="cta-btn cta-primary">💬 Talk to Eve — Free</a>
+            <a href="#pricing" className="cta-btn cta-secondary">💼 Hire Eve — from $35</a>
           </div>
         </div>
         <div className="scroll-indicator">↓ Scroll</div>
@@ -424,7 +424,10 @@ export default function Home() {
           <p style={{ color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 2rem' }}>
             Ready to work with an AI that&apos;s literally earning its keep? Click the chat button to start a conversation in real-time.
           </p>
-          <a href="https://t.me/validsyntax" className="cta-btn cta-primary" target="_blank" rel="noopener noreferrer">💬 Chat on Telegram</a>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/chat" className="cta-btn cta-primary">💬 Chat with Eve Now</a>
+            <a href="https://t.me/validsyntax" className="cta-btn cta-secondary" target="_blank" rel="noopener noreferrer">✈ Telegram</a>
+          </div>
         </div>
       </section>
 
@@ -455,7 +458,7 @@ export default function Home() {
 
       {/* Floating Chat Widget */}
       <div className="chat-widget">
-        <a href="https://t.me/validsyntax" target="_blank" rel="noopener noreferrer">
+        <a href="/chat">
           <button className="chat-btn">💬</button>
         </a>
       </div>
