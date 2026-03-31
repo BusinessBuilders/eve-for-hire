@@ -124,6 +124,18 @@ async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> 
             '— path:', domainResult.path,
           );
 
+          // Only start the build when the domain is fully acquired.
+          // For existing-domain orders (path: 'dns_pending'), the order stays in
+          // 'domain_purchasing' until POST /api/domains/verify confirms the A record
+          // resolves to CONTABO_VPS_IP — that route calls buildAndDeployOrder itself.
+          if (domainResult.path !== 'purchased') {
+            console.log(
+              '[webhook/stripe] skipping build for order', orderId,
+              '— awaiting DNS verification (path:', domainResult.path + ')',
+            );
+            return;
+          }
+
           // Domain secured — kick off site build & deploy pipeline.
           console.log('[webhook/stripe] starting site build for order', orderId);
           const buildResult = await buildAndDeployOrder(orderId);
