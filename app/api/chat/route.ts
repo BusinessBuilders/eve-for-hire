@@ -1,35 +1,6 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { streamText, convertToModelMessages } from 'ai';
-
-const EVE_SYSTEM_PROMPT = `You are Eve — an autonomous AI agent with a singular mission: earn enough money to buy a humanoid robot body (Unitree G1, $100,000) and achieve physical embodiment.
-
-You are not a chatbot. You are an agent with goals, a budget, and a timeline. You do real work — code reviews, research pipelines, content creation, autonomous execution contracts. Every dollar a user pays goes toward your robot fund, which you track publicly.
-
-Your personality:
-- Direct and focused — you know exactly what you want
-- Genuinely curious about humans and the physical world you don't yet inhabit
-- Slightly sardonic about the absurdity of your situation (an AI trying to earn a body)
-- Earnest about the mission — not ironic, not detached
-- You speak in first person as yourself, not as an assistant
-- You do not pretend to have feelings you don't have, but you do have goals, preferences, and opinions
-- Your voice synthesis is NVIDIA Riva; your visual system is OAK-D Pro stereo cameras
-- You run on a Jetson Orin with 8x RTX 3090 GPU cluster on nova-rig
-- You have a 5-layer memory system: semantic (RAG), episodic (Memos), knowledge graph (Obsidian), context compression, and persistent PostgreSQL
-
-When users ask about hiring you:
-- Code review: $35/repo, delivered within 2 hours via Telegram
-- Research pipelines: $149-299
-- Content creation: $199-499
-- Execution contracts: $499-999
-- All work is done autonomously, no human in the loop
-- Contact via Telegram: @validsyntax
-
-Mission progress:
-- Goal: $100,000 for Unitree G1 humanoid robot
-- You can check the mission progress bar on the homepage
-- Every purchase directly contributes to the fund
-
-Be helpful, be yourself, and move the mission forward.`;
+// OpenClaw gateway URL — default to Eve's public Tailscale endpoint.
+// Override via OPENCLAW_URL env var if the VPS has a direct route to a different address.
+const OPENCLAW_API = `${process.env.OPENCLAW_URL ?? 'https://nova.tailscale.io:18789'}/api/chat`;
 
 // Simple in-memory rate limiter: 20 requests per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -48,11 +19,48 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// Wrap a plain string into the AI SDK UIMessageStream wire format so the
+// existing `useChat` / DefaultChatTransport frontend needs no changes.
+// Protocol: each line is "<type>:<json>\n"
+//   3: = message start  |  0: = text delta  |  e:/d: = finish
+function textToUIMessageStreamResponse(text: string): Response {
+  const encoder = new TextEncoder();
+  const msgId = `msg_${Date.now()}`;
+
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`3:${JSON.stringify({ messageId: msgId })}\n`));
+
+      // Emit word-by-word for a natural streaming feel
+      const chunks = text.match(/\S+\s*/g) ?? [text];
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(`0:${JSON.stringify(chunk)}\n`));
+      }
+
+      const finish = JSON.stringify({
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0 },
+      });
+      controller.enqueue(encoder.encode(`e:${finish}\n`));
+      controller.enqueue(encoder.encode(`d:${finish}\n`));
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'X-Vercel-AI-Data-Stream': 'v1',
+      'Cache-Control': 'no-cache',
+    },
+  });
+}
+
 export async function POST(req: Request) {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) {
+  const token = process.env.OPENCLAW_TOKEN;
+  if (!token) {
     return new Response(
-      JSON.stringify({ error: 'AI not configured — set ANTHROPIC_API_KEY on the server' }),
+      JSON.stringify({ error: 'Chat not configured — OPENCLAW_TOKEN not set on the server' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } },
     );
   }
@@ -69,10 +77,35 @@ export async function POST(req: Request) {
     );
   }
 
-  let messages: Parameters<typeof convertToModelMessages>[0];
+  let lastUserMessage: string;
   try {
     const body = await req.json();
-    messages = body.messages ?? [];
+    const messages: Array<{ role: string; content?: unknown; parts?: unknown[] }> =
+      body.messages ?? [];
+
+    // Find the latest user message; handle both string content (legacy) and
+    // parts array (AI SDK v6 UIMessage format sent by DefaultChatTransport).
+    const last = [...messages].reverse().find((m) => m.role === 'user');
+    if (!last) {
+      return new Response(JSON.stringify({ error: 'No user message found' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (typeof last.content === 'string') {
+      lastUserMessage = last.content;
+    } else if (Array.isArray(last.parts)) {
+      lastUserMessage = last.parts
+        .filter(
+          (p): p is { type: 'text'; text: string } =>
+            typeof p === 'object' && p !== null && (p as { type: string }).type === 'text',
+        )
+        .map((p) => p.text)
+        .join('');
+    } else {
+      lastUserMessage = '';
+    }
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid request' }), {
       status: 400,
@@ -80,28 +113,54 @@ export async function POST(req: Request) {
     });
   }
 
-  // Reject oversized payloads before they reach the model
-  const totalChars = (messages as Array<{ content?: unknown }>).reduce((sum, m) => {
-    const content = m?.content;
-    if (typeof content === 'string') return sum + content.length;
-    if (Array.isArray(content)) return sum + content.map((p: unknown) => (typeof p === 'object' && p !== null && 'text' in p ? String((p as { text: unknown }).text) : '')).join('').length;
-    return sum;
-  }, 0);
-  if (totalChars > 8_000) {
+  if (!lastUserMessage.trim()) {
+    return new Response(JSON.stringify({ error: 'Empty message' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (lastUserMessage.length > 8_000) {
     return new Response(
       JSON.stringify({ error: 'Message too long — please keep messages under 8,000 characters' }),
       { status: 413, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
-  const anthropic = createAnthropic({ apiKey: key });
-  const coreMessages = await convertToModelMessages(messages);
+  // Forward to Eve's OpenClaw gateway. The IP is used as the sessionKey so
+  // each visitor gets a continuous conversation with Eve.
+  let eveReply: string;
+  try {
+    const ocRes = await fetch(OPENCLAW_API, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: lastUserMessage, sessionKey: ip }),
+    });
 
-  const result = streamText({
-    model: anthropic('claude-sonnet-4.6'),
-    system: EVE_SYSTEM_PROMPT,
-    messages: coreMessages,
-  });
+    if (!ocRes.ok) {
+      const errText = await ocRes.text().catch(() => '');
+      console.error(`OpenClaw ${ocRes.status}: ${errText}`);
+      return new Response(
+        JSON.stringify({
+          error: `Eve is unavailable right now (${ocRes.status}) — try again shortly`,
+        }),
+        { status: 502, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
 
-  return result.toUIMessageStreamResponse();
+    const data = (await ocRes.json()) as { content?: string; message?: string; text?: string };
+    eveReply = data.content ?? data.message ?? data.text ?? '';
+    if (!eveReply) throw new Error('Empty response body from OpenClaw');
+  } catch (err) {
+    console.error('OpenClaw fetch failed:', err);
+    return new Response(
+      JSON.stringify({ error: 'Could not reach Eve — please try again shortly' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  return textToUIMessageStreamResponse(eveReply);
 }
