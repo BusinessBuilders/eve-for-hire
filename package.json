@@ -11,12 +11,14 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.64",
     "@ai-sdk/react": "^3.0.143",
+    "@types/ssh2": "^1.15.5",
     "ai": "^6.0.141",
     "next": "^15.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "ssh2": "^1.17.0",
     "stripe": "^14.25.0"
   },
   "devDependencies": {
