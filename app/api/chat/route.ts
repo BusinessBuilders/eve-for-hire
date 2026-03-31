@@ -135,6 +135,7 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
+        'x-openclaw-token': token,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ message: lastUserMessage, sessionKey: ip }),
