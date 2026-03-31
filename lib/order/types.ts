@@ -99,6 +99,12 @@ export interface AuditEntry {
 
 // ─── Requirements captured during qualifying ───────────────────────────────
 
+/** Which domain acquisition path the customer chose during qualifying */
+export type DomainPath =
+  | 'suggested'  // Eve-suggested domain — customer picked from AI suggestions
+  | 'new'        // Customer-specified new domain — Eve purchases on their behalf
+  | 'existing';  // Customer already owns the domain — Eve provides DNS instructions only
+
 export interface OrderRequirements {
   /** Business type / industry */
   businessType: string;
@@ -106,6 +112,8 @@ export interface OrderRequirements {
   purpose: string;
   /** Desired domain name (may differ from purchased domain) */
   desiredDomain: string;
+  /** How the domain is being acquired */
+  domainPath?: DomainPath;
   /** Colour preferences, tone, etc. */
   style?: string;
   /** Raw transcript summary from Eve's chat */

@@ -13,9 +13,10 @@
  *   STRIPE_WEBHOOK_SECRET   — webhook signing secret from Stripe Dashboard
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
+import { processDomainForOrder } from '@/lib/porkbun/domain-service';
 import type { PaymentInfo } from '@/lib/order/types';
 
 export async function POST(req: NextRequest) {
@@ -102,6 +103,26 @@ async function handleEvent(stripe: Stripe, event: Stripe.Event): Promise<void> {
         );
       } else {
         console.log('[webhook/stripe] order', orderId, '→ paid');
+
+        // Kick off domain acquisition after the response is sent.
+        // after() keeps the function alive until the callback completes,
+        // giving Stripe an immediate 200 while domain work runs in background.
+        after(async () => {
+          console.log('[webhook/stripe] starting domain processing for order', orderId);
+          const domainResult = await processDomainForOrder(orderId);
+          if (domainResult.ok) {
+            console.log(
+              '[webhook/stripe] domain processing complete for order', orderId,
+              '— domain:', domainResult.domain,
+              '— path:', domainResult.path,
+            );
+          } else {
+            console.error(
+              '[webhook/stripe] domain processing failed for order', orderId,
+              '—', domainResult.error,
+            );
+          }
+        });
       }
       break;
     }
