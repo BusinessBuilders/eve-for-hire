@@ -99,8 +99,22 @@ function buildPrompt(req: OrderRequirements): string {
   if (req.chatSummary) parts.push(`Conversation summary: ${req.chatSummary}`);
 
   parts.push('');
-  parts.push('Return a JSON object with these fields:');
-  parts.push(JSON.stringify(SiteContentSchema.shape, null, 2));
+  parts.push(`Return a single valid JSON object with exactly these fields:
+{
+  "businessName": string — short business name used in the logo and title,
+  "tagline": string — one-line tagline under the business name,
+  "headline": string — punchy hero headline, max 10 words, benefit-led,
+  "subheadline": string — 1-2 sentences expanding the headline,
+  "ctaText": string — call-to-action button label (e.g. "Book a Call"),
+  "features": [
+    { "icon": string (single emoji), "title": string (2-4 words), "description": string (1 sentence) },
+    ... (3 to 6 items)
+  ],
+  "about": string — 2-3 sentence paragraph for the About Us section,
+  "primaryColor": string — dominant brand hex color (e.g. "#2563eb"), vivid enough for 3:1 contrast,
+  "accentColor": string — secondary accent hex color that complements the primary,
+  "contactEmail": string (optional) — contact email if derivable from the requirements
+}`);
 
   return parts.join('\n');
 }

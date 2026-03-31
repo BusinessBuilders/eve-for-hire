@@ -48,20 +48,36 @@ export type BuildResult =
 /**
  * Build and deploy the website for a given order.
  *
- * Must be called when the order is in the 'building' state.
- * Handles all state transitions internally.
+ * Accepts starting states:
+ *   'building'      — full pipeline: content gen + SSH deploy + DNS + smoke test
+ *   'deploying'     — verification only: DNS propagation + HTTP smoke test (site already on VPS)
+ *   'deploy_failed' — retries from deploying phase (transitions to 'deploying' first)
+ *   'live'          — idempotent no-op
  *
- * This function is idempotent — if the order is already 'deploying' or 'live',
- * it returns successfully without re-running the build.
+ * Handles all state transitions internally.
  */
 export async function buildAndDeployOrder(orderId: string): Promise<BuildResult> {
   const order = await orderStore.findById(orderId);
   if (!order) return { ok: false, phase: 'build', error: `Order ${orderId} not found` };
 
-  // Idempotency — already past building.
-  if (order.state === 'deploying' || order.state === 'live') {
+  // Idempotency — already live.
+  if (order.state === 'live') {
     const url = order.deploy?.siteUrl ?? `https://${order.domain?.domain}`;
     return { ok: true, siteUrl: url };
+  }
+
+  // Deploy retry: transition back to deploying, then run only the verification phase.
+  if (order.state === 'deploy_failed') {
+    const retryResult = await orderStore.transition(orderId, { event: 'RETRY_DEPLOY' });
+    if (!retryResult.ok && retryResult.error !== 'IDEMPOTENT_SKIP') {
+      return { ok: false, phase: 'deploy', error: `RETRY_DEPLOY failed: ${retryResult.detail}` };
+    }
+    return runVerificationPhase(orderId, order.domain?.domain, order.deploy?.siteUrl);
+  }
+
+  // Skip build phase — site already on VPS, just re-verify.
+  if (order.state === 'deploying') {
+    return runVerificationPhase(orderId, order.domain?.domain, order.deploy?.siteUrl);
   }
 
   if (order.state !== 'building') {
@@ -161,11 +177,35 @@ export async function buildAndDeployOrder(orderId: string): Promise<BuildResult>
 
   console.log(`[build-service] order ${orderId} → deploying`);
 
-  // ── Phase 3: Wait for DNS + smoke test ──────────────────────────────────────
+  return runVerificationPhase(orderId, domain, undefined);
+}
+
+// ─── Verification phase ───────────────────────────────────────────────────────
+
+/**
+ * DNS propagation + HTTP smoke test phase.
+ * Called after the site is already deployed to the VPS.
+ * Handles both fresh deploys (building → deploying → live) and
+ * retries (deploy_failed → deploying → live).
+ */
+async function runVerificationPhase(
+  orderId: string,
+  domain: string | undefined,
+  _existingSiteUrl: string | undefined,
+): Promise<BuildResult> {
+  if (!domain) {
+    await failDeploy(orderId, 'No domain on order — cannot verify');
+    return { ok: false, phase: 'deploy', error: 'Missing domain for verification' };
+  }
+
+  const vpsIp = process.env.CONTABO_VPS_IP;
+  if (!vpsIp) {
+    await failDeploy(orderId, 'CONTABO_VPS_IP is not set — cannot verify DNS');
+    return { ok: false, phase: 'deploy', error: 'CONTABO_VPS_IP not configured' };
+  }
+
   console.log(`[build-service] waiting for DNS propagation for ${domain} → ${vpsIp}`);
-  const dnsResult = await waitForDnsPropagation(domain, vpsIp, {
-    timeoutMs: 5 * 60_000,
-  });
+  const dnsResult = await waitForDnsPropagation(domain, vpsIp, { timeoutMs: 5 * 60_000 });
 
   if (!dnsResult.ok) {
     const msg = `DNS for ${domain} did not resolve to ${vpsIp} within 5 minutes (got: ${dnsResult.resolvedIp ?? 'no record'})`;
@@ -175,8 +215,8 @@ export async function buildAndDeployOrder(orderId: string): Promise<BuildResult>
   }
 
   console.log(`[build-service] DNS ok for ${domain} (${dnsResult.elapsedMs}ms)`);
-
   console.log(`[build-service] running smoke test for ${domain}`);
+
   const smokeResult = await httpSmokeTest(domain, { timeoutMs: 3 * 60_000 });
 
   if (!smokeResult.ok) {
@@ -190,7 +230,6 @@ export async function buildAndDeployOrder(orderId: string): Promise<BuildResult>
 
   console.log(`[build-service] smoke test ok for ${domain} (${smokeResult.statusCode} ${smokeResult.url})`);
 
-  // ── Transition to live ──────────────────────────────────────────────────────
   const siteUrl = smokeResult.url ?? `https://${domain}`;
   const deployInfo: DeployInfo = {
     siteUrl,

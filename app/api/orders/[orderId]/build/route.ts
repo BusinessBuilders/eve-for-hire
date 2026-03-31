@@ -28,7 +28,12 @@ export async function POST(
     return NextResponse.json({ error: 'Order not found' }, { status: 404 });
   }
 
-  const allowedStates = ['building', 'build_failed', 'deploy_failed'];
+  // Accepted starting states. The build service handles all internal transitions:
+  //   build_failed  → RETRY_BUILD → building → ... (full pipeline)
+  //   deploy_failed → RETRY_DEPLOY → deploying → DNS + smoke test only
+  //   building      → full pipeline
+  //   deploying     → DNS + smoke test only (re-verify already-uploaded site)
+  const allowedStates = ['building', 'build_failed', 'deploy_failed', 'deploying'];
   if (!allowedStates.includes(order.state)) {
     return NextResponse.json(
       {
@@ -39,20 +44,13 @@ export async function POST(
     );
   }
 
-  // For retry states, reset back to building first.
+  // For build_failed, transition to building so the service sees the correct start state.
+  // deploy_failed and deploying retries are handled internally by buildAndDeployOrder.
   if (order.state === 'build_failed') {
     const retryResult = await orderStore.transition(orderId, { event: 'RETRY_BUILD' });
     if (!retryResult.ok) {
       return NextResponse.json(
         { error: 'Failed to reset order to building state', detail: retryResult.detail },
-        { status: 422 },
-      );
-    }
-  } else if (order.state === 'deploy_failed') {
-    const retryResult = await orderStore.transition(orderId, { event: 'RETRY_DEPLOY' });
-    if (!retryResult.ok) {
-      return NextResponse.json(
-        { error: 'Failed to reset order to deploying state', detail: retryResult.detail },
         { status: 422 },
       );
     }
