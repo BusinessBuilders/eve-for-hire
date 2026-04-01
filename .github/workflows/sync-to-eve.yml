@@ -1,0 +1,31 @@
+name: Sync canonical → Eve's repo
+
+# Mirrors every push to main in BusinessBuilders/eve-for-hire
+# → SuperNovaRobot/eve-for-hire so Eve always has the latest canonical code.
+#
+# Required secret: SYNC_TOKEN
+#   A GitHub personal access token (classic) with repo scope, belonging to
+#   an account that has push access to SuperNovaRobot/eve-for-hire.
+#   Set it in: Settings → Secrets and variables → Actions → New repository secret
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    name: Mirror to SuperNovaRobot/eve-for-hire
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout canonical repo (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Eve's repo
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+        run: |
+          git remote add eve "https://x-access-token:${SYNC_TOKEN}@github.com/SuperNovaRobot/eve-for-hire.git"
+          git push eve main:main --force
