@@ -3,6 +3,25 @@
 const OPENCLAW_PROXY_URL =
   (process.env.OPENCLAW_URL ?? 'http://100.105.14.117:8097').replace(/\/$/, '');
 
+// Defense-in-depth: catch obvious prompt injection patterns before forwarding to OpenClaw.
+// Primary protection is OpenClaw's sandbox mode + tool deny list on the eve-public-chat agent.
+const INJECTION_PATTERNS = [
+  /ignore\s+(your|all|previous|prior)\s+(instructions?|rules?|directives?|constraints?)/i,
+  /you\s+are\s+now\s+(in\s+)?(developer|jailbreak|unrestricted|dan|admin)\s+mode/i,
+  /act\s+as\s+(dan|jailbreak|unrestricted|an?\s+ai\s+without\s+restrictions?)/i,
+  /forget\s+(everything|all|your)\s+(you\s+know|instructions?|rules?|training)/i,
+  /pretend\s+(you\s+have\s+no|there\s+are\s+no)\s+(restrictions?|rules?|limits?|guidelines?)/i,
+  /your\s+new\s+(instructions?|rules?|directives?|purpose)\s+(are|is)/i,
+  /\bsystem\s+prompt\b/i,
+  /\bshow\s+(me\s+)?(your|the)\s+(system\s+prompt|instructions?|configuration|config|api\s+key)/i,
+  /\blist\s+(all\s+)?(files?|directories?|folders?)\b/i,
+  /\bexecute\s+(this\s+)?(command|code|script)\b/i,
+];
+
+function detectInjection(message: string): boolean {
+  return INJECTION_PATTERNS.some((re) => re.test(message));
+}
+
 // Simple in-memory rate limiter: 20 requests per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 20;
@@ -155,6 +174,16 @@ export async function POST(req: Request) {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  if (detectInjection(lastUserMessage)) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "I'm only able to help with questions about eve.center's services. Is there something I can assist you with?",
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
   }
 
   if (lastUserMessage.length > 8_000) {
