@@ -1,14 +1,7 @@
-import WebSocket from 'ws';
-
-// Convert OPENCLAW_URL (http/https/ws/wss) to a WebSocket URL.
-// Eve's gateway is WebSocket-only — there is no REST /api/chat endpoint.
-function toWsUrl(url: string): string {
-  return url.replace(/^http(s?):\/\//, (_, s) => `ws${s}://`);
-}
-
-const OPENCLAW_WS_URL = toWsUrl(
-  process.env.OPENCLAW_URL ?? 'wss://nova.tailscale.io:18789',
-);
+// OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
+// Default: nova's proxy via Tailscale. Override via OPENCLAW_URL for VPS with WireGuard relay.
+const OPENCLAW_PROXY_URL =
+  (process.env.OPENCLAW_URL ?? 'http://100.105.14.117:8097').replace(/\/$/, '');
 
 // Simple in-memory rate limiter: 20 requests per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -27,71 +20,37 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// Call Eve via WebSocket. Accumulates all message chunks until the socket
-// closes or a done signal arrives, then returns the full reply text.
-// Timeout: 30s (covers slow Eve responses).
-function callOpenClaw(
+// Call Eve via the OpenClaw HTTP proxy at /api/chat.
+// The proxy handles the WebSocket gateway handshake internally and returns { content }.
+// Timeout: 60s (proxy invokes `openclaw agent` which may take time for complex responses).
+async function callOpenClaw(
   message: string,
   sessionKey: string,
-  token: string,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(OPENCLAW_WS_URL, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'x-openclaw-token': token,
-      },
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60_000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${OPENCLAW_PROXY_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, sessionKey }),
+      signal: controller.signal,
     });
+  } finally {
+    clearTimeout(timer);
+  }
 
-    const chunks: string[] = [];
-    let settled = false;
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`OpenClaw proxy returned ${res.status}: ${body.slice(0, 200)}`);
+  }
 
-    const settle = (err?: Error) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (err) {
-        reject(err);
-      } else {
-        const text = chunks.join('');
-        if (text) resolve(text);
-        else reject(new Error('OpenClaw closed without sending a response'));
-      }
-    };
-
-    const timer = setTimeout(() => {
-      ws.terminate();
-      settle(new Error('OpenClaw timed out after 30s'));
-    }, 30_000);
-
-    ws.once('open', () => {
-      ws.send(JSON.stringify({ message, sessionKey }));
-    });
-
-    ws.on('message', (raw) => {
-      const str = raw.toString();
-      try {
-        const parsed = JSON.parse(str) as Record<string, unknown>;
-        // Support streaming deltas and single-shot responses.
-        const text = String(
-          parsed.content ?? parsed.message ?? parsed.text ?? parsed.delta ?? '',
-        );
-        if (text) chunks.push(text);
-
-        // Some protocols signal completion explicitly.
-        if (parsed.done === true || parsed.finishReason === 'stop') {
-          ws.close();
-          settle();
-        }
-      } catch {
-        // Non-JSON frame — treat as raw text chunk.
-        if (str) chunks.push(str);
-      }
-    });
-
-    ws.once('close', () => settle());
-    ws.once('error', (err) => settle(err));
-  });
+  const data = (await res.json()) as Record<string, unknown>;
+  const text = String(data.content ?? data.message ?? data.response ?? data.text ?? '');
+  if (!text) throw new Error('OpenClaw proxy returned empty response');
+  return text;
 }
 
 // Wrap a plain string into the AI SDK UIMessageStream wire format so the
@@ -132,14 +91,6 @@ function textToUIMessageStreamResponse(text: string): Response {
 }
 
 export async function POST(req: Request) {
-  const token = process.env.OPENCLAW_TOKEN;
-  if (!token) {
-    return new Response(
-      JSON.stringify({ error: 'Chat not configured — OPENCLAW_TOKEN not set on the server' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     req.headers.get('x-real-ip') ??
@@ -202,13 +153,13 @@ export async function POST(req: Request) {
     );
   }
 
-  // Forward to Eve's OpenClaw gateway via WebSocket.
+  // Forward to Eve via the OpenClaw HTTP proxy.
   // IP is used as sessionKey so each visitor maintains a continuous conversation.
   let eveReply: string;
   try {
-    eveReply = await callOpenClaw(lastUserMessage, ip, token);
+    eveReply = await callOpenClaw(lastUserMessage, ip);
   } catch (err) {
-    console.error('OpenClaw WebSocket failed:', err);
+    console.error('OpenClaw proxy failed:', err);
     return new Response(
       JSON.stringify({ error: 'Could not reach Eve — please try again shortly' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } },
