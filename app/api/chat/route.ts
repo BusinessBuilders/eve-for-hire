@@ -53,42 +53,46 @@ async function callOpenClaw(
   return text;
 }
 
-// Wrap a plain string into the AI SDK UIMessageStream wire format so the
+// Wrap a plain string into the AI SDK v6 UIMessageStream SSE format so the
 // existing `useChat` / DefaultChatTransport frontend needs no changes.
-// Protocol: each line is "<type>:<json>\n"
-//   3: = message start  |  0: = text delta  |  e:/d: = finish
+// Protocol: SSE events, each `data:` line is a JSON object matching uiMessageChunkSchema.
+//   text-start  → creates a text part on the message
+//   text-delta  → appends delta to that text part
+//   text-end    → marks text part complete
+//   [DONE]      → signals end of stream
 function textToUIMessageStreamResponse(text: string): Response {
   const encoder = new TextEncoder();
-  const msgId = `msg_${Date.now()}`;
+  const partId = `part_${Date.now()}`;
+
+  const sse = (obj: unknown) => encoder.encode(`data: ${JSON.stringify(obj)}\n\n`);
 
   const stream = new ReadableStream({
     start(controller) {
-      controller.enqueue(encoder.encode(`3:${JSON.stringify({ messageId: msgId })}\n`));
+      controller.enqueue(sse({ type: 'text-start', id: partId }));
 
       // Emit word-by-word for a natural streaming feel
       const chunks = text.match(/\S+\s*/g) ?? [text];
       for (const chunk of chunks) {
-        controller.enqueue(encoder.encode(`0:${JSON.stringify(chunk)}\n`));
+        controller.enqueue(sse({ type: 'text-delta', id: partId, delta: chunk }));
       }
 
-      const finish = JSON.stringify({
-        finishReason: 'stop',
-        usage: { promptTokens: 0, completionTokens: 0 },
-      });
-      controller.enqueue(encoder.encode(`e:${finish}\n`));
-      controller.enqueue(encoder.encode(`d:${finish}\n`));
+      controller.enqueue(sse({ type: 'text-end', id: partId }));
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
       controller.close();
     },
   });
 
   return new Response(stream, {
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'X-Vercel-AI-Data-Stream': 'v1',
+      'Content-Type': 'text/event-stream',
+      'X-Vercel-AI-UI-Message-Stream': 'v1',
       'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
     },
   });
 }
+
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const ip =
