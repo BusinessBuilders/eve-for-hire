@@ -30,7 +30,7 @@ jobs:
             set -e
             cd /var/www/eve-for-hire-app
             git pull origin main
-            npm ci --omit=dev
+            npm ci
             NODE_ENV=production npm run build
             pm2 reload ecosystem.config.js --env production
             pm2 save
