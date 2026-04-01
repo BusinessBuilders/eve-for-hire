@@ -22,7 +22,7 @@ if (fs.existsSync(envFile)) {
       if (eq === -1) return;
       const key = trimmed.slice(0, eq).trim();
       const val = trimmed.slice(eq + 1).trim();
-      if (key && !(key in process.env)) process.env[key] = val;
+      if (key) process.env[key] = val; // always re-read .env.production so pm2 reload picks up changes
     });
 }
 
@@ -41,10 +41,12 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
 
-        // Required: OpenClaw gateway — Eve's AI conversation interface
-        // Obtain token from Eve or the board; set URL if VPS is on Eve's Tailscale network
+        // Required: OpenClaw HTTP proxy — Eve's AI conversation interface.
+        // route.ts POSTs to OPENCLAW_URL/api/chat; the proxy handles the WS gateway internally.
+        // On the Contabo VPS, a reverse SSH tunnel from nova exposes port 8097 on localhost:
+        //   OPENCLAW_URL=http://127.0.0.1:8097  (set in .env.production on the VPS)
         OPENCLAW_TOKEN: process.env.OPENCLAW_TOKEN || '',
-        OPENCLAW_URL: process.env.OPENCLAW_URL || 'https://nova.tailscale.io:18789',
+        OPENCLAW_URL: process.env.OPENCLAW_URL || 'http://100.105.14.117:8097',
 
         // Required: Stripe — payments and webhook verification
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
