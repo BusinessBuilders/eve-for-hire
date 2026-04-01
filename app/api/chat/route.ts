@@ -56,10 +56,13 @@ async function callOpenClaw(
 // Wrap a plain string into the AI SDK v6 UIMessageStream SSE format so the
 // existing `useChat` / DefaultChatTransport frontend needs no changes.
 // Protocol: SSE events, each `data:` line is a JSON object matching uiMessageChunkSchema.
+//   start       → initializes the message (required first event)
+//   start-step  → begins a generation step
 //   text-start  → creates a text part on the message
 //   text-delta  → appends delta to that text part
 //   text-end    → marks text part complete
-//   [DONE]      → signals end of stream
+//   finish-step → ends the generation step
+//   finish      → signals end of stream (replaces the old data-stream [DONE])
 function textToUIMessageStreamResponse(text: string): Response {
   const encoder = new TextEncoder();
   const partId = `part_${Date.now()}`;
@@ -68,6 +71,9 @@ function textToUIMessageStreamResponse(text: string): Response {
 
   const stream = new ReadableStream({
     start(controller) {
+      // Required: initialize the message before any parts
+      controller.enqueue(sse({ type: 'start' }));
+      controller.enqueue(sse({ type: 'start-step' }));
       controller.enqueue(sse({ type: 'text-start', id: partId }));
 
       // Emit word-by-word for a natural streaming feel
@@ -77,7 +83,8 @@ function textToUIMessageStreamResponse(text: string): Response {
       }
 
       controller.enqueue(sse({ type: 'text-end', id: partId }));
-      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.enqueue(sse({ type: 'finish-step' }));
+      controller.enqueue(sse({ type: 'finish', finishReason: 'stop' }));
       controller.close();
     },
   });
