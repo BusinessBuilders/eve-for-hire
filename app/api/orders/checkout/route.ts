@@ -117,6 +117,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ orderId: order.id, redirectTo: `/order/${order.id}` });
   }
 
+  // Upsert Stripe customer by email — reuse existing customer to avoid duplicate
+  // customer records on repeat checkout attempts with the same email address.
+  let stripeCustomerId: string;
+  try {
+    const existing = await stripe.customers.list({ email: customerEmail, limit: 1 });
+    if (existing.data.length > 0) {
+      stripeCustomerId = existing.data[0].id;
+    } else {
+      const created = await stripe.customers.create({
+        email: customerEmail,
+        ...(typeof customerName === 'string' && customerName ? { name: customerName } : {}),
+      });
+      stripeCustomerId = created.id;
+    }
+  } catch (err) {
+    console.error('[orders/checkout] Stripe customer upsert failed:', err);
+    return NextResponse.json({ error: 'Could not set up customer record' }, { status: 502 });
+  }
+
   // Create a new Stripe Checkout Session.
   // Use client_reference_id so the webhook can resolve the order without a DB lookup.
   let session: Stripe.Checkout.Session;
@@ -125,7 +144,7 @@ export async function POST(req: NextRequest) {
       {
         mode: 'subscription',
         client_reference_id: order.id,
-        customer_email: customerEmail,
+        customer: stripeCustomerId,
         // orderId in session metadata lets checkout.session.completed webhook
         // resolve the order for both subscription and one-time payment modes.
         metadata: { orderId: order.id },
