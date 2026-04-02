@@ -32,6 +32,190 @@ function TypingIndicator() {
   );
 }
 
+// ─── Domain results card ──────────────────────────────────────────────────────
+
+interface DomainResult {
+  domain: string;
+  available: boolean;
+  price?: string;
+}
+
+function DomainResultsCard({
+  keyword,
+  results,
+  onSelect,
+}: {
+  keyword: string;
+  results: DomainResult[];
+  onSelect: (domain: string) => void;
+}) {
+  return (
+    <div className="action-card domain-card">
+      <div className="action-card-title">Domains matching &ldquo;{keyword}&rdquo;</div>
+      <div className="domain-rows">
+        {results.map((r) => (
+          <div key={r.domain} className={`domain-row ${r.available ? 'domain-available' : 'domain-taken'}`}>
+            <span className="domain-name">{r.domain}</span>
+            <div className="domain-row-right">
+              {r.available && r.price && (
+                <span className="domain-price">{r.price}/yr</span>
+              )}
+              <span className={`domain-badge ${r.available ? 'badge-available' : 'badge-taken'}`}>
+                {r.available ? 'Available' : 'Taken'}
+              </span>
+              {r.available && (
+                <button
+                  className="domain-select-btn"
+                  onClick={() => onSelect(r.domain)}
+                >
+                  Select →
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Checkout card ────────────────────────────────────────────────────────────
+
+interface CheckoutData {
+  businessName?: string;
+  description?: string;
+  domain?: string;
+  domainPath?: string;
+}
+
+function CheckoutCard({
+  data,
+  sessionId,
+}: {
+  data: CheckoutData;
+  sessionId: string;
+}) {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleCheckout() {
+    const trimmed = email.trim();
+    if (!trimmed.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/orders/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerEmail: trimmed,
+          idempotencyKey: `session-${sessionId}-${data.domain ?? 'unknown'}`,
+          requirements: {
+            businessName: data.businessName ?? '',
+            description: data.description ?? '',
+            desiredDomain: data.domain ?? '',
+            domainPath: data.domainPath ?? 'new',
+          },
+        }),
+      });
+      const json = (await res.json()) as { url?: string; redirectTo?: string; error?: string };
+      if (json.url) {
+        window.open(json.url, '_blank', 'noopener');
+      } else if (json.redirectTo) {
+        window.open(json.redirectTo, '_blank', 'noopener');
+      } else {
+        setError(json.error ?? 'Checkout failed — please try again.');
+      }
+    } catch {
+      setError('Network error — please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="action-card checkout-card">
+      <div className="action-card-title">Ready to build your site!</div>
+      {data.businessName && (
+        <div className="checkout-detail">
+          <span className="checkout-label">Site name</span>
+          <span className="checkout-value">{data.businessName}</span>
+        </div>
+      )}
+      {data.domain && (
+        <div className="checkout-detail">
+          <span className="checkout-label">Domain</span>
+          <span className="checkout-value">{data.domain}</span>
+        </div>
+      )}
+      <div className="checkout-price-row">
+        <span className="checkout-price">$89</span>
+        <span className="checkout-price-desc">AI website + domain + 1-year hosting</span>
+      </div>
+      <input
+        type="email"
+        className="checkout-email-input"
+        placeholder="Your email address"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleCheckout(); }}
+        disabled={loading}
+      />
+      {error && <div className="checkout-error">{error}</div>}
+      <button
+        className="checkout-btn"
+        onClick={handleCheckout}
+        disabled={loading || !email.trim()}
+      >
+        {loading ? 'Creating checkout…' : 'Proceed to Checkout →'}
+      </button>
+    </div>
+  );
+}
+
+// ─── Action block renderer ────────────────────────────────────────────────────
+
+type ActionData =
+  | { type: 'domain-results'; keyword: string; results: DomainResult[] }
+  | ({ type: 'checkout-ready' } & CheckoutData);
+
+function ActionBlock({
+  raw,
+  sessionId,
+  onDomainSelect,
+}: {
+  raw: string;
+  sessionId: string;
+  onDomainSelect: (domain: string) => void;
+}) {
+  let data: ActionData;
+  try {
+    data = JSON.parse(raw) as ActionData;
+  } catch {
+    return null; // malformed — render nothing
+  }
+
+  if (data.type === 'domain-results') {
+    return (
+      <DomainResultsCard
+        keyword={data.keyword}
+        results={data.results}
+        onSelect={onDomainSelect}
+      />
+    );
+  }
+  if (data.type === 'checkout-ready') {
+    return <CheckoutCard data={data} sessionId={sessionId} />;
+  }
+  return null;
+}
+
+// ─── Main chat page ───────────────────────────────────────────────────────────
+
 export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [aiError, setAiError] = useState('');
@@ -199,6 +383,71 @@ export default function ChatPage() {
           font-size: 2.5rem;
           box-shadow: 0 0 40px rgba(0, 217, 255, 0.25);
         }
+
+        /* ── Action cards ── */
+        .action-card {
+          margin-top: 0.75rem; border-radius: 12px;
+          border: 1px solid rgba(0, 217, 255, 0.25);
+          background: rgba(0, 217, 255, 0.04);
+          overflow: hidden;
+        }
+        .action-card-title {
+          padding: 0.65rem 1rem; font-size: 0.8rem; font-weight: 700;
+          color: var(--cyan); border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+          text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        /* Domain card */
+        .domain-rows { display: flex; flex-direction: column; }
+        .domain-row {
+          display: flex; align-items: center; gap: 0.5rem;
+          padding: 0.55rem 1rem; font-size: 0.85rem;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .domain-row:last-child { border-bottom: none; }
+        .domain-name { flex: 1; font-family: var(--font-dm-mono), monospace; color: var(--text); }
+        .domain-row-right { display: flex; align-items: center; gap: 0.5rem; }
+        .domain-price { font-size: 0.8rem; color: var(--muted); }
+        .domain-badge {
+          padding: 0.15rem 0.5rem; border-radius: 99px;
+          font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-available { background: rgba(0, 217, 100, 0.15); color: #00d964; border: 1px solid rgba(0, 217, 100, 0.3); }
+        .badge-taken { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; border: 1px solid rgba(255, 107, 107, 0.2); }
+        .domain-available .domain-name { color: var(--text); }
+        .domain-taken .domain-name { color: var(--muted); text-decoration: line-through; }
+        .domain-select-btn {
+          padding: 0.25rem 0.75rem; border-radius: 8px;
+          background: var(--cyan); color: #000; border: none; cursor: pointer;
+          font-size: 0.78rem; font-weight: 700; transition: opacity 0.15s;
+        }
+        .domain-select-btn:hover { opacity: 0.85; }
+
+        /* Checkout card */
+        .checkout-card { padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem; }
+        .checkout-detail { display: flex; gap: 0.75rem; align-items: baseline; font-size: 0.88rem; }
+        .checkout-label { color: var(--muted); font-size: 0.78rem; min-width: 70px; }
+        .checkout-value { color: var(--text); font-weight: 600; }
+        .checkout-price-row { display: flex; align-items: baseline; gap: 0.5rem; margin: 0.25rem 0; }
+        .checkout-price { font-size: 1.5rem; font-weight: 800; color: var(--cyan); }
+        .checkout-price-desc { font-size: 0.8rem; color: var(--muted); }
+        .checkout-email-input {
+          padding: 0.6rem 0.9rem; border-radius: 8px;
+          border: 1px solid var(--border); background: var(--glass);
+          color: var(--text); font-size: 0.88rem; outline: none;
+          transition: border-color 0.2s; width: 100%; box-sizing: border-box;
+        }
+        .checkout-email-input:focus { border-color: var(--cyan); }
+        .checkout-email-input::placeholder { color: var(--muted); }
+        .checkout-error { font-size: 0.8rem; color: var(--coral, #ff6b6b); }
+        .checkout-btn {
+          padding: 0.65rem 1.25rem; border-radius: 10px; border: none;
+          background: linear-gradient(135deg, var(--cyan), #6c63ff);
+          color: #000; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+          transition: opacity 0.2s; width: 100%;
+        }
+        .checkout-btn:hover:not(:disabled) { opacity: 0.9; }
+        .checkout-btn:disabled { opacity: 0.45; cursor: not-allowed; }
       `}</style>
 
       <div className="chat-page">
@@ -238,7 +487,36 @@ export default function ChatPage() {
                   {msg.role === 'assistant' && <div className="msg-avatar">🤖</div>}
                   <div className="msg-bubble">
                     {msg.role === 'assistant' ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // Intercept fenced code blocks; render action cards for
+                          // `json-action` language, fall through to normal code otherwise.
+                          code({ className, children, ...props }) {
+                            const language = className?.replace('language-', '');
+                            // The `language-xxx` className only appears on fenced code blocks,
+                            // so checking it is sufficient to skip inline backtick spans.
+                            if (language === 'json-action') {
+                              return (
+                                <ActionBlock
+                                  raw={String(children).trim()}
+                                  sessionId={sessionId}
+                                  onDomainSelect={(domain) => {
+                                    submit(`I'd like to use ${domain} for my website.`);
+                                  }}
+                                />
+                              );
+                            }
+                            return (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                        }}
+                      >
+                        {text}
+                      </ReactMarkdown>
                     ) : (
                       text
                     )}
