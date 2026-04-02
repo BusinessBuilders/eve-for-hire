@@ -107,9 +107,10 @@ function extractCheckoutSignal(
   if (idx === -1) return null;
 
   const jsonStart = idx + prefix.length;
-  // Skip optional whitespace before the opening brace
+  // Skip any whitespace (spaces, newlines, tabs) between colon and opening brace.
+  // LLMs sometimes emit newlines or extra spaces here.
   let cursor = jsonStart;
-  while (cursor < text.length && text[cursor] === ' ') cursor++;
+  while (cursor < text.length && /\s/.test(text[cursor])) cursor++;
   if (text[cursor] !== '{') return null;
 
   let depth = 0;
@@ -122,9 +123,13 @@ function extractCheckoutSignal(
     }
   }
   if (jsonEnd === -1) return null;
-  if (text[jsonEnd + 1] !== ']') return null;
 
-  const match = text.slice(idx, jsonEnd + 2);
+  // Skip optional spaces between } and ] — LLMs sometimes add a trailing space.
+  let closeIdx = jsonEnd + 1;
+  while (closeIdx < text.length && text[closeIdx] === ' ') closeIdx++;
+  if (text[closeIdx] !== ']') return null;
+
+  const match = text.slice(idx, closeIdx + 1);
   try {
     const data = JSON.parse(text.slice(cursor, jsonEnd + 1)) as Record<string, unknown>;
     return { match, data };

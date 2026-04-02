@@ -317,6 +317,7 @@ export default function ChatPage() {
           border-radius: 4px 16px 16px 16px; color: var(--text);
         }
         .msg-bubble pre { background: rgba(0,0,0,0.4); padding: 0.75rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
+        .msg-bubble pre:has(> div) { background: transparent; padding: 0; border-radius: 0; overflow: visible; margin: 0.5rem 0; }
         .msg-bubble code { font-family: var(--font-dm-mono), monospace; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 0.1em 0.35em; border-radius: 4px; }
         .msg-bubble pre code { background: transparent; padding: 0; }
         .msg-bubble p { margin-bottom: 0.5rem; }
