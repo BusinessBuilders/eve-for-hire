@@ -80,6 +80,112 @@ async function callOpenClaw(
   return text;
 }
 
+// ─── Action signal resolution ────────────────────────────────────────────────
+//
+// Eve can embed structured signals in her responses that trigger server-side
+// API calls. The signals are stripped from the displayed text and replaced with
+// ```json-action code blocks that the chat UI renders as interactive cards.
+//
+// Supported signals:
+//   [DOMAIN_SEARCH: keyword]        → Porkbun availability check → domain-results card
+//   [CHECKOUT_READY:{...json...}]   → Checkout card with embedded requirements
+//
+// This keeps Eve's qualifying logic in her system prompt while the actual API
+// calls happen server-side (no client-side Porkbun keys, no CORS issues).
+
+import { suggestAvailableDomains } from '@/lib/porkbun/domain-service';
+
+/**
+ * Find and extract a `[CHECKOUT_READY:{...}]` signal from text.
+ * Uses bracket-counting to handle JSON values that may contain `]`.
+ */
+function extractCheckoutSignal(
+  text: string,
+): { match: string; data: Record<string, unknown> } | null {
+  const prefix = '[CHECKOUT_READY:';
+  const idx = text.indexOf(prefix);
+  if (idx === -1) return null;
+
+  const jsonStart = idx + prefix.length;
+  // Skip optional whitespace before the opening brace
+  let cursor = jsonStart;
+  while (cursor < text.length && text[cursor] === ' ') cursor++;
+  if (text[cursor] !== '{') return null;
+
+  let depth = 0;
+  let jsonEnd = -1;
+  for (let i = cursor; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0) { jsonEnd = i; break; }
+    }
+  }
+  if (jsonEnd === -1) return null;
+  if (text[jsonEnd + 1] !== ']') return null;
+
+  const match = text.slice(idx, jsonEnd + 2);
+  try {
+    const data = JSON.parse(text.slice(cursor, jsonEnd + 1)) as Record<string, unknown>;
+    return { match, data };
+  } catch {
+    return null;
+  }
+}
+
+interface ResolvedResponse {
+  /** Eve's text with all signals stripped */
+  text: string;
+  /** ```json-action blocks to append after the text */
+  actionBlocks: string[];
+}
+
+/**
+ * Parse Eve's raw response for action signals, resolve them via internal APIs,
+ * and return clean text + resolved action blocks.
+ */
+async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
+  let text = raw;
+  const actionBlocks: string[] = [];
+
+  // ── [DOMAIN_SEARCH: keyword] ──────────────────────────────────────────────
+  const domainSearchRe = /\[DOMAIN_SEARCH:\s*([^\]]{1,80})\]/gi;
+  const domainMatches = [...raw.matchAll(domainSearchRe)];
+
+  for (const m of domainMatches) {
+    text = text.replace(m[0], '');
+    const keyword = m[1].trim();
+    try {
+      const results = await suggestAvailableDomains(keyword);
+      actionBlocks.push(
+        '```json-action\n' +
+          JSON.stringify({ type: 'domain-results', keyword, results }) +
+          '\n```',
+      );
+    } catch (err) {
+      console.error('[chat] domain search failed for', keyword, err);
+      // Graceful degradation: skip the card, Eve's text still explains the options
+    }
+  }
+
+  // ── [CHECKOUT_READY:{...}] ────────────────────────────────────────────────
+  // Only process one checkout signal per response (first wins)
+  const checkoutSignal = extractCheckoutSignal(text);
+  if (checkoutSignal) {
+    text = text.replace(checkoutSignal.match, '');
+    actionBlocks.push(
+      '```json-action\n' +
+        JSON.stringify({ type: 'checkout-ready', ...checkoutSignal.data }) +
+        '\n```',
+    );
+  }
+
+  // Clean up extra blank lines left by signal removal
+  text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+  return { text, actionBlocks };
+}
+
 // Wrap a plain string into the AI SDK v6 UIMessageStream SSE format so the
 // existing `useChat` / DefaultChatTransport frontend needs no changes.
 // Protocol: SSE events, each `data:` line is a JSON object matching uiMessageChunkSchema.
@@ -223,5 +329,12 @@ export async function POST(req: Request) {
     );
   }
 
-  return textToUIMessageStreamResponse(eveReply);
+  // Resolve action signals embedded by Eve (domain searches, checkout triggers).
+  // Signals are stripped from the displayed text; resolved data is appended as
+  // ```json-action blocks that the chat UI renders as interactive cards.
+  const { text, actionBlocks } = await resolveActionSignals(eveReply);
+  const finalText =
+    actionBlocks.length > 0 ? `${text}\n\n${actionBlocks.join('\n\n')}` : text;
+
+  return textToUIMessageStreamResponse(finalText);
 }
