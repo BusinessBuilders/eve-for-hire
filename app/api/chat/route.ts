@@ -124,9 +124,10 @@ function extractCheckoutSignal(
   }
   if (jsonEnd === -1) return null;
 
-  // Skip optional spaces between } and ] — LLMs sometimes add a trailing space.
+  // Skip optional whitespace (spaces, newlines, tabs) between } and ] —
+  // LLMs sometimes format multi-line JSON or add trailing spaces.
   let closeIdx = jsonEnd + 1;
-  while (closeIdx < text.length && text[closeIdx] === ' ') closeIdx++;
+  while (closeIdx < text.length && /\s/.test(text[closeIdx])) closeIdx++;
   if (text[closeIdx] !== ']') return null;
 
   const match = text.slice(idx, closeIdx + 1);
