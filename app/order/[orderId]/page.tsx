@@ -138,7 +138,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
               Order {order.identifier}
             </p>
             <p style={body}>
-              Your $89 has been received. Eve is now building your website.
+              Your first month payment has been received. Eve is now building your website.
               <br />
               You&apos;ll receive an email at <strong>{order.customerEmail}</strong> when your site
               goes live.
