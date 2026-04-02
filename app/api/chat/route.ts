@@ -1,3 +1,5 @@
+import { suggestAvailableDomains } from '@/lib/porkbun/domain-service';
+
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
 // Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
 // Override via OPENCLAW_URL env var for other environments.
@@ -92,8 +94,6 @@ async function callOpenClaw(
 //
 // This keeps Eve's qualifying logic in her system prompt while the actual API
 // calls happen server-side (no client-side Porkbun keys, no CORS issues).
-
-import { suggestAvailableDomains } from '@/lib/porkbun/domain-service';
 
 /**
  * Find and extract a `[CHECKOUT_READY:{...}]` signal from text.
