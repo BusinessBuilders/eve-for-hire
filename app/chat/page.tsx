@@ -35,9 +35,25 @@ function TypingIndicator() {
 export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [aiError, setAiError] = useState('');
+  const [sessionId, setSessionId] = useState('');
+
+  // Generate a stable per-browser-tab session ID so each visitor gets an
+  // isolated OpenClaw conversation. Using sessionStorage (not localStorage)
+  // means a new tab always starts a fresh session with Eve.
+  useEffect(() => {
+    let id = sessionStorage.getItem('eve-session');
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem('eve-session', id);
+    }
+    setSessionId(id);
+  }, []);
 
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({ api: '/api/chat' }),
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      headers: sessionId ? { 'x-eve-session': sessionId } : {},
+    }),
     onError: (err) => setAiError(err.message ?? 'Connection error'),
   });
 

@@ -69,6 +69,13 @@ async function callOpenClaw(
   const data = (await res.json()) as Record<string, unknown>;
   const text = String(data.content ?? data.message ?? data.response ?? data.text ?? '');
   if (!text) throw new Error('OpenClaw proxy returned empty response');
+
+  // Surface LLM-layer errors as thrown exceptions rather than displaying them
+  // verbatim as Eve's reply (e.g. "LLM request failed: network connection error.")
+  if (/^(LLM request failed|Error:|network connection error)/i.test(text)) {
+    throw new Error(`OpenClaw LLM error: ${text}`);
+  }
+
   return text;
 }
 
@@ -194,10 +201,19 @@ export async function POST(req: Request) {
   }
 
   // Forward to Eve via the OpenClaw HTTP proxy.
-  // IP is used as sessionKey so each visitor maintains a continuous conversation.
+  // Prefer the client-generated session ID (x-eve-session header, a UUID stored in
+  // sessionStorage by the frontend) so each browser tab gets its own isolated
+  // OpenClaw conversation. Fall back to the IP-based key when the header is absent
+  // (e.g. direct API calls or older clients).
+  const clientSession = req.headers.get('x-eve-session');
+  const sessionKey =
+    clientSession && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientSession)
+      ? clientSession
+      : `ip-${ip}`;
+
   let eveReply: string;
   try {
-    eveReply = await callOpenClaw(lastUserMessage, ip);
+    eveReply = await callOpenClaw(lastUserMessage, sessionKey);
   } catch (err) {
     console.error('OpenClaw proxy failed:', err);
     return new Response(
