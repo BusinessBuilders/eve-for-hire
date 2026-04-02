@@ -43,10 +43,11 @@ module.exports = {
 
         // Required: OpenClaw HTTP proxy — Eve's AI conversation interface.
         // route.ts POSTs to OPENCLAW_URL/api/chat; the proxy handles the WS gateway internally.
-        // On the Contabo VPS, a reverse SSH tunnel from nova exposes port 8097 on localhost:
-        //   OPENCLAW_URL=http://127.0.0.1:8097  (set in .env.production on the VPS)
+        // The Contabo VPS reaches Nova via a reverse SSH tunnel that Nova maintains:
+        //   ssh -N -R 127.0.0.1:8097:127.0.0.1:8097 root@<vps-ip>
+        // So the correct VPS value is http://127.0.0.1:8097 (set in .env.production).
         OPENCLAW_TOKEN: process.env.OPENCLAW_TOKEN || '',
-        OPENCLAW_URL: process.env.OPENCLAW_URL || 'http://100.105.14.117:8097',
+        OPENCLAW_URL: process.env.OPENCLAW_URL || 'http://127.0.0.1:8097',
 
         // Required: Stripe — payments and webhook verification
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
