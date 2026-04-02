@@ -169,7 +169,7 @@ function CheckoutCard({
       <button
         className="checkout-btn"
         onClick={handleCheckout}
-        disabled={loading || !email.trim()}
+        disabled={loading || !email.trim() || !data.domain}
       >
         {loading ? 'Creating checkout…' : 'Proceed to Checkout →'}
       </button>
