@@ -2,13 +2,14 @@
  * POST /api/webhooks/stripe — process Stripe webhook events.
  *
  * Verifies the Stripe-Signature header and drives order state transitions:
- *   payment_intent.succeeded      → PAYMENT_SUCCEEDED  (payment_pending → paid)
- *   payment_intent.payment_failed → PAYMENT_FAILED     (payment_pending → payment_failed)
+ *   checkout.session.completed     → PAYMENT_SUCCEEDED  (works for both payment + subscription)
+ *   payment_intent.succeeded       → PAYMENT_SUCCEEDED  (idempotent fallback for one-time payments)
+ *   payment_intent.payment_failed  → PAYMENT_FAILED     (payment_pending → payment_failed)
  *
- * payment_intent.succeeded is the hard gate — it fires only when funds are guaranteed.
- * checkout.session.completed fires on session completion (including free/discounted orders)
- * and is deliberately NOT used here. orderId is embedded in payment_intent_data.metadata
- * at Checkout Session creation so it travels with the PaymentIntent with no secondary lookup.
+ * checkout.session.completed is the primary payment gate for subscription checkouts —
+ * orderId comes from session.metadata.orderId which is set at session creation.
+ * payment_intent.succeeded is kept as a fallback for legacy one-time payments.
+ * Both handlers are idempotent (IDEMPOTENT_SKIP from orderStore prevents double-processing).
  *
  * Returns 200 for all valid, verified requests — including unhandled event types —
  * so Stripe does not retry unnecessarily.
@@ -63,6 +64,93 @@ export async function POST(req: NextRequest) {
 
 async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> {
   switch (event.type) {
+    // Primary handler for subscription checkouts. Also fires for one-time payments.
+    // Uses session.metadata.orderId — set at Checkout Session creation.
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      // Only process confirmed payments (skip free trials, pending async payments, etc.)
+      if (session.payment_status !== 'paid') {
+        console.log('[webhook/stripe] checkout.session.completed skipped — payment_status:', session.payment_status);
+        break;
+      }
+
+      const orderId = session.metadata?.orderId;
+      if (!orderId) {
+        console.warn('[webhook/stripe] checkout.session.completed has no orderId in metadata', session.id);
+        break;
+      }
+
+      const order = await orderStore.findById(orderId);
+      if (!order) {
+        console.warn('[webhook/stripe] order not found', orderId, 'session', session.id);
+        break;
+      }
+
+      const paymentInfo: PaymentInfo = {
+        stripeSessionId: session.id,
+        amountCents: order.payment?.amountCents ?? (session.amount_total ?? 8900),
+        paidAt: new Date().toISOString(),
+      };
+
+      const result = await orderStore.transition(orderId, {
+        event: 'PAYMENT_SUCCEEDED',
+        note: 'checkout.session.completed webhook',
+        meta: { stripeSessionId: session.id },
+        patch: { payment: paymentInfo },
+      });
+
+      if (!result.ok && result.error !== 'IDEMPOTENT_SKIP') {
+        console.error(
+          '[webhook/stripe] PAYMENT_SUCCEEDED transition failed for order',
+          orderId,
+          result.error,
+          result.detail
+        );
+      } else if (result.ok) {
+        console.log('[webhook/stripe] order', orderId, '→ paid (via checkout.session.completed)');
+
+        after(async () => {
+          console.log('[webhook/stripe] starting domain processing for order', orderId);
+          const domainResult = await processDomainForOrder(orderId);
+          if (!domainResult.ok) {
+            console.error(
+              '[webhook/stripe] domain processing failed for order', orderId,
+              '—', domainResult.error,
+            );
+            return;
+          }
+
+          console.log(
+            '[webhook/stripe] domain processing complete for order', orderId,
+            '— domain:', domainResult.domain,
+            '— path:', domainResult.path,
+          );
+
+          if (domainResult.path !== 'purchased') {
+            console.log(
+              '[webhook/stripe] skipping build for order', orderId,
+              '— awaiting DNS verification (path:', domainResult.path + ')',
+            );
+            return;
+          }
+
+          console.log('[webhook/stripe] starting site build for order', orderId);
+          const buildResult = await buildAndDeployOrder(orderId);
+          if (buildResult.ok) {
+            console.log('[webhook/stripe] site live for order', orderId, '—', buildResult.siteUrl);
+          } else {
+            console.error(
+              '[webhook/stripe] site build failed for order', orderId,
+              `(phase=${buildResult.phase}):`, buildResult.error,
+            );
+          }
+        });
+      }
+      break;
+    }
+
+    // Fallback for legacy one-time payment flows. Idempotent with the above.
     case 'payment_intent.succeeded': {
       const pi = event.data.object as Stripe.PaymentIntent;
 

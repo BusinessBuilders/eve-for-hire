@@ -154,7 +154,10 @@ function CheckoutCard({
       )}
       <div className="checkout-price-row">
         <span className="checkout-price">$89</span>
-        <span className="checkout-price-desc">AI website + domain + 1-year hosting</span>
+        <span className="checkout-price-desc">first month · then $29/mo</span>
+      </div>
+      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+        Includes AI build + domain registration. Cancel anytime.
       </div>
       <input
         type="email"
@@ -502,7 +505,7 @@ export default function ChatPage() {
                                   raw={String(children).trim()}
                                   sessionId={sessionId}
                                   onDomainSelect={(domain) => {
-                                    submit(`I'd like to use ${domain} for my website.`);
+                                    submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
                                   }}
                                 />
                               );

@@ -1,5 +1,9 @@
 /**
- * POST /api/orders/checkout — create a $89 Basic-tier order and Stripe Checkout Session.
+ * POST /api/orders/checkout — create a subscription order and Stripe Checkout Session.
+ *
+ * Pricing: $89 first month (setup + first hosting month), then $29/month.
+ *   - $60 one-time setup fee (site build + domain registration)
+ *   - $29/month recurring hosting subscription
  *
  * Creates (or retrieves) an order, advances it to payment_pending, and returns a
  * Stripe-hosted Checkout URL. The caller should redirect the customer to that URL.
@@ -24,7 +28,8 @@ import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
 import type { PaymentInfo, OrderRequirements } from '@/lib/order/types';
 
-const BASIC_TIER_CENTS = 8900; // $89.00
+const SETUP_FEE_CENTS = 6000;  // $60.00 one-time (site build + domain registration)
+const MONTHLY_CENTS = 2900;    // $29.00/month recurring (hosting)
 
 export async function POST(req: NextRequest) {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -118,32 +123,45 @@ export async function POST(req: NextRequest) {
   try {
     session = await stripe.checkout.sessions.create(
       {
-        mode: 'payment',
+        mode: 'subscription',
         client_reference_id: order.id,
         customer_email: customerEmail,
-        // Embed orderId in the PaymentIntent metadata so payment_intent.succeeded
-        // and payment_intent.payment_failed webhooks can resolve the order directly
-        // without a secondary Stripe API call.
-        payment_intent_data: {
+        // orderId in session metadata lets checkout.session.completed webhook
+        // resolve the order for both subscription and one-time payment modes.
+        metadata: { orderId: order.id },
+        subscription_data: {
           metadata: { orderId: order.id },
         },
+        // subscription mode supports mixed one-time + recurring line items.
+        // One-time items appear on the first invoice only ($60 + $29 = $89 first month).
         line_items: [
           {
             quantity: 1,
             price_data: {
               currency: 'usd',
-              unit_amount: BASIC_TIER_CENTS,
+              unit_amount: SETUP_FEE_CENTS,
               product_data: {
-                name: 'Eve Basic Website — $89',
-                description: 'AI-built website + domain + 1-year hosting. Live in minutes.',
+                name: 'Eve Website Setup & Domain Registration',
+                description: 'One-time: AI site build + domain registration',
                 images: [`${baseUrl}/eve_face_card.png`],
+              },
+            },
+          },
+          {
+            quantity: 1,
+            price_data: {
+              currency: 'usd',
+              unit_amount: MONTHLY_CENTS,
+              recurring: { interval: 'month' },
+              product_data: {
+                name: 'Eve Website — Monthly Hosting',
+                description: '$29/month hosting. Cancel anytime.',
               },
             },
           },
         ],
         success_url: `${baseUrl}/order/${order.id}?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/#hire`,
-        metadata: { orderId: order.id },
       },
       // Idempotency key on the Stripe call prevents duplicate sessions on retries.
       { idempotencyKey: `checkout-${order.idempotencyKey}` }
@@ -165,7 +183,7 @@ export async function POST(req: NextRequest) {
 
   const paymentInfo: PaymentInfo = {
     stripeSessionId: session.id,
-    amountCents: BASIC_TIER_CENTS,
+    amountCents: SETUP_FEE_CENTS + MONTHLY_CENTS, // $89 total first month
   };
   await orderStore.transition(order.id, {
     event: 'REQUIREMENTS_READY',
