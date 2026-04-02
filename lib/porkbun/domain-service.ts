@@ -70,7 +70,9 @@ export async function suggestAvailableDomains(
 
   const client = createPorkbunClient();
   const results = await client.checkDomains(candidates);
-  return results.map((r) => ({ domain: r.domain, available: r.available, price: r.price }));
+  return results
+    .filter((r) => r.available)
+    .map((r) => ({ domain: r.domain, available: r.available, price: r.price }));
 }
 
 /**
