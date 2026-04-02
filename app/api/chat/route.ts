@@ -1,7 +1,8 @@
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
-// Default: nova's proxy via Tailscale. Override via OPENCLAW_URL for VPS with WireGuard relay.
+// Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
+// Override via OPENCLAW_URL env var for other environments.
 const OPENCLAW_PROXY_URL =
-  (process.env.OPENCLAW_URL ?? 'http://100.105.14.117:8097').replace(/\/$/, '');
+  (process.env.OPENCLAW_URL ?? 'http://127.0.0.1:8097').replace(/\/$/, '');
 
 // Defense-in-depth: catch obvious prompt injection patterns before forwarding to OpenClaw.
 // Primary protection is OpenClaw's sandbox mode + tool deny list on the eve-public-chat agent.
