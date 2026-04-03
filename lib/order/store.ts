@@ -29,6 +29,7 @@ export interface OrderStore {
   create(input: CreateOrderInput): Promise<Order>;
   findById(id: string): Promise<Order | null>;
   findByIdempotencyKey(key: string): Promise<Order | null>;
+  findByDomain(domain: string): Promise<Order | null>;
   transition(id: string, input: TransitionInput): Promise<TransitionResult>;
   list(opts?: { limit?: number; offset?: number }): Promise<Order[]>;
 }
@@ -167,6 +168,15 @@ class SqliteOrderStore implements OrderStore {
     const row = this.db
       .prepare<[string], { data: string }>('SELECT data FROM orders WHERE idempotency_key = ?')
       .get(key);
+    return row ? (JSON.parse(row.data) as Order) : null;
+  }
+
+  async findByDomain(domain: string): Promise<Order | null> {
+    const row = this.db
+      .prepare<[string], { data: string }>(
+        `SELECT data FROM orders WHERE json_extract(data, '$.domain.domain') = ?`,
+      )
+      .get(domain);
     return row ? (JSON.parse(row.data) as Order) : null;
   }
 
