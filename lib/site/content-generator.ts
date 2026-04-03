@@ -7,7 +7,6 @@
  */
 
 import { generateText } from 'ai';
-import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import type { OrderRequirements } from '@/lib/order/types';
 
@@ -37,6 +36,38 @@ export const SiteContentSchema = z.object({
     .describe(
       '2-3 sentence paragraph about the business for the "About Us" section',
     ),
+  servicesPage: z
+    .object({
+      intro: z.string().describe('One sentence intro for the services page'),
+      items: z
+        .array(
+          z.object({
+            icon: z.string().describe('A single relevant emoji'),
+            title: z.string().describe('Service name, 2-5 words'),
+            description: z.string().describe('One sentence describing this service'),
+            price: z.string().optional().describe('Price or price range, e.g. "From $99"'),
+          }),
+        )
+        .min(1)
+        .max(8),
+    })
+    .optional()
+    .describe('Content for the dedicated Services page'),
+  aboutPage: z
+    .object({
+      story: z.string().describe('2-3 sentences telling the business origin story'),
+      mission: z.string().describe('1-2 sentence mission statement'),
+    })
+    .optional()
+    .describe('Extended content for the dedicated About page'),
+  contactPage: z
+    .object({
+      address: z.string().optional().describe('Street address if applicable'),
+      phone: z.string().optional().describe('Phone number if applicable'),
+      hours: z.string().optional().describe('Business hours, e.g. "Mon–Fri 9am–5pm"'),
+    })
+    .optional()
+    .describe('Contact details for the Contact page'),
   primaryColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -54,23 +85,19 @@ export type SiteContent = z.infer<typeof SiteContentSchema>;
 
 /**
  * Generate structured landing page content from a customer's requirements.
- * Calls Anthropic claude-sonnet-4-6 with Output.object() for typed output.
+ * Routes through Vercel AI Gateway — no provider API key needed.
+ * Auth via OIDC (VERCEL_OIDC_TOKEN) or AI_GATEWAY_API_KEY env var.
  */
 export async function generateSiteContent(
   requirements: OrderRequirements,
 ): Promise<SiteContent> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
-
-  const anthropic = createAnthropic({ apiKey });
-
   const prompt = buildPrompt(requirements);
 
   const { text } = await generateText({
-    model: anthropic('claude-sonnet-4.6'),
+    model: 'anthropic/claude-sonnet-4.6',
     prompt,
     system: SYSTEM_PROMPT,
-    maxOutputTokens: 1024,
+    maxOutputTokens: 1500,
   });
 
   // Parse the JSON block from the response.
@@ -111,6 +138,22 @@ function buildPrompt(req: OrderRequirements): string {
     ... (3 to 6 items)
   ],
   "about": string — 2-3 sentence paragraph for the About Us section,
+  "servicesPage": {
+    "intro": string — one sentence intro for the services page,
+    "items": [
+      { "icon": string, "title": string (2-5 words), "description": string (1 sentence), "price"?: string (optional, e.g. "From $99") },
+      ... (1 to 8 services)
+    ]
+  },
+  "aboutPage": {
+    "story": string — 2-3 sentences telling the business origin story,
+    "mission": string — 1-2 sentence mission statement
+  },
+  "contactPage": {
+    "address"?: string — street address if known,
+    "phone"?: string — phone number if known,
+    "hours"?: string — business hours if known (e.g. "Mon–Fri 9am–5pm")
+  },
   "primaryColor": string — dominant brand hex color (e.g. "#2563eb"), vivid enough for 3:1 contrast,
   "accentColor": string — secondary accent hex color that complements the primary,
   "contactEmail": string (optional) — contact email if derivable from the requirements
