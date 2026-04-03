@@ -175,7 +175,18 @@ async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
       );
     } catch (err) {
       console.error('[chat] domain search failed for', keyword, err);
-      // Graceful degradation: skip the card, Eve's text still explains the options
+      // Surface the failure as a visible error card rather than silently dropping it.
+      // Silent failures leave users confused about why no domain card appeared.
+      actionBlocks.push(
+        '```json-action\n' +
+          JSON.stringify({
+            type: 'domain-results',
+            keyword,
+            results: [],
+            error: 'Domain search is temporarily unavailable — please try again in a moment.',
+          }) +
+          '\n```',
+      );
     }
   }
 

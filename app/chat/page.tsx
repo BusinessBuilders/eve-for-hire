@@ -43,15 +43,20 @@ interface DomainResult {
 function DomainResultsCard({
   keyword,
   results,
+  error,
   onSelect,
 }: {
   keyword: string;
   results: DomainResult[];
+  error?: string;
   onSelect: (domain: string) => void;
 }) {
   return (
     <div className="action-card domain-card">
       <div className="action-card-title">Domains matching &ldquo;{keyword}&rdquo;</div>
+      {error ? (
+        <div className="domain-search-error">{error}</div>
+      ) : (
       <div className="domain-rows">
         {results.map((r) => (
           <div
@@ -77,6 +82,7 @@ function DomainResultsCard({
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
@@ -185,7 +191,7 @@ function CheckoutCard({
 // ─── Action block renderer ────────────────────────────────────────────────────
 
 type ActionData =
-  | { type: 'domain-results'; keyword: string; results: DomainResult[] }
+  | { type: 'domain-results'; keyword: string; results: DomainResult[]; error?: string }
   | ({ type: 'checkout-ready' } & CheckoutData);
 
 function ActionBlock({
@@ -209,6 +215,7 @@ function ActionBlock({
       <DomainResultsCard
         keyword={data.keyword}
         results={data.results}
+        error={data.error}
         onSelect={onDomainSelect}
       />
     );
@@ -448,6 +455,10 @@ export default function ChatPage() {
         .domain-row:last-child { border-bottom: none; }
         .domain-row-selectable { cursor: pointer; }
         .domain-row-selectable:hover { background: rgba(0, 217, 255, 0.08); }
+        .domain-search-error {
+          padding: 0.75rem 1rem; font-size: 0.82rem;
+          color: var(--muted); font-style: italic;
+        }
         .domain-name { flex: 1; font-family: var(--font-dm-mono), monospace; color: var(--text); }
         .domain-row-right { display: flex; align-items: center; gap: 0.5rem; }
         .domain-price { font-size: 0.8rem; color: var(--muted); }
