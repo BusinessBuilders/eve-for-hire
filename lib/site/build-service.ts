@@ -23,7 +23,7 @@
 
 import { orderStore } from '@/lib/order/store';
 import { generateSiteContent } from './content-generator';
-import { renderSiteHtml } from './template';
+import { renderSitePages } from './template';
 import {
   openSshSession,
   assertValidDomain,
@@ -116,11 +116,12 @@ export async function buildAndDeployOrder(orderId: string): Promise<BuildResult>
 
   // ── Phase 1: Generate content ───────────────────────────────────────────────
   console.log(`[build-service] generating content for order ${orderId} domain=${domain}`);
-  let html: string;
+  let pages: Record<string, string>;
   try {
     const content = await generateSiteContent(requirements);
-    html = renderSiteHtml(content, domain);
-    console.log(`[build-service] content generated for ${domain} (${html.length} bytes)`);
+    pages = renderSitePages(content, domain);
+    const totalBytes = Object.values(pages).reduce((s, h) => s + h.length, 0);
+    console.log(`[build-service] content generated for ${domain} (${Object.keys(pages).length} pages, ${totalBytes} bytes)`);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     console.error(`[build-service] content generation failed for ${orderId}:`, detail);
@@ -143,8 +144,10 @@ export async function buildAndDeployOrder(orderId: string): Promise<BuildResult>
     const siteRoot = remoteSiteRootPath(domain);
     await session.runRemoteCommand(`mkdir -p "${siteRoot}"`);
 
-    // Upload the generated HTML.
-    await session.uploadFile(`${siteRoot}/index.html`, html);
+    // Upload all generated pages (index.html, about.html, services.html, contact.html).
+    for (const [filename, html] of Object.entries(pages)) {
+      await session.uploadFile(`${siteRoot}/${filename}`, html);
+    }
 
     // Write the per-site Caddy config.
     const caddyConfig = generateSiteCaddyConfig(domain);
