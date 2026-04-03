@@ -24,6 +24,7 @@ import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
 import { processDomainForOrder } from '@/lib/porkbun/domain-service';
 import { buildAndDeployOrder } from '@/lib/site/build-service';
+import { trackFunnelEvent } from '@/lib/analytics/events';
 import type { PaymentInfo } from '@/lib/order/types';
 
 export async function POST(req: NextRequest) {
@@ -110,6 +111,12 @@ async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> 
       } else if (result.ok) {
         console.log('[webhook/stripe] order', orderId, '→ paid (via checkout.session.completed)');
 
+        trackFunnelEvent('payment_completed', {
+          orderId,
+          email: order.customerEmail,
+          domain: order.requirements?.desiredDomain,
+        });
+
         after(async () => {
           console.log('[webhook/stripe] starting domain processing for order', orderId);
           const domainResult = await processDomainForOrder(orderId);
@@ -191,6 +198,14 @@ async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> 
         );
       } else {
         console.log('[webhook/stripe] order', orderId, '→ paid');
+
+        if (result.ok) {
+          trackFunnelEvent('payment_completed', {
+            orderId,
+            email: order.customerEmail,
+            domain: order.requirements?.desiredDomain,
+          });
+        }
 
         // Kick off domain acquisition after the response is sent.
         // after() keeps the function alive until the callback completes,

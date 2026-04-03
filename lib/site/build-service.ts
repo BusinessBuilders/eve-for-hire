@@ -22,6 +22,7 @@
  */
 
 import { orderStore } from '@/lib/order/store';
+import { trackFunnelEvent } from '@/lib/analytics/events';
 import { generateSiteContent } from './content-generator';
 import { renderSitePages } from './template';
 import {
@@ -252,6 +253,15 @@ async function runVerificationPhase(
   }
 
   console.log(`[build-service] order ${orderId} → live at ${siteUrl}`);
+
+  const liveOrder = await orderStore.findById(orderId);
+  trackFunnelEvent('site_live', {
+    orderId,
+    domain,
+    email: liveOrder?.customerEmail,
+    siteUrl,
+  });
+
   return { ok: true, siteUrl };
 }
 
