@@ -42,5 +42,19 @@ jobs:
             NODE_ENV=production npm run build
             pm2 reload ecosystem.config.js --env production
             pm2 save
+
+            # Reload nginx proxy config if the eve-landing container is running.
+            # Also pull latest nginx config in /var/www/eve-for-hire (legacy path)
+            # so proxy_read_timeout and other changes take effect immediately.
+            if docker inspect eve-landing >/dev/null 2>&1; then
+              if [ -d /var/www/eve-for-hire ]; then
+                cd /var/www/eve-for-hire && git pull origin main || true
+              fi
+              docker exec eve-landing nginx -s reload
+              echo "nginx reloaded."
+            else
+              echo "WARNING: eve-landing container not found — nginx not reloaded."
+            fi
+
             echo "Deploy complete."
           ENDSSH
