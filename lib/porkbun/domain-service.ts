@@ -70,10 +70,9 @@ export async function suggestAvailableDomains(
 
   const client = createPorkbunClient();
   const results = await client.checkDomains(candidates);
-  // Return all results (available + taken) so the card shows the full picture.
-  // The DomainResultsCard renders taken domains with a strikethrough + "Taken"
-  // badge, which is more useful than an empty card when all TLDs happen to be taken.
-  return results.map((r) => ({ domain: r.domain, available: r.available, price: r.price }));
+  return results
+    .filter((r) => r.available)
+    .map((r) => ({ domain: r.domain, available: r.available, price: r.price }));
 }
 
 /**
