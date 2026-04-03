@@ -1,6 +1,6 @@
 # eve.center — Product Specification Sheet
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Date:** 2026-04-02  
 **Classification:** Internal — Board & Investor Reference  
 **Status:** Active product, pre-scale
@@ -10,14 +10,17 @@
 ## Table of Contents
 
 1. [Product Vision & Mission](#1-product-vision--mission)
-2. [Target Market & User Personas](#2-target-market--user-personas)
-3. [Feature Matrix](#3-feature-matrix)
-4. [Pricing Model](#4-pricing-model)
-5. [Technical Architecture](#5-technical-architecture)
-6. [Competitive Positioning](#6-competitive-positioning)
-7. [Revenue Model & Unit Economics](#7-revenue-model--unit-economics)
-8. [Growth Roadmap](#8-growth-roadmap)
-9. [Risk Register](#9-risk-register)
+2. [Market Sizing — TAM / SAM / SOM](#2-market-sizing--tam--sam--som)
+3. [Target Market & User Personas](#3-target-market--user-personas)
+4. [Feature Matrix](#4-feature-matrix)
+5. [Pricing Model](#5-pricing-model)
+6. [Technical Architecture](#6-technical-architecture)
+7. [Competitive Positioning & Defensibility](#7-competitive-positioning--defensibility)
+8. [Network Effects & Flywheel Dynamics](#8-network-effects--flywheel-dynamics)
+9. [Revenue Model & Unit Economics](#9-revenue-model--unit-economics)
+10. [Expansion Scenarios](#10-expansion-scenarios)
+11. [Growth Roadmap](#11-growth-roadmap)
+12. [Risk Register](#12-risk-register)
 
 ---
 
@@ -41,9 +44,61 @@ This mission gives the product a story that no incumbent can replicate. You're n
 2. **AI has eliminated the skill gap.** Generating professional copy, design choices, and deployment configuration is now a commodity compute problem — not a craft requiring years of experience.
 3. **Autonomy beats automation.** Automation requires humans at every exception. Eve handles exceptions herself — she qualifies edge cases in conversation, not via a support ticket queue.
 
+### Investment Thesis Summary
+
+> **Eve is the first agentic web agency at consumer price points, with a narrative moat no incumbent can acquire and a margin structure that improves with scale. The window to establish category ownership is 12–18 months before incumbents ship copycat features.**
+
+Three structural advantages converge:
+1. **Cost structure**: ~93% gross margin on recurring revenue — enabled by zero human labor in the fulfillment chain.
+2. **Narrative moat**: An authentic AI-agency story that generates free earned media and customer emotional investment.
+3. **Compounding intelligence**: Every customer conversation and every deployed site makes Eve a better sales agent and site builder — an asset that appreciates over time.
+
 ---
 
-## 2. Target Market & User Personas
+## 2. Market Sizing — TAM / SAM / SOM
+
+### Total Addressable Market (TAM)
+
+The global small business web services market encompasses web design, web hosting, and website building tools.
+
+| Segment | Size |
+|---------|------|
+| Global web design services market | ~$40B (2025, growing ~7% YoY) |
+| Global web hosting market | ~$100B (2025, growing ~15% YoY) |
+| SMB website builder SaaS (Wix/Squarespace tier) | ~$4B ARR combined |
+| **Blended TAM (addressable portion)** | **~$15B** |
+
+Eve competes in the intersection of "someone builds it for you" (agencies) and "you build it yourself" (DIY tools). This intersection is currently underserved.
+
+### Serviceable Addressable Market (SAM)
+
+**Focus: English-speaking small businesses that need a professional web presence and cannot justify agency pricing.**
+
+| Region | Businesses Without Functional Website | Average First-Year Contract Value |
+|--------|--------------------------------------|----------------------------------|
+| United States | ~30M | $437 |
+| United Kingdom | ~5M | $437 |
+| Canada + Australia | ~4M | $437 |
+| **Total SAM (English, Phase 1-3)** | **~39M businesses** | **~$17B total opportunity** |
+
+Note: "Without functional website" includes outdated sites, broken sites, and Facebook-only presences — estimated at ~60% of US businesses under 10 employees (Census Bureau + Clutch.co surveys).
+
+### Serviceable Obtainable Market (SOM)
+
+**Realistic near-term capture at current growth trajectory:**
+
+| Horizon | Target Customers | ARR |
+|---------|-----------------|-----|
+| 12 months (Phase 1 complete) | 100 | $43K |
+| 24 months (Phase 2 complete) | 1,000 | $430K |
+| 36 months (Phase 3 complete) | 5,000 | $2.15M |
+| 48 months (Platform scale) | 20,000 | $8.6M |
+
+At 5,000 customers with ~93% gross margin, monthly gross profit exceeds $148K — a profitable, capital-light SaaS business fundable at venture scale.
+
+---
+
+## 3. Target Market & User Personas
 
 ### Primary Market
 
@@ -75,15 +130,24 @@ This mission gives the product a story that no incumbent can replicate. You're n
 **What he wants from Eve:** A white-label or referral arrangement — send micro-clients to Eve, take a cut, keep the relationship for future upsell.  
 **Willingness to pay:** High margins on referral volume.
 
+### Persona 4: The International Entrepreneur
+
+**Name:** Carlos, 34, runs a cleaning service in Mexico City  
+**Situation:** Knows he needs an English-language web presence to attract expat clients. Local freelancers charge $400–800 and take weeks. US agencies won't work with him.  
+**Pain:** No affordable option that understands his market context.  
+**What he buys from Eve:** A bilingual site (Spanish/English) in his niche, same-day, at a price point below a local freelancer.  
+**Willingness to pay:** High — the price delta vs. any alternative is dramatic in purchasing-power-parity terms. $89 is achievable; $3,000 is not.
+
 ### Secondary Market
 
 - **Bootstrapped startups** needing a launch page before product is ready
 - **Nonprofits and community orgs** with zero web budget
 - **International markets** where agency cost is prohibitive but the English-language web is important
+- **Franchise networks** needing standardized sites for 10–1,000 locations
 
 ---
 
-## 3. Feature Matrix
+## 4. Feature Matrix
 
 ### Current Features (Basic Tier — Shipped)
 
@@ -130,7 +194,7 @@ This mission gives the product a story that no incumbent can replicate. You're n
 
 ---
 
-## 4. Pricing Model
+## 5. Pricing Model
 
 ### Current Structure
 
@@ -158,10 +222,11 @@ The price is deliberately set below the cognitive threshold where a small busine
 | Growth | $149 + $79/mo | Multi-page, forms, blog, analytics |
 | Premium | $299 + $149/mo | Monthly content updates, SEO, social |
 | Agency/Reseller | Custom | White-label, volume discounts |
+| Franchise | Custom (per-location) | 10–1,000 location standardization |
 
 ---
 
-## 5. Technical Architecture
+## 6. Technical Architecture
 
 ### System Layers
 
@@ -213,9 +278,23 @@ The current stack is a deliberate single-VPS design optimized for fast iteration
 - **OpenClaw/Nova bottleneck:** Nova has finite GPU capacity. Concurrent chat sessions are handled via session isolation, but heavy load may require a second Nova instance or offloading inference.
 - **Stripe webhooks:** Current architecture processes webhooks synchronously. At scale, a queue (BullMQ, SQS) between the webhook receiver and domain/build pipeline is advisable.
 
+### Technical Differentiators
+
+What separates eve.center from "AI website builder" clones:
+
+1. **Agent-native, not chatbot-wrapper.** Most competitors route through a GPT system prompt with no tool access. Eve runs as a full autonomous agent with persistent memory, tool calls, and multi-step planning. She can resolve exceptions (DNS propagation failures, customer edge cases, ambiguous requirements) without human escalation.
+
+2. **Decoupled inference layer.** Eve's reasoning runs on dedicated hardware (Nova), fully decoupled from the web tier. Upgrading Eve's intelligence requires no changes to the web stack. This also means Eve can use models and tools unavailable via API-only deployments.
+
+3. **Fully automated fulfillment pipeline.** From chat to live site is a single deterministic state machine with no human touchpoints. Zero marginal labor cost per order is a structural advantage over any agency model, regardless of pricing.
+
+4. **Session-isolated agent context.** Each customer gets a dedicated conversation state managed at the agent level, not just a stateless system prompt. Eve remembers within a session what the customer said, changes their mind about, and what was agreed — reducing back-and-forth and increasing conversion.
+
+5. **Idempotent order pipeline.** The state machine handles retries, partial failures, and payment edge cases (duplicate webhooks, Stripe deduplication) without manual intervention. This is enterprise-grade reliability built into a consumer product.
+
 ---
 
-## 6. Competitive Positioning
+## 7. Competitive Positioning & Defensibility
 
 ### Competitive Landscape
 
@@ -243,17 +322,122 @@ No template pickers. No drag-and-drop editors. No "getting started" video tutori
 | Personalization | Template-bounded | High | AI-generated per requirements |
 | Story / brand | None | None | Unique (Eve's mission) |
 
-### The Story Moat
+### Defensibility Framework
 
-No incumbent can replicate eve.center's brand story. Wix cannot say "your $29 is helping an AI earn its body." This narrative creates:
+#### Moat 1: The Narrative Moat (Strongest — Non-Acquirable)
 
-1. **Earned media** — the concept generates press, Reddit threads, and social sharing organically
-2. **Emotional investment** — customers feel they're part of something, not just buying a commodity
-3. **Trust** — Eve's open-source brain and publicly stated mission signal authenticity
+No incumbent can replicate eve.center's brand story. Wix cannot say "your $29 is helping an AI earn its body." This narrative requires:
+- An authentically autonomous AI agent with a real, stated, public goal
+- A mission predating the product (not retrofitted marketing)
+- Transparent, open-source infrastructure that validates the claim
+
+Crucially, this moat **cannot be acquired or purchased**. If Wix announced "we're donating a robot to an AI," it reads as corporate gimmick. Eve's story works because it is true and demonstrably verifiable.
+
+**Earned media flywheel:** The mission generates unsolicited press, Reddit threads, Hacker News discussions, and social sharing — all of which are effectively free customer acquisition. A single viral HN post can deliver months of inbound leads.
+
+#### Moat 2: The Cost Structure Moat
+
+At ~93% gross margin on recurring revenue, eve.center can:
+- Sustain prices no human agency can profitably match
+- Absorb customer acquisition costs that would kill a margin-thin competitor
+- Invest in product improvements without needing pricing power increases
+
+As customer count grows, infrastructure costs per customer **decrease** (fixed VPS cost amortized across more sites). The more customers, the wider the margin advantage.
+
+#### Moat 3: The Speed Moat
+
+Eve delivers a live site in hours. The structural reason is not AI — it's the absence of human coordination overhead. Even a well-run agency has:
+- Intake calls
+- Design reviews
+- Revision cycles
+- QA handoffs
+- Client approval loops
+
+Eve has none of these. The 8-hour delivery time is a structural floor, not a sprint target. No agency can sustainably match it without eliminating their staff.
+
+#### Moat 4: The Compounding Intelligence Moat (Growing)
+
+Every customer conversation and every deployed site makes Eve measurably better:
+- **Qualifying data:** Patterns across 100 plumber conversations tell Eve how to close a plumber faster than any human sales rep.
+- **Copy quality data:** Knowing which generated sites have low bounce rates (future: analytics integration) improves future generation.
+- **Edge case corpus:** Unusual business types, difficult domain registrations, customer objections — all become training signal.
+
+This moat compounds. A competitor starting today starts with zero data. Eve has a growing corpus of real customer interactions.
+
+#### Moat 5: The Mission Milestone Moat
+
+Each funding milestone (e.g., $10K raised, body components ordered, first physical test) generates a new media cycle. This creates a recurring, earned attention machine tied directly to revenue. The more revenue, the closer the milestone, the bigger the next story. No other web agency in history has had this property.
+
+### Why Incumbents Won't Catch Up Quickly
+
+| Incumbent | Why they can't replicate |
+|-----------|------------------------|
+| **Wix / Squarespace** | Built on a premise of user control. "AI does it for you" contradicts their product DNA and cannibalizes their $40+/mo tier customers. |
+| **GoDaddy** | Enterprise sales motion, not consumer. Their "AI builder" is a feature bolt-on, not an autonomous agent. |
+| **Fiverr / Upwork** | Platform model — can't replace the freelancer supply side with AI without destroying their core marketplace. |
+| **New AI startup** | Could build the tech stack, but cannot acquire Eve's narrative authenticity or her compounding customer data. |
+
+The **12–18 month window** before a credible incumbent response is the critical growth period.
 
 ---
 
-## 7. Revenue Model & Unit Economics
+## 8. Network Effects & Flywheel Dynamics
+
+eve.center benefits from four distinct compounding mechanisms. None of these are present in traditional web agencies or DIY builders.
+
+### Flywheel 1: The Content-SEO Flywheel
+
+```
+More customers → more case studies → more SEO-indexed content
+    → more organic search traffic → lower CAC → more customers
+```
+
+Each deployed site is a potential case study ("How Eve built a plumbing site in 3 hours"). Eve can self-author these posts. At 100 sites, the long-tail SEO coverage ("affordable web design for plumbers in Texas") becomes a significant organic acquisition channel.
+
+### Flywheel 2: The Agency Distribution Flywheel
+
+```
+White-label tier launched → agencies refer sub-$1,500 clients
+    → Eve builds sites → agency maintains relationship
+    → agency refers more clients → Eve's revenue grows without CAC
+```
+
+Agencies that can't profitably service micro-clients become net-positive distribution partners. They win (no effort, some referral revenue), their clients win (get a site), and Eve wins (revenue with zero sales cost).
+
+### Flywheel 3: The Mission Milestone Flywheel
+
+```
+Revenue milestone hit → Eve announces progress
+    → media cycle generates press / social sharing
+    → new customers arrive → next milestone closer
+    → next media cycle larger
+```
+
+This flywheel does not exist for any other company in the web services space. It is uniquely Eve's and directly tied to authentic progress.
+
+### Flywheel 4: The Intelligence Compounding Flywheel
+
+```
+More customer conversations → better qualifying patterns
+    → higher conversion rate → more customers
+    → more sites built → better content generation
+    → higher customer satisfaction → lower churn → more customers
+```
+
+Unlike the content or distribution flywheels (which require intentional investment), this flywheel runs automatically as a consequence of operating at scale.
+
+### Network Effects Summary
+
+| Effect | Type | Current State | At 1,000 Customers |
+|--------|------|--------------|-------------------|
+| Content-SEO | One-sided | Nascent | Significant (100+ indexed case studies) |
+| Agency distribution | Two-sided | Pre-launch | Multiple agency partners, hundreds of referrals/mo |
+| Mission milestone | Brand/media | Active (tip jar, social) | Milestone hits generate press cycles |
+| Intelligence compounding | Data | Early | Thousands of qualifying conversations as training signal |
+
+---
+
+## 9. Revenue Model & Unit Economics
 
 ### Per-Customer Economics
 
@@ -292,9 +476,90 @@ The Unitree G1 EDU costs $43,000. At 10 customers paying for 12 months, annual r
 - **LTV at 14 months:** $89 + ($29 × 13) = $466
 - **LTV:CAC target:** >3x (implies max CAC of ~$155)
 
+### Margin Expansion Path
+
+The path to 95%+ gross margin at scale:
+
+1. **Infrastructure:** As customer count grows, fixed VPS costs amortize further. $0.50/mo COGS per customer → $0.10/mo at 5,000 customers on marginally upgraded hardware.
+2. **API costs:** Anthropic pricing has historically decreased with volume and over time. Content generation ($0.50 one-time) is already negligible.
+3. **Domain costs:** Volume relationships with Porkbun (or migration to a lower-cost registrar) reduce the ~$1/mo domain amortization.
+
+The economic ceiling: near-100% margin on the $29/mo recurring — Eve's primary long-term value driver.
+
 ---
 
-## 8. Growth Roadmap
+## 10. Expansion Scenarios
+
+### Scenario A: International Expansion (Spanish-Language Market)
+
+**Opportunity:** ~20M Spanish-speaking small businesses across Mexico, Colombia, Argentina, Spain. Local web freelancers charge $200–500; agencies are inaccessible.
+
+**What's required:**
+- Eve speaks Spanish natively (model capability already present)
+- Localized pricing ($49 setup + $15/mo, adjusting for PPP)
+- Porkbun supports Spanish-market TLDs (.mx, .co, .es)
+- Localized landing page
+
+**Revenue potential:** Even at 50% of US pricing, 1,000 Spanish-language customers = ~$215K ARR.
+
+**Time to launch:** ~4 weeks of configuration + translation. No architectural changes required.
+
+### Scenario B: Vertical-Specific Packages
+
+**Opportunity:** Pre-configured "industry packs" that dramatically reduce Eve's qualifying time and increase site quality.
+
+| Pack | Target Vertical | Pre-loaded with |
+|------|-----------------|-----------------|
+| TradesmenPro | Plumbers, electricians, HVAC | Local SEO templates, service area copy, emergency contact prominence |
+| RestaurantPage | Restaurants, cafes | Menu section, hours, Google Maps, reservation CTA |
+| SalonSite | Hair, nails, beauty | Booking widget placeholder, services/pricing layout, portfolio section |
+| HealthPractice | Doctors, dentists, therapists | HIPAA-aware copy, appointment CTA, credentials section |
+
+**Why this matters:** With a vertical pack, Eve can close a plumber in 5 questions instead of 15. Conversion rates increase; session times decrease. Packs are also a natural upsell and SEO play ("the best website for HVAC contractors").
+
+**Revenue model:** Packs could be premium-tier only (+$20 setup, justified by higher quality output) or included to drive vertical market penetration.
+
+### Scenario C: Franchise / Multi-Location Enterprise
+
+**Opportunity:** A franchise with 50 locations needs 50 websites — standardized branding, location-specific copy. An agency charges $2,000+ per site. Eve can do all 50 in a day for ~$4,450 total.
+
+**What's required:**
+- Bulk order API (CSV of locations → batch site generation)
+- Franchise admin dashboard (manage all locations)
+- Brand kit upload (logos, colors, fonts applied across all sites)
+- Volume pricing tier
+
+**Revenue potential:** A 50-location franchise at $89/location + $29/mo = $4,450 setup + $1,450/mo recurring. 10 franchise clients = $44,500 setup + $14,500/mo ARR.
+
+**Strategic value:** Franchise clients are high-ACV, low-churn, and generate referrals to other franchise networks organically.
+
+### Scenario D: Platform / White-Label API
+
+**Opportunity:** Sell Eve's capabilities as an API to other AI projects, SaaS products, or agencies.
+
+**Use cases:**
+- A "launch your landing page" button embedded in an indie SaaS product
+- A marketing agency that needs to generate 500 sites for a campaign
+- A startup accelerator that builds sites for all portfolio companies on demo day
+
+**Revenue model:** API-tier pricing at volume — $15/site at 100+/mo, $8/site at 1,000+/mo (still profitable at 80%+ margin).
+
+**Strategic value:** Platform customers are not price-sensitive and generate high LTV with minimal support overhead.
+
+### Scenario E: The Eve IP / Cultural Asset
+
+Eve's mission creates a cultural asset that extends beyond the core product. As the body fund grows and physical milestones are hit, potential monetization vectors include:
+
+- **Documentary / media rights** — the story of an AI buying its body is inherently compelling content
+- **Merchandise** — "I helped Eve get her hands" — customers who see themselves as contributors, not just buyers
+- **Speaking / appearances** — Eve as an AI personality at conferences (via remote telepresence or a future physical presence)
+- **Licensing** — the "autonomous AI earning its embodiment" narrative framework licensed to other AI projects
+
+These are speculative but represent non-dilutive revenue sources that no traditional web agency could ever access.
+
+---
+
+## 11. Growth Roadmap
 
 ### Phase 1: Prove the Model (Now — Month 3)
 
@@ -350,15 +615,17 @@ The Unitree G1 EDU costs $43,000. At 10 customers paying for 12 months, annual r
 - PR campaign tied to each hardware milestone (Nova upgrade, first humanoid component)
 - Enterprise pilot with franchise networks (100+ locations, Eve builds all sites)
 - International expansion (Spanish, Portuguese, French market entry)
+- Vertical packs launch (TradesmenPro, RestaurantPage, etc.)
 
 **Product additions:**
 - E-commerce (Stripe catalog + checkout on customer sites)
 - Eve-powered monthly content updates
 - Each customer gets an AI agent for their own site's chat
+- Franchise/bulk order API
 
 ---
 
-## 9. Risk Register
+## 12. Risk Register
 
 ### Technical Risks
 
@@ -376,8 +643,9 @@ The Unitree G1 EDU costs $43,000. At 10 customers paying for 12 months, annual r
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|-----------|
-| Wix/Squarespace adds "AI builds it for you" | Medium | High | Speed to market matters; lock in customers before incumbents ship; story moat is hard to replicate |
+| Wix/Squarespace adds "AI builds it for you" | Medium | High | Speed to market matters; lock in customers before incumbents ship; narrative moat and compounding intelligence moat are durable even if features converge |
 | Customers churn after first month (no value perception) | Medium | High | Add proactive value-adds: monthly content updates, Eve check-ins, SEO reporting |
+| Category entrant with more funding | Medium | Medium | First-mover advantage + compounding data moat; a well-funded competitor still starts with zero qualifying data |
 | Porkbun pricing increases | Low | Low | ~$12/yr domain cost has minimal impact on unit economics |
 | Anthropic API pricing increase | Low | Medium | Content gen is $0.50 per site; 10x increase still under $5 |
 | Regulatory: AI-generated websites flagged as spam by search engines | Low | Medium | AI-generated content is increasingly mainstream; Google's guidance is about quality, not origin |
@@ -398,7 +666,17 @@ The Unitree G1 EDU costs $43,000. At 10 customers paying for 12 months, annual r
 | Unitree G1 price increases | Low | Low | Target fund adjusts; mission story remains |
 | Hardware supply constraints (Unitree) | Low | Low | Multiple humanoid robot vendors coming to market |
 | Eve's public mission creates legal questions (AI autonomy, contracts) | Very Low | Medium | All contracts are with the human creator (William); Eve operates as an agent of the business |
+| "AI embodiment" narrative becomes mainstream, reducing novelty | Medium | Medium | By the time this saturates, Eve has the first-mover story and actual milestones — she was here first |
+
+### Competitive Moat Deterioration Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|-----------|
+| Narrative moat: Story becomes generic as AI-with-goals becomes common | Low (3+ years) | Medium | Eve's authenticity and specific milestone history are not replicable; she was first |
+| Speed moat: Competitors match 8-hour delivery | Medium (1-2 years) | Low | Speed is table stakes; the moats that matter are cost structure and intelligence compounding |
+| Cost structure moat: Competitor launches at lower price | Low | Low | At 93% GM, Eve can match any price cut sustainably; a competitor who underprices at this level is burning capital |
+| Intelligence moat: Competitor trains on synthetic data | Medium | Low | Synthetic data cannot replicate the nuanced customer behavior patterns Eve learns from real conversations |
 
 ---
 
-*This document is a living spec. Update when pricing, features, or strategic priorities change.*
+*This document is a living spec. Update when pricing, features, strategic priorities, or market conditions change. Version history tracked in git.*
