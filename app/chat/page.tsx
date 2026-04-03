@@ -54,7 +54,14 @@ function DomainResultsCard({
       <div className="action-card-title">Domains matching &ldquo;{keyword}&rdquo;</div>
       <div className="domain-rows">
         {results.map((r) => (
-          <div key={r.domain} className={`domain-row ${r.available ? 'domain-available' : 'domain-taken'}`}>
+          <div
+            key={r.domain}
+            className={`domain-row ${r.available ? 'domain-available domain-row-selectable' : 'domain-taken'}`}
+            onClick={r.available ? () => onSelect(r.domain) : undefined}
+            role={r.available ? 'button' : undefined}
+            tabIndex={r.available ? 0 : undefined}
+            onKeyDown={r.available ? (e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(r.domain); } : undefined}
+          >
             <span className="domain-name">{r.domain}</span>
             <div className="domain-row-right">
               {r.available && r.price && (
@@ -64,12 +71,7 @@ function DomainResultsCard({
                 {r.available ? 'Available' : 'Taken'}
               </span>
               {r.available && (
-                <button
-                  className="domain-select-btn"
-                  onClick={() => onSelect(r.domain)}
-                >
-                  Select →
-                </button>
+                <span className="domain-select-btn" aria-hidden="true">Select →</span>
               )}
             </div>
           </div>
@@ -433,6 +435,8 @@ export default function ChatPage() {
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .domain-row:last-child { border-bottom: none; }
+        .domain-row-selectable { cursor: pointer; }
+        .domain-row-selectable:hover { background: rgba(0, 217, 255, 0.08); }
         .domain-name { flex: 1; font-family: var(--font-dm-mono), monospace; color: var(--text); }
         .domain-row-right { display: flex; align-items: center; gap: 0.5rem; }
         .domain-price { font-size: 0.8rem; color: var(--muted); }
