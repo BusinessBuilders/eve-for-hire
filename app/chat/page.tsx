@@ -225,6 +225,11 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState('');
   const [isReturningUser, setIsReturningUser] = useState(false);
 
+  // sessionIdRef holds the current session ID for the transport headers function.
+  // Using a ref (not state) ensures the headers function always reads the latest
+  // value even though the transport object is created only once.
+  const sessionIdRef = useRef('');
+
   // Persist session across browser closes using localStorage so returning users
   // can resume their qualifying conversation with Eve.
   useEffect(() => {
@@ -235,14 +240,23 @@ export default function ChatPage() {
     } else {
       setIsReturningUser(true);
     }
+    sessionIdRef.current = id;
     setSessionId(id);
   }, []);
 
-  const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
+  // Create the transport once so useChat gets a stable reference.
+  // headers is a Resolvable function — evaluated at request time — so every
+  // message picks up the current sessionIdRef value rather than a stale closure.
+  const transportRef = useRef(
+    new DefaultChatTransport({
       api: '/api/chat',
-      headers: sessionId ? { 'x-eve-session': sessionId } : {},
+      headers: (): Record<string, string> =>
+        sessionIdRef.current ? { 'x-eve-session': sessionIdRef.current } : {},
     }),
+  );
+
+  const { messages, sendMessage, status } = useChat({
+    transport: transportRef.current,
     onError: (err) => setAiError(err.message ?? 'Connection error'),
   });
 
@@ -271,6 +285,7 @@ export default function ChatPage() {
   function startFresh() {
     const id = crypto.randomUUID();
     localStorage.setItem('eve-session', id);
+    sessionIdRef.current = id;
     setSessionId(id);
     setIsReturningUser(false);
   }
