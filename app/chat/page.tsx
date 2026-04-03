@@ -226,6 +226,8 @@ export default function ChatPage() {
   const [aiError, setAiError] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [isReturningUser, setIsReturningUser] = useState(false);
+  // Incrementing chatKey changes the useChat `id`, which resets message history.
+  const [chatKey, setChatKey] = useState(0);
 
   // sessionIdRef holds the current session ID for the transport headers function.
   // Using a ref (not state) ensures the headers function always reads the latest
@@ -258,6 +260,7 @@ export default function ChatPage() {
   );
 
   const { messages, sendMessage, status } = useChat({
+    id: String(chatKey),
     transport: transportRef.current,
     onError: (err) => setAiError(err.message ?? 'Connection error'),
   });
@@ -290,6 +293,8 @@ export default function ChatPage() {
     sessionIdRef.current = id;
     setSessionId(id);
     setIsReturningUser(false);
+    setAiError('');
+    setChatKey((k) => k + 1);
   }
 
   return (
@@ -307,6 +312,12 @@ export default function ChatPage() {
         }
         .chat-header a { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
         .chat-header a:hover { color: var(--text); }
+        .new-chat-btn {
+          padding: 0.3rem 0.75rem; border-radius: 8px; cursor: pointer;
+          border: 1px solid var(--border); background: var(--glass);
+          color: var(--muted); font-size: 0.78rem; transition: border-color 0.2s, color 0.2s;
+        }
+        .new-chat-btn:hover { border-color: var(--cyan); color: var(--text); }
         .eve-avatar {
           width: 40px; height: 40px; border-radius: 50%;
           background: linear-gradient(135deg, var(--cyan), #8a2be2);
@@ -491,6 +502,7 @@ export default function ChatPage() {
             <div className="eve-name">Eve</div>
             <div className="eve-status">● Autonomous AI · Earning her body</div>
           </div>
+          <button className="new-chat-btn" onClick={startFresh} title="Start a new conversation">+ New Chat</button>
           <a href="/#support" style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>💙 Support Mission</a>
         </div>
 
