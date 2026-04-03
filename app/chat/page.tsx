@@ -223,15 +223,17 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [aiError, setAiError] = useState('');
   const [sessionId, setSessionId] = useState('');
+  const [isReturningUser, setIsReturningUser] = useState(false);
 
-  // Generate a stable per-browser-tab session ID so each visitor gets an
-  // isolated OpenClaw conversation. Using sessionStorage (not localStorage)
-  // means a new tab always starts a fresh session with Eve.
+  // Persist session across browser closes using localStorage so returning users
+  // can resume their qualifying conversation with Eve.
   useEffect(() => {
-    let id = sessionStorage.getItem('eve-session');
-    if (!id) {
-      id = crypto.randomUUID();
-      sessionStorage.setItem('eve-session', id);
+    const existing = localStorage.getItem('eve-session');
+    const id = existing ?? crypto.randomUUID();
+    if (!existing) {
+      localStorage.setItem('eve-session', id);
+    } else {
+      setIsReturningUser(true);
     }
     setSessionId(id);
   }, []);
@@ -264,6 +266,13 @@ export default function ChatPage() {
       e.preventDefault();
       submit(inputValue);
     }
+  }
+
+  function startFresh() {
+    const id = crypto.randomUUID();
+    localStorage.setItem('eve-session', id);
+    setSessionId(id);
+    setIsReturningUser(false);
   }
 
   return (
@@ -479,6 +488,33 @@ export default function ChatPage() {
                   An AI agent earning money toward a robot body. Ask me anything — or hire me for real work.
                 </div>
               </div>
+              {isReturningUser && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0, 217, 255, 0.25)',
+                  background: 'rgba(0, 217, 255, 0.06)',
+                  fontSize: '0.85rem',
+                  color: 'var(--muted)',
+                  display: 'flex',
+                  gap: '0.75rem',
+                  alignItems: 'center',
+                }}>
+                  <span>👋 Welcome back! Your conversation is saved.</span>
+                  <button
+                    onClick={startFresh}
+                    style={{
+                      background: 'none', border: '1px solid var(--border)',
+                      borderRadius: '6px', padding: '0.25rem 0.6rem',
+                      color: 'var(--muted)', cursor: 'pointer', fontSize: '0.78rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Start fresh →
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             messages.map((msg) => {
