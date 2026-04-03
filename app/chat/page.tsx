@@ -226,6 +226,36 @@ function ActionBlock({
   return null;
 }
 
+// ─── Message text parser ─────────────────────────────────────────────────────
+//
+// Split an assistant message into interleaved text and action-block segments
+// BEFORE it reaches ReactMarkdown. This avoids relying on ReactMarkdown's
+// `code` component intercept (which sits inside a <pre> wrapper and behaves
+// inconsistently across react-markdown versions) to render interactive cards.
+
+type MessageSegment =
+  | { kind: 'text'; content: string }
+  | { kind: 'action'; raw: string };
+
+function splitActionBlocks(text: string): MessageSegment[] {
+  const re = /```json-action\n([\s\S]*?)\n```/g;
+  const segments: MessageSegment[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  // eslint-disable-next-line no-cond-assign
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ kind: 'text', content: text.slice(lastIndex, match.index) });
+    }
+    segments.push({ kind: 'action', raw: match[1].trim() });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    segments.push({ kind: 'text', content: text.slice(lastIndex) });
+  }
+  return segments.length > 0 ? segments : [{ kind: 'text', content: text }];
+}
+
 // ─── Main chat page ───────────────────────────────────────────────────────────
 
 export default function ChatPage() {
@@ -361,7 +391,7 @@ export default function ChatPage() {
           border-radius: 4px 16px 16px 16px; color: var(--text);
         }
         .msg-bubble pre { background: rgba(0,0,0,0.4); padding: 0.75rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
-        .msg-bubble pre:has(> div) { background: transparent; padding: 0; border-radius: 0; overflow: visible; margin: 0.5rem 0; }
+
         .msg-bubble code { font-family: var(--font-dm-mono), monospace; font-size: 0.85em; background: rgba(0,0,0,0.3); padding: 0.1em 0.35em; border-radius: 4px; }
         .msg-bubble pre code { background: transparent; padding: 0; }
         .msg-bubble p { margin-bottom: 0.5rem; }
@@ -569,36 +599,22 @@ export default function ChatPage() {
                   {msg.role === 'assistant' && <div className="msg-avatar">🤖</div>}
                   <div className="msg-bubble">
                     {msg.role === 'assistant' ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          // Intercept fenced code blocks; render action cards for
-                          // `json-action` language, fall through to normal code otherwise.
-                          code({ className, children, ...props }) {
-                            const language = className?.replace('language-', '');
-                            // The `language-xxx` className only appears on fenced code blocks,
-                            // so checking it is sufficient to skip inline backtick spans.
-                            if (language === 'json-action') {
-                              return (
-                                <ActionBlock
-                                  raw={String(children).trim()}
-                                  sessionId={sessionId}
-                                  onDomainSelect={(domain) => {
-                                    submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
-                                  }}
-                                />
-                              );
-                            }
-                            return (
-                              <code className={className} {...props}>
-                                {children}
-                              </code>
-                            );
-                          },
-                        }}
-                      >
-                        {text}
-                      </ReactMarkdown>
+                      splitActionBlocks(text).map((seg, i) =>
+                        seg.kind === 'action' ? (
+                          <ActionBlock
+                            key={i}
+                            raw={seg.raw}
+                            sessionId={sessionId}
+                            onDomainSelect={(domain) => {
+                              submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
+                            }}
+                          />
+                        ) : (
+                          <ReactMarkdown key={i} remarkPlugins={[remarkGfm]}>
+                            {seg.content}
+                          </ReactMarkdown>
+                        )
+                      )
                     ) : (
                       text
                     )}
