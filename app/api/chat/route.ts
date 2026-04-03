@@ -1,4 +1,5 @@
 import { suggestAvailableDomains } from '@/lib/porkbun/domain-service';
+import { trackFunnelEvent } from '@/lib/analytics/events';
 
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
 // Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
@@ -144,6 +145,8 @@ interface ResolvedResponse {
   text: string;
   /** ```json-action blocks to append after the text */
   actionBlocks: string[];
+  /** Domain keywords that triggered a DOMAIN_SEARCH signal in this response */
+  domainKeywords: string[];
 }
 
 /**
@@ -153,6 +156,7 @@ interface ResolvedResponse {
 async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
   let text = raw;
   const actionBlocks: string[] = [];
+  const domainKeywords: string[] = [];
 
   // ── [DOMAIN_SEARCH: keyword] ──────────────────────────────────────────────
   const domainSearchRe = /\[DOMAIN_SEARCH:\s*([^\]]{1,80})\]/gi;
@@ -161,6 +165,7 @@ async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
   for (const m of domainMatches) {
     text = text.replace(m[0], '');
     const keyword = m[1].trim();
+    domainKeywords.push(keyword);
     try {
       const results = await suggestAvailableDomains(keyword);
       actionBlocks.push(
@@ -189,7 +194,7 @@ async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
   // Clean up extra blank lines left by signal removal
   text = text.replace(/\n{3,}/g, '\n\n').trim();
 
-  return { text, actionBlocks };
+  return { text, actionBlocks, domainKeywords };
 }
 
 // Wrap a plain string into the AI SDK v6 UIMessageStream SSE format so the
@@ -254,10 +259,13 @@ export async function POST(req: Request) {
   }
 
   let lastUserMessage: string;
+  let userMessageCount = 0;
   try {
     const body = await req.json();
     const messages: Array<{ role: string; content?: unknown; parts?: unknown[] }> =
       body.messages ?? [];
+
+    userMessageCount = messages.filter((m) => m.role === 'user').length;
 
     // Find the latest user message; handle both string content (legacy) and
     // parts array (AI SDK v6 UIMessage format sent by DefaultChatTransport).
@@ -324,6 +332,10 @@ export async function POST(req: Request) {
       ? clientSession
       : `ip-${ip}`;
 
+  // Funnel tracking: first message = chat opened; second = qualifying underway.
+  if (userMessageCount === 1) trackFunnelEvent('chat_opened', { sessionId: sessionKey });
+  if (userMessageCount === 2) trackFunnelEvent('qualifying_started', { sessionId: sessionKey });
+
   let eveReply: string;
   try {
     eveReply = await callOpenClaw(lastUserMessage, sessionKey);
@@ -338,7 +350,13 @@ export async function POST(req: Request) {
   // Resolve action signals embedded by Eve (domain searches, checkout triggers).
   // Signals are stripped from the displayed text; resolved data is appended as
   // ```json-action blocks that the chat UI renders as interactive cards.
-  const { text, actionBlocks } = await resolveActionSignals(eveReply);
+  const { text, actionBlocks, domainKeywords } = await resolveActionSignals(eveReply);
+
+  // Emit one domain_searched event per keyword Eve searched in this response.
+  for (const keyword of domainKeywords) {
+    trackFunnelEvent('domain_searched', { sessionId: sessionKey, keyword });
+  }
+
   const finalText =
     actionBlocks.length > 0 ? `${text}\n\n${actionBlocks.join('\n\n')}` : text;
 

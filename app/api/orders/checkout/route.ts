@@ -26,6 +26,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
+import { trackFunnelEvent } from '@/lib/analytics/events';
 import type { PaymentInfo, OrderRequirements } from '@/lib/order/types';
 
 const SETUP_FEE_CENTS = 6000;  // $60.00 one-time (site build + domain registration)
@@ -208,6 +209,12 @@ export async function POST(req: NextRequest) {
     event: 'REQUIREMENTS_READY',
     patch: { payment: paymentInfo, requirements: orderRequirements },
     meta: { stripeSessionId: session.id, desiredDomain: orderRequirements.desiredDomain },
+  });
+
+  trackFunnelEvent('checkout_initiated', {
+    orderId: order.id,
+    email: customerEmail,
+    domain: desiredDomain,
   });
 
   return NextResponse.json({ url: session.url, orderId: order.id });
