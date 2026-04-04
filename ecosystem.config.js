@@ -68,6 +68,12 @@ module.exports = {
 
         // Order database — stored outside app root so redeploys don't wipe orders
         ORDER_DB_PATH: '/var/data/orders.db',
+
+        // Affiliate signups — stored outside app root so redeploys don't wipe data
+        AFFILIATES_DATA_PATH: '/var/data/affiliates.json',
+
+        // Admin secret — used to protect GET /api/affiliates (set a strong random string)
+        ADMIN_SECRET: process.env.ADMIN_SECRET || '',
       },
     },
   ],

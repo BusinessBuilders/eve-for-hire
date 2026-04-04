@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'affiliates.json');
+// Stored outside app root to survive git-pull redeploys (same pattern as ORDER_DB_PATH)
+const DATA_FILE = process.env.AFFILIATES_DATA_PATH
+  ?? path.join(process.cwd(), 'data', 'affiliates.json');
 
 interface AffiliateSignup {
   id: string;
@@ -66,7 +68,12 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const adminSecret = process.env.ADMIN_SECRET;
+  const provided = req.headers.get('x-admin-secret') ?? new URL(req.url).searchParams.get('secret');
+  if (!adminSecret || provided !== adminSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const signups = loadSignups();
   return NextResponse.json({ count: signups.length, signups });
 }
