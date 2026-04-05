@@ -26,6 +26,50 @@ function detectInjection(message: string): boolean {
   return INJECTION_PATTERNS.some((re) => re.test(message));
 }
 
+// Business category keywords that should trigger a domain search when the user mentions
+// wanting a website but doesn't provide a business name. GLM-4.7 sometimes asks for the
+// name before emitting [DOMAIN_SEARCH:], so we inject it deterministically as a fallback.
+const WEBSITE_INTENT_RE = /\b(website|site|domain|web\s*page|landing\s*page|online\s+presence)\b/i;
+const BUSINESS_CATEGORIES: [RegExp, string][] = [
+  [/\b(restaurant|cafe|diner|eatery|bistro|brasserie)\b/i, 'restaurant'],
+  [/\b(bakery|bake\s*shop|patisserie|pastry)\b/i, 'bakery'],
+  [/\b(gym|fitness|yoga|pilates|crossfit|workout)\b/i, 'fitness'],
+  [/\b(salon|barbershop|barber|hair\s*cut|beauty\s*shop|nail\s*(salon|studio))\b/i, 'salon'],
+  [/\b(plumber|plumbing|electrician|electrical|handyman|contractor|construction|roofing)\b/i, 'contractor'],
+  [/\b(law\s*firm|attorney|lawyer|legal\s*services)\b/i, 'law firm'],
+  [/\b(doctor|dentist|clinic|medical|dental|chiropractic|therapy|therapist)\b/i, 'medical'],
+  [/\b(real\s*estate|realtor|property\s*management)\b/i, 'real estate'],
+  [/\b(photography|photographer|photo\s*studio)\b/i, 'photography'],
+  [/\b(tutoring|tutor|coaching|coach|education|school|academy)\b/i, 'tutoring'],
+  [/\b(shop|store|boutique|retail|ecommerce|e-commerce)\b/i, 'shop'],
+  [/\b(cleaning|janitorial|maid\s*service|housekeeping)\b/i, 'cleaning'],
+  [/\b(landscaping|lawn\s*(care|service)|gardening|garden)\b/i, 'landscaping'],
+  [/\b(catering|event\s*(planning|planner)|wedding\s*planner)\b/i, 'catering'],
+  [/\b(auto|automotive|car\s*(repair|shop|dealership)|mechanic)\b/i, 'auto repair'],
+  [/\b(pet\s*(grooming|care|sitting|hotel)|veterinarian|vet)\b/i, 'pet care'],
+  [/\b(consulting|consultant|advisory)\b/i, 'consulting'],
+  [/\b(accounting|accountant|bookkeeping|bookkeeper|cpa|tax)\b/i, 'accounting'],
+  [/\b(moving|mover|storage|relocation)\b/i, 'moving'],
+  [/\b(painting|painter|interior\s*design|decorator)\b/i, 'painting'],
+];
+
+/**
+ * If the user's message expresses website intent + a business category but Eve's reply
+ * contains no [DOMAIN_SEARCH: signal, append one. This is a deterministic fallback for
+ * cases where the LLM asks for a business name before emitting the signal.
+ */
+function injectCategorySignalIfMissing(userMessage: string, eveReply: string): string {
+  if (eveReply.includes('[DOMAIN_SEARCH:')) return eveReply;
+  if (!WEBSITE_INTENT_RE.test(userMessage)) return eveReply;
+
+  for (const [pattern, category] of BUSINESS_CATEGORIES) {
+    if (pattern.test(userMessage)) {
+      return `${eveReply}\n[DOMAIN_SEARCH: ${category}]`;
+    }
+  }
+  return eveReply;
+}
+
 // Simple in-memory rate limiter: 20 requests per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 20;
@@ -357,6 +401,11 @@ export async function POST(req: Request) {
       { status: 503, headers: { 'Content-Type': 'application/json' } },
     );
   }
+
+  // Deterministic fallback: if the user mentioned a website + business category but Eve's
+  // response lacks a [DOMAIN_SEARCH: signal (GLM-4.7 sometimes asks for a name first),
+  // inject one so the domain card always appears on the first relevant message.
+  eveReply = injectCategorySignalIfMissing(lastUserMessage, eveReply);
 
   // Resolve action signals embedded by Eve (domain searches, checkout triggers).
   // Signals are stripped from the displayed text; resolved data is appended as
