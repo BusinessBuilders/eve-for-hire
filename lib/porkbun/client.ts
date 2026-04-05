@@ -70,11 +70,22 @@ export class PorkbunClient {
     path: string,
     body: Record<string, unknown> = {},
   ): Promise<T> {
-    const res = await fetch(`${BASE_URL}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...this.auth(), ...body }),
-    });
+    // 10s hard timeout per request — prevents a slow or unresponsive Porkbun API
+    // from hanging the entire /api/chat response past nginx's proxy_read_timeout.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10_000);
+
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...this.auth(), ...body }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
 
     if (!res.ok) {
       throw new PorkbunApiError(

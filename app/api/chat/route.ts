@@ -73,17 +73,34 @@ const KEYWORD_SKIP_WORDS = new Set([
 /**
  * Extract a slug-friendly keyword from a message for use in a domain search
  * when the user hasn't mentioned a specific business category.
+ *
+ * Strategy (in priority order):
+ * 1. Named-entity extraction — look for "called X" / "named X" / "it's X" patterns
+ *    to pull out the actual business name the user stated.
+ * 2. Stop/skip-word filter — fall back to the first meaningful words in the message.
+ * 3. Final fallback — return "business" so the domain card always appears.
  */
 function extractDomainKeyword(message: string): string {
-  const words = message
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
+  const normalized = message.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+
+  // Strategy 1: capture the name the user gave us ("it's called Business Builders").
+  // The lookahead stops capture before common sentence-continuation words so we don't
+  // swallow "can you suggest" into the name.
+  const namedMatch = normalized.match(
+    /(?:called|named|it[s']?\s*called|it[s']?\s*named)\s+([a-z][a-z0-9 -]{1,29})(?=\s+(?:can|could|would|please|for|and|to|the|a|an|i |we )|$)/,
+  );
+  if (namedMatch) {
+    const slug = namedMatch[1].trim().replace(/\s+/g, '-');
+    if (slug.length >= 3) return slug;
+  }
+
+  // Strategy 2: filter stop/skip words and take the first 2 meaningful words.
+  const words = normalized
     .split(/\s+/)
-    .filter(
-      (w) => w.length >= 4 && !KEYWORD_STOP_WORDS.has(w) && !KEYWORD_SKIP_WORDS.has(w),
-    );
-  if (words.length === 0) return 'business';
-  return words.slice(0, 2).join('-');
+    .filter((w) => w.length >= 4 && !KEYWORD_STOP_WORDS.has(w) && !KEYWORD_SKIP_WORDS.has(w));
+  if (words.length > 0) return words.slice(0, 2).join('-');
+
+  return 'business';
 }
 
 /**
