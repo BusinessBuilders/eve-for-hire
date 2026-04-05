@@ -53,10 +53,45 @@ const BUSINESS_CATEGORIES: [RegExp, string][] = [
   [/\b(painting|painter|interior\s*design|decorator)\b/i, 'painting'],
 ];
 
+// Stop words to skip when extracting a domain keyword from a free-form message.
+const KEYWORD_STOP_WORDS = new Set([
+  'i','a','an','the','and','or','but','in','on','at','to','for','of','with','by',
+  'my','me','we','you','it','is','are','was','be','have','do','can','set','up',
+  'want','need','get','like','so','how','what','that','this','from','about',
+  'would','could','should','will','just','some','any','all','out','us','our',
+  'its','been','had','has','as','let','hey','no','not','if','please','more',
+  'than','also','make','use','into','give','new','go','may','using','e2e',
+  'test','testing','please','help','show','display','find','search','real',
+]);
+
+// Words that describe website/domain intent but make poor domain keywords.
+const KEYWORD_SKIP_WORDS = new Set([
+  'website','site','domain','domains','webpage','page','online','web',
+  'presence','landing','need','want','build','create','register','buy','purchase',
+]);
+
 /**
- * If the user's message expresses website intent + a business category but Eve's reply
- * contains no [DOMAIN_SEARCH: signal, append one. This is a deterministic fallback for
- * cases where the LLM asks for a business name before emitting the signal.
+ * Extract a slug-friendly keyword from a message for use in a domain search
+ * when the user hasn't mentioned a specific business category.
+ */
+function extractDomainKeyword(message: string): string {
+  const words = message
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(
+      (w) => w.length >= 4 && !KEYWORD_STOP_WORDS.has(w) && !KEYWORD_SKIP_WORDS.has(w),
+    );
+  if (words.length === 0) return 'business';
+  return words.slice(0, 2).join('-');
+}
+
+/**
+ * If the user's message expresses website/domain intent but Eve's reply contains no
+ * [DOMAIN_SEARCH:] signal, append one. Tries specific business-category keywords first
+ * (more targeted); falls back to extracting any meaningful word from the message so
+ * that generic requests like "set me up with a test website domain" still surface the
+ * domain-picker card.
  */
 function injectCategorySignalIfMissing(userMessage: string, eveReply: string): string {
   if (eveReply.includes('[DOMAIN_SEARCH:')) return eveReply;
@@ -67,7 +102,12 @@ function injectCategorySignalIfMissing(userMessage: string, eveReply: string): s
       return `${eveReply}\n[DOMAIN_SEARCH: ${category}]`;
     }
   }
-  return eveReply;
+
+  // Generic fallback: user expressed website/domain intent but no specific business
+  // category matched (e.g. "set me up with a test website domain"). Extract any
+  // meaningful word from their message so the domain card still appears.
+  const keyword = extractDomainKeyword(userMessage);
+  return `${eveReply}\n[DOMAIN_SEARCH: ${keyword}]`;
 }
 
 // Simple in-memory rate limiter: 20 requests per IP per minute
