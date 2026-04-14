@@ -1,62 +1,95 @@
 {
-  "businessName": "Mike's Plumbing",
-  "tagline": "Reliable 24/7 Plumbing Services in Austin, TX",
-  "headline": "Expert Austin Plumbing – Ready When You Need Us",
-  "subheadline": "From emergency leaks to routine maintenance, Mike’s Plumbing provides professional, trustworthy service across the Austin area.",
-  "ctaText": "Get 24/7 Help Now",
+  "businessName": "Casa Bonita Tacos",
+  "tagline": "Authentic Mexican Soul in the Heart of Denver",
+  "headline": "Family Recipes. Festive Flavors. Authentic Soul.",
+  "subheadline": "From Esperanza's Oaxacan kitchen to your table in Denver — experience 15 years of family tradition, street-style tacos, and handmade heart.",
+  "ctaText": "See Our Menu",
   "features": [
     {
-      "icon": "🚑",
-      "title": "24/7 Emergency Service",
-      "description": "We're available day or night to handle your plumbing emergencies."
+      "icon": "🌮",
+      "title": "Authentic Tacos",
+      "description": "Street-style tacos with handmade tortillas and family recipes passed down generations."
     },
     {
-      "icon": "📍",
-      "title": "Austin Local",
-      "description": "Proudly serving the Austin community with local expertise."
+      "icon": "🫔",
+      "title": "Burritos & Enchiladas",
+      "description": "Hearty, flavor-packed classics made fresh every day."
     },
     {
-      "icon": "🛠️",
-      "title": "Expert Repairs",
-      "description": "Licensed professionals for all your plumbing needs, big or small."
+      "icon": "🥑",
+      "title": "Fresh Guacamole",
+      "description": "Made tableside with ripe avocados, lime, cilantro, and a secret touch."
+    },
+    {
+      "icon": "👨‍👩‍👧‍👦",
+      "title": "Family Friendly",
+      "description": "A warm, festive space welcoming families, date nights, and everyone in between."
+    },
+    {
+      "icon": "🎉",
+      "title": "Festive Atmosphere",
+      "description": "Colorful decor, live music on weekends, and the energy of a true Mexican celebration."
+    },
+    {
+      "icon": "🍹",
+      "title": "Margaritas & More",
+      "description": "Hand-crafted margaritas, agua frescas, and a full bar menu."
     }
   ],
-  "about": "Mike's Plumbing has been a staple in the Austin community, built on a foundation of trust and professional excellence. We specialize in fast, reliable plumbing solutions for residential and commercial clients alike.",
+  "about": "Casa Bonita Tacos has been a Denver institution since Maria and Roberto Gutierrez opened our doors in 2009. What started as a small family dream has grown into a beloved neighborhood restaurant, but our recipes — handed down from Roberto's grandmother in Oaxaca — have never changed. We cook everything fresh, every day.",
   "servicesPage": {
-    "intro": "Comprehensive plumbing solutions tailored to your home or business.",
+    "intro": "Our menu celebrates the rich flavors of authentic Mexican cuisine.",
     "items": [
       {
-        "icon": "💧",
-        "title": "Leak Detection & Repair",
-        "description": "Fast identification and fix for hidden leaks to prevent water damage."
+        "icon": "🌮",
+        "title": "Street Tacos (3-pack)",
+        "description": "Al pastor, carne asada, or chicken with onion, cilantro, and salsa verde.",
+        "price": "$12.99"
       },
       {
-        "icon": "🚽",
-        "title": "Drain Cleaning",
-        "description": "Clearing stubborn clogs and maintaining your drainage system."
+        "icon": "🫔",
+        "title": "Signature Burrito",
+        "description": "Stuffed with rice, beans, your choice of meat, cheese, and house salsa.",
+        "price": "$13.99"
       },
       {
-        "icon": "🔥",
-        "title": "Water Heater Service",
-        "description": "Installation, repair, and maintenance for all water heater types."
+        "icon": "🧀",
+        "title": "Cheese Enchiladas",
+        "description": "Corn tortillas, house cheese blend, topped with red or green chile.",
+        "price": "$11.99"
       },
       {
-        "icon": "🚿",
-        "title": "Fixture Installation",
-        "description": "Professional upgrades for your kitchen and bathroom fixtures."
+        "icon": "🥑",
+        "title": "Tableside Guacamole",
+        "description": "Fresh avocados prepared at your table with chips.",
+        "price": "$9.99"
+      },
+      {
+        "icon": "🍹",
+        "title": "Classic Margarita",
+        "description": "Fresh lime juice, triple sec, and your choice of tequila, on the rocks or frozen.",
+        "price": "$10.99"
+      },
+      {
+        "icon": "🌯",
+        "title": "Family Combo Platter",
+        "description": "Tacos, enchiladas, rice, beans — feeds the whole family.",
+        "price": "$42.99"
       }
     ]
   },
   "aboutPage": {
-    "story": "Founded by Mike, a master plumber with over 15 years of experience, we started with a single truck and a commitment to honest service. Today, we remain family-owned and dedicated to the same Austin neighborhoods where we began.",
-    "mission": "To provide every Austin resident with high-quality, dependable plumbing services while maintaining the highest standards of integrity."
+    "story": "In 2009, Maria and Roberto Gutierrez bet everything on a dream — an authentic Mexican restaurant in Denver's Baker neighborhood. Roberto's grandmother Esperanza had spent 40 years perfecting the recipes in Oaxaca, and Roberto spent 5 years as a chef in Mexico City before bringing those flavors to Colorado. Today, their children work alongside them, and Esperanza's recipes are still the heart of every dish.",
+    "mission": "To bring the soul of authentic Mexican home cooking to Denver — one taco at a time — and to make every guest feel like family."
   },
   "contactPage": {
-    "address": "Austin, TX",
-    "phone": "(512) 555-0123",
-    "hours": "24/7 Emergency Service Available"
+    "address": "345 W 10th Ave, Denver, CO 80204",
+    "phone": "(720) 555-0312",
+    "hours": "Mon–Thu: 11am–9pm | Fri–Sat: 11am–11pm | Sun: 11am–8pm"
   },
-  "primaryColor": "#1e40af",
-  "accentColor": "#ffffff",
-  "contactEmail": "hello@mikes-plumbing-austin.com"
+  "primaryColor": "#b91c1c",
+  "accentColor": "#15803d",
+  "backgroundColor": "#ffffff",
+  "softBackgroundColor": "#fef3c7",
+  "contactEmail": "hola@casabonitatacos.com"
 }
