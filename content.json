@@ -1,0 +1,62 @@
+{
+  "businessName": "Mike's Plumbing",
+  "tagline": "Reliable 24/7 Plumbing Services in Austin, TX",
+  "headline": "Expert Austin Plumbing – Ready When You Need Us",
+  "subheadline": "From emergency leaks to routine maintenance, Mike’s Plumbing provides professional, trustworthy service across the Austin area.",
+  "ctaText": "Get 24/7 Help Now",
+  "features": [
+    {
+      "icon": "🚑",
+      "title": "24/7 Emergency Service",
+      "description": "We're available day or night to handle your plumbing emergencies."
+    },
+    {
+      "icon": "📍",
+      "title": "Austin Local",
+      "description": "Proudly serving the Austin community with local expertise."
+    },
+    {
+      "icon": "🛠️",
+      "title": "Expert Repairs",
+      "description": "Licensed professionals for all your plumbing needs, big or small."
+    }
+  ],
+  "about": "Mike's Plumbing has been a staple in the Austin community, built on a foundation of trust and professional excellence. We specialize in fast, reliable plumbing solutions for residential and commercial clients alike.",
+  "servicesPage": {
+    "intro": "Comprehensive plumbing solutions tailored to your home or business.",
+    "items": [
+      {
+        "icon": "💧",
+        "title": "Leak Detection & Repair",
+        "description": "Fast identification and fix for hidden leaks to prevent water damage."
+      },
+      {
+        "icon": "🚽",
+        "title": "Drain Cleaning",
+        "description": "Clearing stubborn clogs and maintaining your drainage system."
+      },
+      {
+        "icon": "🔥",
+        "title": "Water Heater Service",
+        "description": "Installation, repair, and maintenance for all water heater types."
+      },
+      {
+        "icon": "🚿",
+        "title": "Fixture Installation",
+        "description": "Professional upgrades for your kitchen and bathroom fixtures."
+      }
+    ]
+  },
+  "aboutPage": {
+    "story": "Founded by Mike, a master plumber with over 15 years of experience, we started with a single truck and a commitment to honest service. Today, we remain family-owned and dedicated to the same Austin neighborhoods where we began.",
+    "mission": "To provide every Austin resident with high-quality, dependable plumbing services while maintaining the highest standards of integrity."
+  },
+  "contactPage": {
+    "address": "Austin, TX",
+    "phone": "(512) 555-0123",
+    "hours": "24/7 Emergency Service Available"
+  },
+  "primaryColor": "#1e40af",
+  "accentColor": "#ffffff",
+  "contactEmail": "hello@mikes-plumbing-austin.com"
+}
