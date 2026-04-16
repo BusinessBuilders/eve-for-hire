@@ -278,13 +278,18 @@ async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
       console.error('[chat] domain search failed for', keyword, err);
       // Surface the failure as a visible error card rather than silently dropping it.
       // Silent failures leave users confused about why no domain card appeared.
+      const error =
+        err instanceof Error && err.name === 'AbortError'
+          ? 'Domain search timed out — please try again in a moment.'
+          : 'Domain search is temporarily unavailable — please try again in a moment.';
+
       actionBlocks.push(
         '```json-action\n' +
           JSON.stringify({
             type: 'domain-results',
             keyword,
             results: [],
-            error: 'Domain search is temporarily unavailable — please try again in a moment.',
+            error,
           }) +
           '\n```',
       );

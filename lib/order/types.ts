@@ -53,6 +53,7 @@ export type OrderEvent =
   | 'DEPLOY_SUCCEEDED'     // deploying → live
   | 'DEPLOY_FAILED'        // deploying → deploy_failed
   | 'RETRY_DEPLOY'         // deploy_failed → deploying
+  | 'RESET_TO_BUILDING'    // any post-paid state → building
   | 'CANCEL';              // any non-terminal → cancelled
 
 // ─── Transition table ──────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ export const TRANSITIONS: Record<OrderEvent, { from: OrderState[]; to: OrderStat
   DEPLOY_SUCCEEDED:   { from: ['deploying'],          to: 'live' },
   DEPLOY_FAILED:      { from: ['deploying'],          to: 'deploy_failed' },
   RETRY_DEPLOY:       { from: ['deploy_failed'],      to: 'deploying' },
+  RESET_TO_BUILDING:  { from: ['live', 'deploying', 'deploy_failed', 'build_failed', 'building'], to: 'building' },
   CANCEL: {
     from: ['new', 'qualifying', 'payment_pending', 'payment_failed',
            'paid', 'domain_purchasing', 'domain_failed',

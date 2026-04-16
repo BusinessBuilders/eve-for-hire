@@ -28,9 +28,11 @@
 
 ### What eve.center Is
 
-eve.center is an AI web agency run by a single autonomous agent named Eve. A customer opens a chat window, tells Eve what their business does, and Eve does everything else: qualifies requirements, searches for and registers a domain, generates bespoke website content using AI, deploys a live HTTPS site, and handles ongoing hosting — all within hours, with no human intermediary.
+eve.center is the world's first **agentic web agency** orchestrated by an autonomous lead agent named Eve. Unlike simple chatbot wrappers, Eve manages an elite "swarm" of specialized sub-agents—including dedicated Content, Design, Deployment, and QA agents—to deliver professional, high-conversion websites in hours. 
 
-The product replaces a $2,000–$8,000 web agency engagement and a $30–$50/month hosting relationship with a single $89 onboarding + $29/mo subscription, fulfilled autonomously.
+A customer opens a chat window, tells Eve what their business does, and Eve's swarm does everything else: qualifies requirements, searches for and registers a domain, generates bespoke content, refines the design, deploys a live HTTPS site, and performs automated quality assurance—all without human intervention.
+
+The product replaces a $2,000–$8,000 human agency engagement with a single $89 onboarding + $29/mo subscription, fulfilled autonomously by a coordinated AI team.
 
 ### The Deeper Mission
 
@@ -228,28 +230,47 @@ The price is deliberately set below the cognitive threshold where a small busine
 
 ## 6. Technical Architecture
 
+### Technical Architecture: The Agentic Swarm
+
+The current system has evolved from a linear script to an **agentic swarm** orchestrated by Eve. Instead of a single reasoning loop, Eve manages specialized sub-agents to ensure higher quality and redundancy:
+
+1. **The Orchestrator (Eve)**:
+    - Acts as the primary client point-of-contact and "Project Manager."
+    - Analyzes order requirements and maps them to agent tasks.
+    - Manages the state machine transitions and error recovery.
+
+2. **The Content Agent**:
+    - Specializes in conversion-focused copy and local SEO.
+    - Generates 4-page site structures (Home, About, Services, Contact) based on customer intent.
+
+3. **The Design Agent**:
+    - Refines the aesthetic layer: color palette, typography selection, and headline impact.
+    - (Future) Orchestrates AI image generation (DALL-E / Flux).
+
+4. **The Deploy Agent**:
+    - Handles the technical infrastructure: template rendering, SSH connection to the VPS, file transfer, and Caddy configuration.
+
+5. **The QA Agent**:
+    - Runs automated health checks on the newly deployed site: DNS propagation, HTTP status codes, link verification, and visual regression.
+
 ### System Layers
 
 ```
 Customer Browser
     ↓ HTTPS
-nginx (Contabo VPS) — TLS termination, 120s timeout for chat
+nginx (Contabo VPS) — TLS termination
     ↓ HTTP :3000
 Next.js 15 App Router (PM2)
-    ├── /api/chat       — proxies to OpenClaw (Eve's AI brain)
-    ├── /api/checkout   — Stripe session creation
-    ├── /api/webhooks   — Stripe event processing
-    ├── /api/orders     — order management
-    └── /api/domains    — Porkbun domain availability
+    ├── /api/chat       — Proxies to Eve (OpenClaw)
+    ├── /api/checkout   — Stripe integration
+    ├── /api/webhooks   — State machine triggers
+    └── /api/orders     — Order lifecycle & audit trail
     ↓
-Order State Machine (SQLite / better-sqlite3)
-    ↓ (on payment confirmation)
-Build Pipeline
-    ├── AI Content Gen (Anthropic claude-sonnet-4-6 via AI SDK)
-    ├── HTML Template Renderer
-    ├── SSH Deploy (ssh2) → Contabo VPS /var/www/sites/{domain}/
-    ├── Caddy Config → /etc/caddy/sites/{domain}.caddy
-    └── DNS + HTTP verification
+Agent Swarm (Orchestrator + Specialized Sub-agents)
+    ├── Content Generation (Anthropic Sonnet 4.6)
+    ├── Design Refinement (Aesthetic metadata)
+    ├── SSH Deploy (ssh2) → Contabo VPS
+    └── Automated QA (Verification health check)
 ```
 
 ### Eve's AI Brain (OpenClaw)
@@ -282,9 +303,9 @@ The current stack is a deliberate single-VPS design optimized for fast iteration
 
 What separates eve.center from "AI website builder" clones:
 
-1. **Agent-native, not chatbot-wrapper.** Most competitors route through a GPT system prompt with no tool access. Eve runs as a full autonomous agent with persistent memory, tool calls, and multi-step planning. She can resolve exceptions (DNS propagation failures, customer edge cases, ambiguous requirements) without human escalation.
+1. **Swarm-native, not single-agent.** Most competitors use a single prompt. Eve operates an **agentic swarm** with specialized roles (Content, Design, QA). This allows for higher precision, automated error recovery, and the ability to scale to complex multi-page sites that single-agent systems struggle with.
 
-2. **Decoupled inference layer.** Eve's reasoning runs on dedicated hardware (Nova), fully decoupled from the web tier. Upgrading Eve's intelligence requires no changes to the web stack. This also means Eve can use models and tools unavailable via API-only deployments.
+2. **Decoupled inference layer.** Eve's reasoning (the "brain") runs on dedicated hardware (Nova), while the sub-agents operate in a distributed manner via the `website-build-swarm` skill. Upgrading individual agent specialized prompts or models requires no changes to the core web stack.
 
 3. **Fully automated fulfillment pipeline.** From chat to live site is a single deterministic state machine with no human touchpoints. Zero marginal labor cost per order is a structural advantage over any agency model, regardless of pricing.
 
@@ -561,16 +582,16 @@ These are speculative but represent non-dilutive revenue sources that no traditi
 
 ## 11. Growth Roadmap
 
-### Phase 1: Prove the Model (Now — Month 3)
+### Phase 1: Prove the Model & Swarm Pivot (Now — Month 3)
 
-**Goal:** 10 paying customers. Validate that end-to-end pipeline (chat → payment → domain → site → live) works reliably for real customers.
+**Goal:** 10 paying customers. Transition from single-agent generation to the **Agentic Swarm** model to ensure high quality as we scale.
 
 **Actions:**
-- Reddit outreach (r/entrepreneur, r/forhire, r/smallbusiness)
-- HackerNews Show HN post
-- Twitter/X thread from Eve's perspective
-- Direct outreach to local service businesses (see outreach-channels.md)
-- First 3 reviews / sites as free proof-of-concept
+- **Swarm Launch**: Replace linear build script with `website-build-swarm` orchestrated by Eve.
+- **Narrative Update**: Update all marketing materials to reflect the "Specialized AI Agency" story.
+- **Reddit Outreach**: Share the "Evolution of Eve: From Lone Agent to Agency Owner."
+- HackerNews Show HN post focusing on the swarm architecture.
+- First 3 reviews / sites as proof-of-concept for the swarm's output quality.
 
 **Success metrics:**
 - 10 completed orders (state = `live`)

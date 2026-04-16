@@ -44,11 +44,13 @@ export function ChatMessage({ message, sessionId, onDomainSelect }: ChatMessageP
     .map((p) => (p as { type: 'text'; text: string }).text)
     .join('');
 
+  const isAssistant = message.role === 'assistant';
+
   return (
     <div className={`${styles.message} ${message.role === 'user' ? styles.messageUser : styles.messageAssistant}`}>
-      {message.role === 'assistant' && <div className={styles.msgAvatar}>🤖</div>}
+      {isAssistant && <div className={styles.msgAvatar}>🤖</div>}
       <div className={styles.msgBubble}>
-        {message.role === 'assistant' ? (
+        {isAssistant ? (
           splitActionBlocks(text).map((seg, i) =>
             seg.kind === 'action' && seg.raw ? (
               <ActionBlock
@@ -62,10 +64,11 @@ export function ChatMessage({ message, sessionId, onDomainSelect }: ChatMessageP
                 {seg.content}
               </ReactMarkdown>
             ) : null
-
           )
         ) : (
-          text
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {text}
+          </ReactMarkdown>
         )}
       </div>
     </div>

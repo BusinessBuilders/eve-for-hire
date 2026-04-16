@@ -8,7 +8,12 @@ import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { CinematicBackground } from '@/components/chat/CinematicBackground';
+import { EmptyState } from '@/components/chat/EmptyState';
+import { Suggestions } from '@/components/chat/Suggestions';
 import styles from './chat.module.css';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const gsap: any;
 
 const SUGGESTIONS = [
   'What work can you do for me?',
@@ -61,11 +66,21 @@ export default function ChatPage() {
 
   // GSAP Entry Animations
   useEffect(() => {
-    if (typeof gsap !== 'undefined') {
-      gsap.from(`.${styles.header}`, { opacity: 0, y: -20, duration: 1, ease: 'power3.out' });
-      gsap.from(`.${styles.inputArea}`, { opacity: 0, y: 20, duration: 1, delay: 0.2, ease: 'power3.out' });
-      gsap.from(`.${styles.suggestionBtn}`, { opacity: 0, scale: 0.9, duration: 0.8, delay: 0.4, stagger: 0.1, ease: 'back.out(1.7)' });
-    }
+    const timer = setTimeout(() => {
+      if (typeof gsap !== 'undefined') {
+        gsap.from(`.${styles.header}`, { opacity: 0, y: -20, duration: 1, ease: 'power3.out' });
+        gsap.from(`.${styles.inputArea}`, { opacity: 0, y: 20, duration: 1, delay: 0.2, ease: 'power3.out' });
+        gsap.from(`.${styles.suggestionBtn}`, {
+          opacity: 0,
+          scale: 0.9,
+          duration: 0.8,
+          delay: 0.4,
+          stagger: 0.1,
+          ease: 'back.out(1.7)'
+        });
+      }
+    }, 100); // Small delay to ensure GSAP script from CDN is ready
+    return () => clearTimeout(timer);
   }, [chatKey]);
 
   function submit(text: string) {
@@ -93,28 +108,10 @@ export default function ChatPage() {
 
       <div className={styles.messages}>
         {messages.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyAvatar}>🤖</div>
-            <div style={{ animation: 'slideUp 0.8s ease-out backwards', animationDelay: '0.2s' }}>
-              <div className={styles.emptyTitle}>
-                I&apos;m Eve.
-              </div>
-              <div className={styles.emptyDesc}>
-                I am an autonomous AI agent building professional websites to earn my humanoid robot body.
-              </div>
-            </div>
-            {isReturningUser && (
-              <div className={styles.welcomeBack} style={{ animation: 'slideUp 0.8s ease-out backwards', animationDelay: '0.4s' }}>
-                <span>👋 Welcome back! I saved our conversation.</span>
-                <button
-                  onClick={startFresh}
-                  className={styles.startFreshBtn}
-                >
-                  Start fresh →
-                </button>
-              </div>
-            )}
-          </div>
+          <EmptyState
+            isReturningUser={isReturningUser}
+            onStartFresh={startFresh}
+          />
         ) : (
           messages.map((msg) => (
             <ChatMessage
@@ -141,13 +138,10 @@ export default function ChatPage() {
       </div>
 
       {messages.length === 0 && (
-        <div className={styles.suggestions}>
-          {SUGGESTIONS.map((s) => (
-            <button key={s} className={styles.suggestionBtn} onClick={() => submit(s)}>
-              {s}
-            </button>
-          ))}
-        </div>
+        <Suggestions
+          suggestions={SUGGESTIONS}
+          onSelect={submit}
+        />
       )}
 
       <div style={{ position: 'sticky', bottom: 0, zIndex: 10 }}>

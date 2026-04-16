@@ -35,8 +35,8 @@ export function applyTransition(order: Order, input: TransitionInput): Transitio
     return { ok: false, error: 'IDEMPOTENT_SKIP', detail: `Order is already in state '${rule.to}'` };
   }
 
-  // Reject transitions from terminal states.
-  if (TERMINAL_STATES.has(order.state)) {
+  // Reject transitions from terminal states, except for the explicit RESET_TO_BUILDING administrative event.
+  if (TERMINAL_STATES.has(order.state) && input.event !== 'RESET_TO_BUILDING') {
     return {
       ok: false,
       error: 'ALREADY_TERMINAL',

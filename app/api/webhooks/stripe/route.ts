@@ -24,6 +24,7 @@ import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
 import { processDomainForOrder } from '@/lib/porkbun/domain-service';
 import { buildAndDeployOrder } from '@/lib/site/build-service';
+import { triggerPaperclipBuild } from '@/lib/site/paperclip-trigger';
 import { trackFunnelEvent } from '@/lib/analytics/events';
 import type { PaymentInfo } from '@/lib/order/types';
 
@@ -142,7 +143,18 @@ async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> 
             return;
           }
 
+          // Domain secured — kick off site build & deploy pipeline.
           console.log('[webhook/stripe] starting site build for order', orderId);
+
+          if (process.env.PAPERCLIP_API_URL) {
+            const triggerResult = await triggerPaperclipBuild(orderId);
+            if (triggerResult.ok) {
+              console.log('[webhook/stripe] delegated build to Paperclip swarm:', triggerResult.issueId);
+              return;
+            }
+            console.error('[webhook/stripe] Paperclip trigger failed, falling back to SSH build:', triggerResult.error);
+          }
+
           const buildResult = await buildAndDeployOrder(orderId);
           if (buildResult.ok) {
             console.log('[webhook/stripe] site live for order', orderId, '—', buildResult.siteUrl);
@@ -240,7 +252,18 @@ async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> 
           }
 
           // Domain secured — kick off site build & deploy pipeline.
+          // Domain secured — kick off site build & deploy pipeline.
           console.log('[webhook/stripe] starting site build for order', orderId);
+
+          if (process.env.PAPERCLIP_API_URL) {
+            const triggerResult = await triggerPaperclipBuild(orderId);
+            if (triggerResult.ok) {
+              console.log('[webhook/stripe] delegated build to Paperclip swarm:', triggerResult.issueId);
+              return;
+            }
+            console.error('[webhook/stripe] Paperclip trigger failed, falling back to SSH build:', triggerResult.error);
+          }
+
           const buildResult = await buildAndDeployOrder(orderId);
           if (buildResult.ok) {
             console.log(

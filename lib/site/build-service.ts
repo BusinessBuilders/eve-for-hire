@@ -57,7 +57,7 @@ export type BuildResult =
  *
  * Handles all state transitions internally.
  */
-export async function buildAndDeployOrder(orderId: string): Promise<BuildResult> {
+export async function buildAndDeployOrder(orderId: string, skipSwarm = false): Promise<BuildResult> {
   const order = await orderStore.findById(orderId);
   if (!order) return { ok: false, phase: 'build', error: `Order ${orderId} not found` };
 

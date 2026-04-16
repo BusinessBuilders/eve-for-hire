@@ -76,7 +76,18 @@ export const SiteContentSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .describe('Secondary accent hex color that complements the primary'),
+  backgroundColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional()
+    .describe('Optional background color for the site, defaults to #ffffff'),
+  softBackgroundColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional()
+    .describe('Optional soft background color for sections, defaults to #f9fafb'),
   contactEmail: z.string().email().optional().describe('Contact email if derivable from requirements'),
+  theme: z.enum(['classic', 'cinematic']).default('classic').describe('The visual theme for the site'),
 });
 
 export type SiteContent = z.infer<typeof SiteContentSchema>;
@@ -156,7 +167,8 @@ function buildPrompt(req: OrderRequirements): string {
   },
   "primaryColor": string — dominant brand hex color (e.g. "#2563eb"), vivid enough for 3:1 contrast,
   "accentColor": string — secondary accent hex color that complements the primary,
-  "contactEmail": string (optional) — contact email if derivable from the requirements
+  "contactEmail": string (optional) — contact email if derivable from the requirements,
+  "theme": "classic" | "cinematic" — select "cinematic" if the style preference is "luxury", "modern", "dark", or "premium". Use "classic" for traditional, professional, or reliable vibes.
 }`);
 
   return parts.join('\n');
@@ -194,6 +206,9 @@ function applyFallbacks(
   const businessName =
     typeof raw.businessName === 'string' ? raw.businessName : domainSlug;
 
+  const styleLower = (req.style || '').toLowerCase();
+  const theme = (raw.theme === 'cinematic' || styleLower.includes('luxury') || styleLower.includes('premium')) ? 'cinematic' : 'classic';
+
   return {
     businessName,
     tagline: typeof raw.tagline === 'string' ? raw.tagline : 'Professional services you can trust',
@@ -221,12 +236,22 @@ function applyFallbacks(
       typeof raw.accentColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.accentColor)
         ? raw.accentColor
         : '#7c3aed',
+    backgroundColor:
+      typeof raw.backgroundColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.backgroundColor)
+        ? (raw.backgroundColor as string)
+        : undefined,
+    softBackgroundColor:
+      typeof raw.softBackgroundColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.softBackgroundColor)
+        ? (raw.softBackgroundColor as string)
+        : undefined,
     contactEmail:
       typeof raw.contactEmail === 'string' && raw.contactEmail.includes('@')
         ? raw.contactEmail
         : undefined,
+    theme,
   };
 }
+
 
 const defaultFeatures: SiteContent['features'] = [
   { icon: '⚡', title: 'Fast & Reliable', description: 'Built for speed and dependability.' },
