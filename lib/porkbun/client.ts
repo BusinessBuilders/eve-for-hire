@@ -70,10 +70,11 @@ export class PorkbunClient {
     path: string,
     body: Record<string, unknown> = {},
   ): Promise<T> {
-    // 10s hard timeout per request — prevents a slow or unresponsive Porkbun API
-    // from hanging the entire /api/chat response past nginx's proxy_read_timeout.
+    // 20s hard timeout per request — provides more headroom for slow Porkbun
+    // responses while still keeping the 3-check sequence (3*20s + 2*10.5s = 81s)
+    // safely under nginx's 120s proxy_read_timeout.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
+    const timer = setTimeout(() => controller.abort(), 20_000);
 
     let res: Response;
     try {
@@ -135,19 +136,37 @@ export class PorkbunClient {
 
   /**
    * Check availability of multiple domains sequentially.
-   * Respects Porkbun's 1-per-10s rate limit by sleeping between requests
-   * using the `ttlRemaining` value from each response.
+   *
+   * Robust: if a single domain check fails (e.g. 400 for a restricted domain),
+   * it logs the error and continues with the others.
+   *
+   * Respects Porkbun's 1-per-10s rate limit by sleeping between requests.
    */
   async checkDomains(domains: string[]): Promise<PorkbunDomainAvailability[]> {
     const results: PorkbunDomainAvailability[] = [];
     for (let i = 0; i < domains.length; i++) {
-      const result = await this.checkDomain(domains[i]);
-      results.push({ domain: result.domain, available: result.available, price: result.price });
-      // Sleep between checks using the rate-limit window from the response.
-      // Add a small buffer (+500 ms) to avoid hitting the boundary.
-      if (i < domains.length - 1) {
-        const sleepMs = ((result.ttlRemaining ?? 10) + 0.5) * 1000;
-        await new Promise((resolve) => setTimeout(resolve, sleepMs));
+      try {
+        const result = await this.checkDomain(domains[i]);
+        results.push({
+          domain: result.domain,
+          available: result.available,
+          price: result.price,
+        });
+
+        // Sleep between successful checks using the rate-limit window from the response.
+        if (i < domains.length - 1) {
+          const sleepMs = ((result.ttlRemaining ?? 10) + 0.5) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, sleepMs));
+        }
+      } catch (err) {
+        // Log individual failures but don't crash the whole search.
+        console.error(`[porkbun] checkDomain failed for ${domains[i]}:`, err);
+
+        // If we have more domains to check, sleep before the next one to avoid
+        // cascading rate-limit errors. Use standard 10.5s window.
+        if (i < domains.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 10500));
+        }
       }
     }
     return results;

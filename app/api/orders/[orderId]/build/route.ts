@@ -16,12 +16,20 @@
 import { NextRequest, NextResponse, after } from 'next/server';
 import { orderStore } from '@/lib/order/store';
 import { buildAndDeployOrder } from '@/lib/site/build-service';
+import { triggerPaperclipBuild } from '@/lib/site/paperclip-trigger';
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
   const { orderId } = await params;
+  let useSwarm = false;
+  try {
+    const body = await req.json();
+    useSwarm = !!body.swarm;
+  } catch {
+    // Default to false if body is missing or invalid
+  }
 
   const order = await orderStore.findById(orderId);
   if (!order) {
@@ -58,8 +66,18 @@ export async function POST(
 
   // Kick off the full pipeline after returning 202 to the caller.
   after(async () => {
-    console.log(`[build-route] starting build for order ${orderId}`);
-    const result = await buildAndDeployOrder(orderId);
+    console.log(`[build-route] starting build for order ${orderId} (swarm=${useSwarm})`);
+    
+    if (useSwarm && process.env.PAPERCLIP_API_URL) {
+      const triggerResult = await triggerPaperclipBuild(orderId);
+      if (triggerResult.ok) {
+        console.log(`[build-route] delegated build to Paperclip swarm: ${triggerResult.issueId}`);
+        return;
+      }
+      console.error(`[build-route] Paperclip trigger failed, falling back to SSH build: ${triggerResult.error}`);
+    }
+
+    const result = await buildAndDeployOrder(orderId, useSwarm);
     if (result.ok) {
       console.log(`[build-route] build complete for ${orderId} → ${result.siteUrl}`);
     } else {

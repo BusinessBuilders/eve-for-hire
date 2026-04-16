@@ -37,6 +37,13 @@ export async function GET(req: NextRequest) {
     const results = await suggestAvailableDomains(q!);
     return NextResponse.json({ results });
   } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      return NextResponse.json(
+        { error: 'Domain lookup timed out — please try again in a moment.' },
+        { status: 504 },
+      );
+    }
+
     if (err instanceof Error && err.message.includes('not configured')) {
       return NextResponse.json({ error: 'Domain service not configured' }, { status: 503 });
     }

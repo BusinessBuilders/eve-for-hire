@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "name": "Swarm Base Design Tokens",
+  "tokens": {
+    "color": {
+      "light": {
+        "bg": "#ffffff",
+        "surface": "#f8fafc",
+        "surfaceHover": "#f1f5f9",
+        "textMain": "#0f172a",
+        "textMuted": "#475569",
+        "border": "#e2e8f0"
+      },
+      "dark": {
+        "bg": "#0f172a",
+        "surface": "rgba(30, 41, 59, 0.7)",
+        "surfaceHover": "rgba(51, 65, 85, 0.8)",
+        "textMain": "#f8fafc",
+        "textMuted": "#94a3b8",
+        "border": "rgba(255, 255, 255, 0.1)"
+      },
+      "semantic": {
+        "success": "#15803d",
+        "error": "#b91c1c",
+        "warning": "#a16207",
+        "info": "#1d4ed8"
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "primary": "'Inter', system-ui, -apple-system, sans-serif",
+        "secondary": "'Montserrat', system-ui, -apple-system, sans-serif"
+      },
+      "scale": {
+        "xs": "0.75rem",
+        "sm": "0.875rem",
+        "base": "1rem",
+        "lg": "1.125rem",
+        "xl": "1.25rem",
+        "2xl": "1.5rem",
+        "3xl": "1.875rem",
+        "4xl": "2.25rem"
+      }
+    },
+    "spacing": {
+      "unit": 8,
+      "scale": {
+        "1": "0.25rem",
+        "2": "0.5rem",
+        "3": "0.75rem",
+        "4": "1rem",
+        "6": "1.5rem",
+        "8": "2rem",
+        "12": "3rem",
+        "16": "4rem",
+        "20": "5rem",
+        "24": "6rem"
+      }
+    },
+    "effects": {
+      "radius": {
+        "sm": "0.25rem",
+        "md": "0.5rem",
+        "lg": "0.75rem",
+        "xl": "1rem",
+        "full": "9999px"
+      },
+      "shadow": {
+        "sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "md": "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+        "lg": "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+        "xl": "0 20px 25px -5px rgb(0 0 0 / 0.1)"
+      },
+      "blur": {
+        "glass": "12px"
+      }
+    }
+  }
+}
