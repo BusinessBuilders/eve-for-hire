@@ -49,6 +49,10 @@ export interface SshSession {
   runRemoteCommand(command: string): Promise<RemoteCommandResult>;
   /** Upload string content to a remote file path via SFTP. */
   uploadFile(remotePath: string, content: string): Promise<void>;
+  /** Create a symbolic link on the remote host. */
+  createSymlink(targetPath: string, linkPath: string): Promise<void>;
+  /** List files in a remote directory. */
+  listDirectory(remotePath: string): Promise<string[]>;
   /** Close the connection. */
   close(): void;
 }
@@ -144,6 +148,30 @@ function buildSession(client: Client): SshSession {
           writeStream.on('finish', () => resolve());
 
           writeStream.end(content, 'utf-8');
+        });
+      });
+    },
+
+    createSymlink(targetPath: string, linkPath: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        client.sftp((err, sftp) => {
+          if (err) return reject(new Error(`SFTP subsystem failed: ${err.message}`));
+          sftp.symlink(targetPath, linkPath, (err) => {
+            if (err) return reject(new Error(`SFTP symlink failed: ${err.message}`));
+            resolve();
+          });
+        });
+      });
+    },
+
+    listDirectory(remotePath: string): Promise<string[]> {
+      return new Promise((resolve, reject) => {
+        client.sftp((err, sftp) => {
+          if (err) return reject(new Error(`SFTP subsystem failed: ${err.message}`));
+          sftp.readdir(remotePath, (err, list) => {
+            if (err) return reject(new Error(`SFTP readdir failed: ${err.message}`));
+            resolve(list.map((item) => item.filename));
+          });
         });
       });
     },

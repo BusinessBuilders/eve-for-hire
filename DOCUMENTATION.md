@@ -196,18 +196,17 @@ After payment, the system calls Anthropic Claude Sonnet 4.6 via the AI SDK to ge
 
 The output is validated against a Zod schema before being passed to the HTML template renderer.
 
-### 2.7 Site Build & Deployment Pipeline
+### 2.7 Site Build & Deployment Pipeline (with Rollback)
 
-**Files:** `lib/site/build-service.ts`, `lib/site/template.ts`, `lib/site/ssh.ts`, `lib/site/caddy.ts`, `lib/site/verify.ts`
+**Files:** `lib/site/build-service.ts`, `lib/site/template.ts`, `lib/site/ssh.ts`, `lib/site/caddy.ts`, `lib/site/verify.ts`, `scripts/swarm-tools/rollback-site.ts`
 
-After content generation:
+The deployment pipeline uses a versioned directory structure to enable atomic deployments and rapid rollbacks:
 
-1. **Render HTML** — AI-generated content is injected into a static HTML template.
-2. **SSH deploy** — the HTML is uploaded to `/var/www/sites/{domain}/index.html` on the Contabo VPS using SSH2.
-3. **Caddy config** — a per-site Caddyfile snippet is written to `/etc/caddy/sites/{domain}.caddy` and Caddy is reloaded. Caddy handles automatic Let's Encrypt HTTPS for each customer domain.
-4. **DNS verification** — the system polls for DNS propagation (A record resolving to Contabo VPS IP).
-5. **HTTP smoke test** — confirms the site is reachable over HTTPS.
-6. **Order marked live** — state transitions to `live`.
+1. **Versioned Root** — instead of a flat directory, sites are stored in `/var/www/sites/{domain}/versions/{timestamp}/`.
+2. **Atomic Switch** — a symbolic link at `/var/www/sites/{domain}/current` points to the active version.
+3. **Caddy Config** — the per-site Caddyfile points its root to the `current` symlink.
+4. **Pruning** — the deployment tool automatically keeps only the last 5 versions to manage disk space.
+5. **Rollback** — the `rollback-site.ts` tool can instantly revert a site to its previous version by updating the symlink and reloading Caddy.
 
 All remote commands use SSH2's protocol-level `exec()` (not local shell). Domain names are validated against a strict RFC 1123 regex before use in any remote command.
 
