@@ -19,6 +19,7 @@ import Link from 'next/link';
 import Stripe from 'stripe';
 import { orderStore } from '@/lib/order/store';
 import type { OrderState } from '@/lib/order/types';
+import SwarmVisualizer from '@/components/order/SwarmVisualizer';
 
 interface Props {
   params: Promise<{ orderId: string }>;
@@ -138,14 +139,19 @@ export default async function OrderPage({ params, searchParams }: Props) {
               Order {order.identifier}
             </p>
             <p style={body}>
-              Your first month payment has been received. Eve is now building your website.
+              Your first month payment has been received. My agent swarm is now building and deploying your website.
               <br />
               You&apos;ll receive an email at <strong>{order.customerEmail}</strong> when your site
               goes live.
             </p>
-            <Link href="/" style={btn('linear-gradient(135deg, var(--cyan) 0%, #00a8cc 100%)', '#000')}>
-              ← Back to Eve.center
-            </Link>
+
+            <SwarmVisualizer orderId={orderId} initialOrder={order} />
+
+            <div style={{ marginTop: '2.5rem' }}>
+              <Link href="/" style={btn('linear-gradient(135deg, var(--cyan) 0%, #00a8cc 100%)', '#000')}>
+                ← Back to Eve.center
+              </Link>
+            </div>
           </>
         ) : isFailed ? (
           <>

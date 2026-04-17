@@ -1,0 +1,147 @@
+.swarmVisualizer {
+  margin-top: 2rem;
+  padding: 2.5rem;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  position: relative;
+  width: 100%;
+}
+
+.orchestratorNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 2;
+}
+
+.nodeIcon {
+  font-size: 3rem;
+  width: 80px;
+  height: 80px;
+  background: var(--bg);
+  border: 2px solid var(--cyan);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+  position: relative;
+}
+
+.nodeLabel {
+  font-family: var(--font-dm-mono), monospace;
+  color: var(--cyan);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.agentSwarm {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.agentNode {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.agentNode.active {
+  border-color: var(--cyan);
+  background: rgba(0, 217, 255, 0.08);
+  box-shadow: 0 0 25px rgba(0, 217, 255, 0.2);
+  transform: scale(1.02);
+}
+
+.agentNode.done {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.agentNode.pending {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+.agentIcon {
+  font-size: 1.75rem;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.agentNode.active .agentIcon {
+  transform: rotate(5deg);
+}
+
+.agentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.agentName {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.agentStatus {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: var(--font-dm-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.agentNode.active .agentStatus {
+  color: var(--cyan);
+}
+
+.agentNode.done .agentStatus {
+  color: #4ade80;
+}
+
+.pulseRing {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--cyan);
+  border-radius: 18px;
+  animation: pulse 2.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.08); opacity: 0; }
+}
+
+@media (max-width: 560px) {
+  .agentSwarm {
+    grid-template-columns: 1fr;
+  }
+  .swarmVisualizer {
+    padding: 1.5rem;
+  }
+}

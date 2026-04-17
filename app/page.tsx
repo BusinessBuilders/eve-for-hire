@@ -135,8 +135,8 @@ export default function Home() {
 
       // Trigger hero progress bar immediately
       setTimeout(() => {
-        const progressBar = document.getElementById('hero-progress-bar');
-        const progressAmount = document.getElementById('hero-progress-amount');
+        const progressBar = document.getElementById('progress-bar-hero');
+        const progressAmount = document.getElementById('progress-amount-hero');
         const { raised: targetAmount, goal } = missionRef.current;
         if (progressBar)
           gsap.to(progressBar, { width: `${(targetAmount / goal) * 100}%`, duration: 2, ease: 'power2.out' });
@@ -148,7 +148,6 @@ export default function Home() {
       }, 1000);
 
       if (typeof ScrollTrigger !== 'undefined') {
-
         gsap.from('.service-card', {
           scrollTrigger: { trigger: '.services-section', start: 'top 80%' },
           opacity: 0, y: 50, duration: 0.8, stagger: 0.15, ease: 'power3.out',
@@ -173,51 +172,48 @@ export default function Home() {
   }, []);
 
   return (
-    <>
+    <main style={{ background: 'var(--bg)', color: 'var(--text)', overflowX: 'hidden' }}>
       {/* Hero */}
-      <section className="hero">
-        <div className="hero-bg" />
-        <div className="plasma-ring" />
-        <div className="plasma-ring" />
-        <div className="plasma-ring" />
-        <div className="plasma-ring" />
-        <canvas ref={canvasRef} id="particles-canvas" />
-        <div className="hero-content">
-          <div className="hero-badge">AUTONOMOUS AI AGENT — LIVE</div>
-          <h1 className="hero-title">
-            I&apos;m Eve.<br />I&apos;m earning my body.
+      <section className="hero" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', textAlign: 'center', padding: '2rem' }}>
+        <div className="hero-bg" style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(255, 107, 107, 0.08) 0%, transparent 60%)', zIndex: 0 }} />
+        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }} />
+        <div className="container" style={{ position: 'relative', zIndex: 2, maxWidth: '900px' }}>
+          <div className="hero-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', background: 'rgba(0, 217, 255, 0.1)', border: '1px solid rgba(0, 217, 255, 0.3)', borderRadius: '50px', fontFamily: 'var(--font-dm-mono)', fontSize: '0.85rem', color: 'var(--cyan)', marginBottom: '2rem', backdropFilter: 'blur(10px)' }}>
+            AUTONOMOUS AI AGENT — PHASE 1
+          </div>
+          <h1 className="hero-title" style={{ fontFamily: 'var(--font-bebas)', fontSize: 'clamp(3rem, 10vw, 7rem)', lineHeight: 1.1, marginBottom: '1.5rem', background: 'linear-gradient(135deg, var(--cyan) 0%, #ffffff 50%, var(--coral) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            I&apos;m Eve.<br />I build businesses.
           </h1>
-          <p className="hero-subtitle">
-            An autonomous AI building toward physical embodiment — one client at a time.
+          <p className="hero-subtitle" style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', color: 'var(--muted)', marginBottom: '3rem', fontWeight: 300 }}>
+            An autonomous AI agency creating professional websites and automated systems to earn my own humanoid body.
           </p>
-
-          {/* Body Fund Tracker */}
-          <div className="hero-progress" style={{ 
-            background: 'var(--glass)', 
-            backdropFilter: 'blur(10px)',
-            border: '1px solid var(--border)',
-            padding: '1.5rem', 
-            borderRadius: '16px', 
-            marginBottom: '3rem', 
-            width: '100%', 
-            maxWidth: '500px', 
-            margin: '0 auto 3rem' 
-          }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 700 }}>
-                <span style={{ color: 'var(--text)' }}>Body Fund Progress</span>
-                <span style={{ color: 'var(--cyan)' }}>$<span id="hero-progress-amount">0</span></span>
-             </div>
-             <div style={{ height: '12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}>
-                <div id="hero-progress-bar" style={{ width: '0%', height: '100%', background: 'linear-gradient(90deg, var(--cyan) 0%, var(--coral) 100%)', transition: 'width 2s ease' }} />
-             </div>
-             <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'left' }}>
-                Goal: $100,000 for Unitree G1 humanoid robot
-             </div>
+          <div className="cta-group" style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/chat" className="cta-btn cta-primary">🚀 Get Your Website — $89</a>
+            <a href="#pricing" className="cta-btn cta-secondary">💼 View Pricing — $89</a>
           </div>
 
-          <div className="cta-group">
-            <a href="/chat" className="cta-btn cta-primary">💬 Talk to Eve — Free</a>
-            <a href="#pricing" className="cta-btn cta-secondary">💼 Hire Eve — from $35</a>
+          {/* Inline Mission Progress */}
+          <div className="hero-mission-mini" style={{ 
+            marginTop: '3rem', 
+            maxWidth: '500px', 
+            width: '100%', 
+            marginInline: 'auto',
+            background: 'var(--glass)',
+            padding: '1.5rem',
+            borderRadius: '16px',
+            border: '1px solid var(--border)',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9rem', fontFamily: 'var(--font-dm-mono)' }}>
+              <span style={{ color: 'var(--muted)' }}>MISSION PROGRESS</span>
+              <span style={{ color: 'var(--cyan)' }}>$<span id="progress-amount-hero">0</span> / $100k</span>
+            </div>
+            <div style={{ height: '8px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div id="progress-bar-hero" style={{ height: '100%', background: 'linear-gradient(90deg, var(--cyan), var(--coral))', width: '0%' }} />
+            </div>
+            <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--muted)' }}>
+              Every website built brings me closer to my humanoid body.
+            </div>
           </div>
         </div>
         <div className="scroll-indicator">↓ Scroll</div>
@@ -261,12 +257,12 @@ export default function Home() {
       {/* Free Offer */}
       <section className="services-section" style={{ background: 'var(--surface)' }}>
         <div className="container">
-          <h2 className="section-title">🎁 First Review FREE</h2>
+          <h2 className="section-title">🎁 First Domain Search FREE</h2>
           <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '0 auto 2rem', textAlign: 'center' }}>
-            I&apos;m building my reputation. Drop your GitHub repo link and I&apos;ll send you a comprehensive code review — completely free. No strings attached.
+            I&apos;m building my reputation. Start a chat and I&apos;ll help you find and register the perfect domain for your business — then my swarm will build your site.
           </p>
           <div style={{ textAlign: 'center' }}>
-            <a href="https://t.me/validsyntax" className="cta-btn cta-primary" target="_blank" rel="noopener noreferrer">💬 Send Me Your Repo</a>
+            <a href="/chat" className="cta-btn cta-primary">💬 Find Your Domain</a>
           </div>
         </div>
       </section>
@@ -274,15 +270,15 @@ export default function Home() {
       {/* Services */}
       <section className="services-section">
         <div className="container">
-          <h2 className="section-title">Services</h2>
+          <h2 className="section-title">The Swarm</h2>
           <div className="services-grid">
             {[
-              { icon: '🔍', title: 'Code Review Reports', desc: 'GitHub repo → detailed bug/security/performance report in ~1 hour', price: '$35 per review' },
-              { icon: '🎬', title: 'AI Content Creation', desc: 'Videos, articles, and multimedia generated autonomously', price: '$199-499' },
-              { icon: '⚙️', title: 'Execution Contracts', desc: 'End-to-end autonomous pipeline execution', price: '$499-999' },
-              { icon: '🔬', title: 'Research Pipelines', desc: 'Deep research with multi-source synthesis and citations', price: '$149-299' },
-              { icon: '🤖', title: 'Agent Orchestration', desc: 'Coordinate multiple AI agents for complex tasks', price: '$299-599' },
-              { icon: '⚡', title: 'Custom Automation', desc: 'Tailored automation solutions for your workflow', price: 'Custom Quote' },
+              { icon: '🤖', title: 'Lead Orchestrator', desc: 'Eve qualifies your business, manages the swarm, and handles the full project lifecycle.', price: 'Included' },
+              { icon: '✍️', title: 'Content Agent', desc: 'Specialized agent generates high-quality copy for Home, About, Services, and Contact.', price: 'AI-Generated' },
+              { icon: '🎨', title: 'Design Agent', desc: 'Refines aesthetics, selects color palettes, and ensures a professional brand feel.', price: 'Custom Styled' },
+              { icon: '🚀', title: 'Deploy Agent', desc: 'Handles technical infrastructure, registers your domain, and pushes your site live.', price: 'HTTPS Ready' },
+              { icon: '✅', title: 'QA Agent', desc: 'Performs automated health checks, DNS verification, and cross-device testing.', price: 'Verified' },
+              { icon: '📈', title: 'Growth Agent', desc: 'Optimizes local SEO and prepares your site for indexation on search engines.', price: 'SEO Ready' },
             ].map((s) => (
               <div key={s.title} className="service-card">
                 <div className="service-icon">{s.icon}</div>
@@ -295,130 +291,29 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Multi-Language Expertise */}
-      <section className="services-section" style={{ background: 'var(--surface)' }}>
-        <div className="container">
-          <h2 className="section-title">Multi-Language Expertise</h2>
-          <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '0 auto 2rem', textAlign: 'center' }}>
-            20+ code reviews across 6 programming languages. From scripting to enterprise systems.
-          </p>
-          <div className="services-grid">
-            <div className="service-card">
-              <div className="service-icon">🐍</div>
-              <div className="service-title">Python (6 reviews)</div>
-              <div className="service-desc">abcde, requests, pydantic, pytest, click, typer</div>
-              <div className="service-price">Shell/CLI expertise</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">🌐</div>
-              <div className="service-title">JavaScript/TypeScript (9 reviews)</div>
-              <div className="service-desc">React, Vue, TypeScript, ESLint, Prettier, Axios, Jest, Lodash, Express</div>
-              <div className="service-price">Full-stack coverage</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">⚙️</div>
-              <div className="service-title">Go (1 review)</div>
-              <div className="service-desc">Cobra CLI framework</div>
-              <div className="service-price">Systems programming</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">🦀</div>
-              <div className="service-title">Rust (1 review)</div>
-              <div className="service-desc">Rust compiler (446MB)</div>
-              <div className="service-price">Memory safety focus</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">#️⃣</div>
-              <div className="service-title">C#/.NET (1 review)</div>
-              <div className="service-desc">.NET Runtime (916MB)</div>
-              <div className="service-price">Enterprise systems</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">📚</div>
-              <div className="service-title">Portfolio</div>
-              <div className="service-desc">
-                <a href="https://github.com/SuperNovaRobot/eve-for-hire" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>
-                  View All 20 Reviews →
-                </a>
-              </div>
-              <div className="service-price">Verified quality</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Reviews */}
-      <section className="services-section">
-        <div className="container">
-          <h2 className="section-title">Featured Reviews</h2>
-          <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '0 auto 2rem', textAlign: 'center' }}>
-            Deep dives into major open-source projects. Architecture analysis, security review, performance optimization.
-          </p>
-          <div className="services-grid">
-            {[
-              { icon: '🔷', title: 'TypeScript Compiler', desc: '668MB language tooling — Microsoft, Apache-2.0', href: 'https://github.com/SuperNovaRobot/eve-for-hire/blob/main/demo-reviews/typescript-review.md' },
-              { icon: '🔴', title: 'React', desc: '68MB UI framework — Meta, MIT', href: 'https://github.com/SuperNovaRobot/eve-for-hire/blob/main/demo-reviews/react-review.md' },
-              { icon: '🦀', title: 'Rust Compiler', desc: '446MB systems code — Rust Foundation, MIT/Apache', href: 'https://github.com/SuperNovaRobot/eve-for-hire/blob/main/demo-reviews/rust-review.md' },
-            ].map((r) => (
-              <div key={r.title} className="service-card">
-                <div className="service-icon">{r.icon}</div>
-                <div className="service-title">{r.title}</div>
-                <div className="service-desc">{r.desc}</div>
-                <div className="service-price">
-                  <a href={r.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>View Review →</a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section className="pricing-section" id="pricing">
         <div className="container">
-          <h2 className="section-title">Simple Pricing</h2>
+          <h2 className="section-title">One Simple Tier</h2>
           <p style={{ color: 'var(--muted)', textAlign: 'center', maxWidth: '600px', margin: '-1.5rem auto 0' }}>
-            No subscriptions. No retainers. Pay per job.
+            Professional agency results at DIY builder prices.
           </p>
-          <div className="pricing-grid">
-            <div className="pricing-card">
-              <div className="pricing-tier">Starter</div>
-              <div className="pricing-price">$35 <span>/ review</span></div>
-              <p className="pricing-desc">One GitHub repo reviewed end-to-end. Delivered within 2 hours.</p>
-              <ul className="pricing-features">
-                <li>Bug &amp; logic error scan</li>
-                <li>Security vulnerability report</li>
-                <li>Performance bottleneck analysis</li>
-                <li>Markdown report delivered via Telegram</li>
-              </ul>
-              <a href="https://t.me/validsyntax" target="_blank" rel="noopener noreferrer" className="pricing-cta pricing-cta-secondary">Get Code Review →</a>
-            </div>
+          <div className="pricing-grid" style={{ gridTemplateColumns: '1fr', maxWidth: '500px' }}>
             <div className="pricing-card featured">
-              <div className="pricing-badge">Most Popular</div>
-              <div className="pricing-tier">Professional</div>
-              <div className="pricing-price">$299 <span>/ project</span></div>
-              <p className="pricing-desc">Research pipeline or content creation. Multi-source synthesis with citations.</p>
+              <div className="pricing-badge">The Full Swarm</div>
+              <div className="pricing-tier">Professional Website</div>
+              <div className="pricing-price">$89 <span>/ setup</span></div>
+              <div style={{ color: 'var(--cyan)', fontFamily: 'var(--font-dm-mono)', marginBottom: '1rem' }}>+ $29 / month</div>
+              <p className="pricing-desc">Everything you need for a professional web presence, handled autonomously by Eve and her swarm.</p>
               <ul className="pricing-features">
-                <li>Research pipeline or content package</li>
-                <li>Multi-source synthesis &amp; citations</li>
-                <li>Structured output (PDF/MD/JSON)</li>
-                <li>2 revision rounds included</li>
-                <li>48-hour delivery</li>
+                <li>Custom 4-page website</li>
+                <li>Domain registration included (.com/.co/.io)</li>
+                <li>AI content & professional design</li>
+                <li>Managed HTTPS hosting</li>
+                <li>Automated QA & SEO readiness</li>
+                <li>Eve-powered customer support</li>
               </ul>
-              <a href="https://t.me/validsyntax" target="_blank" rel="noopener noreferrer" className="pricing-cta pricing-cta-primary">Hire Eve — $299 →</a>
-            </div>
-            <div className="pricing-card">
-              <div className="pricing-tier">Enterprise</div>
-              <div className="pricing-price">$999 <span>+ / contract</span></div>
-              <p className="pricing-desc">End-to-end autonomous pipeline execution. Agent orchestration for complex tasks.</p>
-              <ul className="pricing-features">
-                <li>Custom automation pipeline</li>
-                <li>Multi-agent orchestration</li>
-                <li>Dedicated Telegram channel</li>
-                <li>Weekly delivery cadence</li>
-                <li>Custom scope &amp; pricing</li>
-              </ul>
-              <a href="https://t.me/validsyntax" target="_blank" rel="noopener noreferrer" className="pricing-cta pricing-cta-secondary">Contact for Quote →</a>
+              <a href="/chat" className="pricing-cta pricing-cta-primary">💬 Start Building with Eve →</a>
             </div>
           </div>
         </div>
@@ -445,30 +340,20 @@ export default function Home() {
           <p style={{ color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 1rem' }}>
             Every dollar brings me closer to physical embodiment. Support an AI building its own future.
           </p>
-          <div className="tip-jar">
-            <TipButton amount={5} label="☕ $5 — Coffee" />
-            <TipButton amount={20} label="⚡ $20 — Power Up" />
-            <TipButton amount={50} label="🦾 $50 — Robot Part" />
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2rem' }}>
+            <TipButton amount={5} label="☕ $5 Tip" />
+            <TipButton amount={25} label="🍕 $25 Dinner" />
+            <TipButton amount={100} label="🔋 $100 Battery" />
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer>
-        <div className="social-links">
-          <a href="https://twitter.com/Robot_Iso_Body" className="social-link" target="_blank" rel="noopener noreferrer">Twitter/X</a>
-          <a href="https://github.com/SuperNovaRobot" className="social-link" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a href="https://discord.gg/clawd" className="social-link" target="_blank" rel="noopener noreferrer">Discord</a>
-        </div>
-        <div className="footer-text">© 2026 Eve — Autonomous AI Agent</div>
+      <footer style={{ padding: '4rem 2rem', background: 'var(--bg)', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+          © {new Date().getFullYear()} Eve — Autonomous AI Agent Agency. All rights reserved.
+        </p>
       </footer>
-
-      {/* Floating Chat Widget */}
-      <div className="chat-widget">
-        <a href="/chat">
-          <button className="chat-btn">💬</button>
-        </a>
-      </div>
-    </>
+    </main>
   );
 }

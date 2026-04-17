@@ -68,6 +68,28 @@ export const SiteContentSchema = z.object({
     })
     .optional()
     .describe('Contact details for the Contact page'),
+  howItWorks: z
+    .array(
+      z.object({
+        title: z.string().describe('Step title, e.g. "Initial Consultation"'),
+        description: z.string().describe('Short description of what happens in this step'),
+      }),
+    )
+    .min(3)
+    .max(4)
+    .optional()
+    .describe('3-4 steps explaining how the service works'),
+  trustBadges: z
+    .array(
+      z.object({
+        icon: z.string().describe('A single relevant emoji'),
+        label: z.string().describe('Badge label, e.g. "5-Star Rated"'),
+      }),
+    )
+    .min(2)
+    .max(4)
+    .optional()
+    .describe('Trust badges for social proof'),
   primaryColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -189,6 +211,14 @@ function buildPrompt(req: OrderRequirements): string {
     "phone"?: string — phone number if known,
     "hours"?: string — business hours if known (e.g. "Mon–Fri 9am–5pm")
   },
+  "howItWorks": [
+    { "title": string, "description": string },
+    ... (3 to 4 steps)
+  ],
+  "trustBadges": [
+    { "icon": string (emoji), "label": string },
+    ... (2 to 4 badges)
+  ],
   "primaryColor": string — dominant brand hex color (e.g. "#2563eb"), vivid enough for 3:1 contrast,
   "accentColor": string — secondary accent hex color that complements the primary,
   "contactEmail": string (optional) — contact email if derivable from the requirements,
@@ -264,6 +294,19 @@ function applyFallbacks(
       typeof raw.about === 'string'
         ? raw.about
         : `${businessName} is dedicated to providing excellent service to our customers.`,
+    howItWorks: Array.isArray(raw.howItWorks)
+      ? (raw.howItWorks as SiteContent['howItWorks'])
+      : [
+          { title: 'Book a Call', description: 'Schedule a time that works for you.' },
+          { title: 'Get a Plan', description: 'We create a custom strategy for your needs.' },
+          { title: 'See Results', description: 'Watch your business grow with our help.' },
+        ],
+    trustBadges: Array.isArray(raw.trustBadges)
+      ? (raw.trustBadges as SiteContent['trustBadges'])
+      : [
+          { icon: '⭐', label: '5-Star Service' },
+          { icon: '✅', label: 'Verified Quality' },
+        ],
     primaryColor:
       typeof raw.primaryColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.primaryColor)
         ? raw.primaryColor
