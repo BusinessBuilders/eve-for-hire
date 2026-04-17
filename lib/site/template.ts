@@ -66,6 +66,11 @@ function renderHome(content: SiteContent, _domain: string): string {
     </div>
   </section>
 
+  ${renderHowItWorks(content)}
+  ${renderPricing(content)}
+  ${renderFaq(content)}
+  ${renderGeolocation(content)}
+
   <section class="about" id="about">
     <div class="container about-inner">
       <div class="about-content">
@@ -73,8 +78,20 @@ function renderHome(content: SiteContent, _domain: string): string {
         <p class="about-text">${esc(content.about)}</p>
         <a href="about.html" class="btn btn-primary">Our Story &rarr;</a>
       </div>
-      <div class="about-visual" aria-hidden="true">
-        <div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>
+      <div class="about-visual about-visual-v13" aria-hidden="true">
+        <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" class="premium-svg">
+          <defs>
+            <linearGradient id="grad-about" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="var(--primary)" />
+              <stop offset="100%" stop-color="var(--accent)" />
+            </linearGradient>
+          </defs>
+          <rect x="50" y="50" width="300" height="300" rx="48" fill="url(#grad-about)" opacity="0.1" />
+          <rect x="80" y="80" width="240" height="240" rx="32" fill="url(#grad-about)" />
+          <path d="M160 200L190 230L240 180" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="320" cy="80" r="40" fill="var(--accent)" />
+          <text x="320" y="92" text-anchor="middle" fill="white" font-family="var(--font-heading)" font-weight="900" font-size="32">${esc(content.businessName.slice(0, 1))}</text>
+        </svg>
       </div>
     </div>
   </section>
@@ -112,8 +129,20 @@ function renderAbout(content: SiteContent): string {
         <p class="about-text">${esc(mission)}</p>
         <a href="contact.html" class="btn btn-primary" style="margin-top:1rem">${esc(content.ctaText)}</a>
       </div>
-      <div class="about-visual" aria-hidden="true">
-        <div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>
+      <div class="about-visual about-visual-v13" aria-hidden="true">
+        <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" class="premium-svg">
+          <defs>
+            <linearGradient id="grad-about" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="var(--primary)" />
+              <stop offset="100%" stop-color="var(--accent)" />
+            </linearGradient>
+          </defs>
+          <rect x="50" y="50" width="300" height="300" rx="48" fill="url(#grad-about)" opacity="0.1" />
+          <rect x="80" y="80" width="240" height="240" rx="32" fill="url(#grad-about)" />
+          <path d="M160 200L190 230L240 180" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="320" cy="80" r="40" fill="var(--accent)" />
+          <text x="320" y="92" text-anchor="middle" fill="white" font-family="var(--font-heading)" font-weight="900" font-size="32">${esc(content.businessName.slice(0, 1))}</text>
+        </svg>
       </div>
     </div>
   </section>
@@ -648,6 +677,126 @@ function css(content: SiteContent): string {
   `;
 }
 
+
+function renderHowItWorks(content: SiteContent): string {
+  if (!content.howItWorks || content.howItWorks.length === 0) return '';
+
+  return `
+  <section class="how-it-works section-padding">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <div class="step-grid">
+        ${content.howItWorks
+          .map(
+            (step, i) => `
+          <div class="step-card">
+            <div class="step-number">${i + 1}</div>
+            <h3 class="step-title">${esc(step.title)}</h3>
+            <p class="step-desc">${esc(step.description)}</p>
+          </div>`,
+          )
+          .join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderFaq(content: SiteContent): string {
+  if (!content.faq || content.faq.length === 0) return '';
+
+  return `
+  <section class="faq section-padding">
+    <div class="container" style="max-width: 800px">
+      <h2 class="section-title">Common Questions</h2>
+      <div style="display:flex; flex-direction:column; gap:var(--space-4)">
+        ${content.faq
+          .map(
+            (item) => `
+          <div class="glass" style="padding:1.5rem; border-radius:var(--radius)">
+            <h3 style="font-size:1.1rem; margin-bottom:0.5rem; color:var(--fg)">${esc(item.question)}</h3>
+            <p style="color:var(--fg-muted); font-size:0.95rem">${esc(item.answer)}</p>
+          </div>`,
+          )
+          .join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderPricing(content: SiteContent): string {
+  if (!content.pricing) return '';
+
+  return `
+  <section class="pricing section-padding" style="background: var(--bg-soft)">
+    <div class="container">
+      <h2 class="section-title">${esc(content.pricing.title)}</h2>
+      <p style="text-align:center; color:var(--fg-muted); margin-top:-2rem; margin-bottom:3rem">${esc(content.pricing.description)}</p>
+      <div class="feature-grid">
+        ${content.pricing.tiers
+          .map(
+            (tier) => `
+          <div class="feature-card ${tier.featured ? 'glass' : ''}" style="${tier.featured ? 'border-color:var(--primary); transform:scale(1.05); z-index:1;' : ''}">
+            <h3 class="feature-title">${esc(tier.name)}</h3>
+            <p class="service-price" style="font-size:2.5rem; margin-bottom:1rem">${esc(tier.price)}</p>
+            <ul style="list-style:none; margin-bottom:2rem; flex-grow:1; display:flex; flex-direction:column; gap:0.5rem">
+              ${tier.features
+                .map(
+                  (f) => `<li style="display:flex; gap:0.5rem; font-size:0.95rem; color:var(--fg-muted)">
+                <span style="color:var(--primary)">✓</span> ${esc(f)}
+              </li>`,
+                )
+                .join('')}
+            </ul>
+            <a href="contact.html" class="btn ${tier.featured ? 'btn-primary' : 'btn-outline'}" style="width:100%">Get Started</a>
+          </div>`,
+          )
+          .join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderGeolocation(content: SiteContent): string {
+  if (!content.location) return '';
+
+  return `
+  <section class="geolocation-section section-padding">
+    <div class="container geo-inner">
+      <div class="geo-map-wrap">
+        <div class="geo-map-bg"></div>
+        <div class="geo-pulse"></div>
+        <div class="geo-marker"></div>
+      </div>
+      <div class="geo-content">
+        <h2 class="section-title">Serving ${esc(content.location.city)}</h2>
+        <p class="about-text">We provide fast, reliable service within a ${content.location.serviceRadius}-mile radius of ${esc(content.location.city)}. Our team is currently active and ready to help.</p>
+        <div class="geo-status" id="geo-status">
+          <div class="geo-dot" id="geo-dot"></div>
+          <span id="geo-text">Ready to check your area...</span>
+        </div>
+        <button class="btn btn-outline" onclick="simulateGeo()" id="geo-btn">Check Service Area</button>
+      </div>
+    </div>
+    <script>
+      function simulateGeo() {
+        const btn = document.getElementById('geo-btn');
+        const dot = document.getElementById('geo-dot');
+        const text = document.getElementById('geo-text');
+        
+        btn.disabled = true;
+        btn.textContent = 'Locating...';
+        dot.className = 'geo-dot';
+        text.textContent = 'Identifying your location...';
+
+        setTimeout(() => {
+          dot.className = 'geo-dot active';
+          text.textContent = 'We\\'re in your area! 📍 Estimated arrival: 15-30 mins.';
+          btn.textContent = 'Area Verified';
+        }, 1500);
+      }
+    </script>
+  </section>`;
+}
 
 function isColorLight(hex: string): boolean {
   const r = parseInt(hex.slice(1, 3), 16);

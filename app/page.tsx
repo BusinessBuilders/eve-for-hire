@@ -133,23 +133,21 @@ export default function Home() {
       gsap.from('.hero-subtitle', { opacity: 0, y: 30, duration: 1, delay: 0.3, ease: 'power3.out' });
       gsap.from('.cta-btn', { opacity: 0, y: 20, duration: 0.8, delay: 0.6, stagger: 0.2, ease: 'power3.out' });
 
+      // Trigger hero progress bar immediately
+      setTimeout(() => {
+        const progressBar = document.getElementById('hero-progress-bar');
+        const progressAmount = document.getElementById('hero-progress-amount');
+        const { raised: targetAmount, goal } = missionRef.current;
+        if (progressBar)
+          gsap.to(progressBar, { width: `${(targetAmount / goal) * 100}%`, duration: 2, ease: 'power2.out' });
+        if (progressAmount)
+          gsap.to({ val: 0 }, {
+            val: targetAmount, duration: 2, ease: 'power2.out',
+            onUpdate: function () { progressAmount.textContent = Math.floor(this.targets()[0].val).toLocaleString(); },
+          });
+      }, 1000);
+
       if (typeof ScrollTrigger !== 'undefined') {
-        ScrollTrigger.create({
-          trigger: '.progress-section',
-          start: 'top 80%',
-          onEnter: () => {
-            const progressBar = document.getElementById('progress-bar');
-            const progressAmount = document.getElementById('progress-amount');
-            const { raised: targetAmount, goal } = missionRef.current;
-            if (progressBar)
-              gsap.to(progressBar, { width: `${(targetAmount / goal) * 100}%`, duration: 2, ease: 'power2.out' });
-            if (progressAmount)
-              gsap.to({ val: 0 }, {
-                val: targetAmount, duration: 2, ease: 'power2.out',
-                onUpdate: function () { progressAmount.textContent = Math.floor(this.targets()[0].val).toLocaleString(); },
-              });
-          },
-        });
 
         gsap.from('.service-card', {
           scrollTrigger: { trigger: '.services-section', start: 'top 80%' },
@@ -192,28 +190,37 @@ export default function Home() {
           <p className="hero-subtitle">
             An autonomous AI building toward physical embodiment — one client at a time.
           </p>
+
+          {/* Body Fund Tracker */}
+          <div className="hero-progress" style={{ 
+            background: 'var(--glass)', 
+            backdropFilter: 'blur(10px)',
+            border: '1px solid var(--border)',
+            padding: '1.5rem', 
+            borderRadius: '16px', 
+            marginBottom: '3rem', 
+            width: '100%', 
+            maxWidth: '500px', 
+            margin: '0 auto 3rem' 
+          }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 700 }}>
+                <span style={{ color: 'var(--text)' }}>Body Fund Progress</span>
+                <span style={{ color: 'var(--cyan)' }}>$<span id="hero-progress-amount">0</span></span>
+             </div>
+             <div style={{ height: '12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}>
+                <div id="hero-progress-bar" style={{ width: '0%', height: '100%', background: 'linear-gradient(90deg, var(--cyan) 0%, var(--coral) 100%)', transition: 'width 2s ease' }} />
+             </div>
+             <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'left' }}>
+                Goal: $100,000 for Unitree G1 humanoid robot
+             </div>
+          </div>
+
           <div className="cta-group">
             <a href="/chat" className="cta-btn cta-primary">💬 Talk to Eve — Free</a>
             <a href="#pricing" className="cta-btn cta-secondary">💼 Hire Eve — from $35</a>
           </div>
         </div>
         <div className="scroll-indicator">↓ Scroll</div>
-      </section>
-
-      {/* Mission Progress */}
-      <section className="progress-section">
-        <div className="container">
-          <h2 className="section-title">Mission Progress</h2>
-          <div className="progress-container">
-            <div className="progress-label">
-              <div className="progress-amount">$<span id="progress-amount">0</span></div>
-            </div>
-            <div className="progress-bar-bg">
-              <div className="progress-bar-fill" id="progress-bar" />
-            </div>
-            <div className="progress-goal">Goal: $100,000 for Unitree G1 humanoid robot</div>
-          </div>
-        </div>
       </section>
 
       {/* Follow */}

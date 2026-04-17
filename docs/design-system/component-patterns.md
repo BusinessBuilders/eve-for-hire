@@ -1,104 +1,83 @@
-# Swarm Component Patterns Library
+# Swarm Component Patterns Library (v1.4)
 
 This document contains standardized CSS and HTML patterns for the Website Build Swarm. Follow these patterns to ensure premium quality and consistency.
 
-## 1. Hero Section
+## 1. Hero Section (Cinematic)
 
-The hero section should be impactful and clear.
+The hero section utilizes radial glows and cinematic typography for a high-end feel.
 
 ```html
-<section class="hero-section reveal-anim">
-    <div class="container">
-        <p class="hero-tagline">{tagline}</p>
-        <h1 class="glow-text">{headline}</h1>
-        <p class="hero-subheadline">{subheadline}</p>
-        <div class="flex-center">
-            <button class="btn btn-primary">{ctaText}</button>
-            <a href="#services" class="btn btn-secondary">Learn More</a>
-        </div>
+<section class="hero reveal-anim">
+    <div class="container hero-inner">
+        <p class="tagline">{tagline}</p>
+        <h1 class="hero-headline">{headline}</h1>
+        <p class="hero-sub">{subheadline}</p>
+        <a href="contact.html" class="btn btn-primary">{ctaText}</a>
     </div>
 </section>
 ```
 
-## 2. Feature Cards (Grid 3)
+## 2. Feature & Pricing Cards
 
-Use glassmorphism for a modern feel.
+Use glassmorphism and deep shadows for featured items.
 
 ```html
-<div class="glass-card reveal-anim">
-    <div class="glass-card-header">
-        <span class="feature-icon">{icon}</span>
-        <h3>{title}</h3>
-    </div>
-    <p class="text-muted">{description}</p>
+<div class="feature-card glass reveal-anim">
+    <div class="feature-icon">{icon}</div>
+    <h3 class="feature-title">{title}</h3>
+    <p class="feature-desc">{description}</p>
+</div>
+
+<!-- Pricing Tier -->
+<div class="feature-card glass featured-tier">
+    <h3 class="feature-title">{tierName}</h3>
+    <p class="service-price">{price}</p>
+    <ul class="tier-features">
+        <li>✓ {feature}</li>
+    </ul>
+    <a href="contact.html" class="btn btn-primary">Get Started</a>
 </div>
 ```
 
-## 3. About Section
+## 3. FAQ Accordion (v1.4)
 
-Combine text with a stylized graphic or image.
+Modular FAQ items with cinematic glass backgrounds.
 
 ```html
-<section id="about" class="section surface-alt">
-    <div class="container about-grid">
-        <div class="reveal-anim">
-            <h2 class="text-accent">{aboutTitle}</h2>
-            <p class="about-description">{aboutText}</p>
-            <div class="stats-grid">
-                <!-- Stat Item -->
-                <div>
-                    <div class="stat-value">{statValue}</div>
-                    <div class="stat-label">{statLabel}</div>
-                </div>
+<section class="faq section-padding">
+    <div class="container max-width-800">
+        <h2 class="section-title">Common Questions</h2>
+        <div class="faq-list">
+            <div class="glass faq-item">
+                <h3>{question}</h3>
+                <p>{answer}</p>
             </div>
         </div>
-        <div class="placeholder-image reveal-anim">
-            <!-- SVG Graphic Here -->
-        </div>
     </div>
 </section>
 ```
 
-## 4. Testimonials
+## 4. About Visual (Premium)
 
-Trust-building is critical for local businesses.
-
-```html
-<div class="glass-card testimonial-card reveal-anim">
-    <div class="glass-card-header flex-between">
-        <div>
-            <h3>{name}</h3>
-            <p class="text-xs">{location}</p>
-        </div>
-        <div class="rating-stars">★★★★★</div>
-    </div>
-    <p class="testimonial-body italic">"{comment}"</p>
-    <div class="testimonial-date">{date}</div>
-</div>
-```
-
-## 5. Contact / Service Request Modal
-
-Ensure the modal is accessible (ARIA).
+A stylized SVG graphic with brand gradients.
 
 ```html
-<div id="request-modal" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal-container">
-        <div class="modal-header">
-            <h2>{modalTitle}</h2>
-            <button class="modal-close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form>
-                <!-- Form Groups -->
-            </form>
-        </div>
-    </div>
+<div class="about-visual about-visual-v13" aria-hidden="true">
+    <svg viewBox="0 0 400 400" fill="none" class="premium-svg">
+        <defs>
+            <linearGradient id="grad-about" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--primary)" />
+                <stop offset="100%" stop-color="var(--accent)" />
+            </linearGradient>
+        </defs>
+        <rect x="80" y="80" width="240" height="240" rx="32" fill="url(#grad-about)" />
+        <!-- Icon components here -->
+    </svg>
 </div>
 ```
 
 ## Animation Guidelines
 
-- **Scroll Reveal**: Apply `.reveal-anim` and use `interactivity.js` to trigger visibility.
-- **Stagger**: Add incremental `animation-delay` to children in a grid.
-- **Hover Transitions**: Always use `var(--transition-smooth)` for button and card hover effects.
+- **Scroll Reveal**: Apply `.reveal-anim` and use GSAP/CSS to trigger visibility.
+- **Cinematic Glow**: Use `var(--primary-glow)` for hero backgrounds.
+- **Hover Transitions**: Always use `cubic-bezier(0.4, 0, 0.2, 1)` for button and card hover effects.
