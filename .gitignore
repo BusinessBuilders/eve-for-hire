@@ -9,3 +9,9 @@ data/*.db-shm
 data/*.db-wal
 .vercel
 tsconfig.tsbuildinfo
+
+# Local artifacts
+.firecrawl/
+scripts/poc-output/
+*.content.json
+which

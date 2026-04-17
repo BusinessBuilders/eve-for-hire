@@ -16,10 +16,10 @@ import styles from './chat.module.css';
 declare const gsap: any;
 
 const SUGGESTIONS = [
-  'What work can you do for me?',
-  "How close are you to getting your body?",
-  'Review my code repo',
-  'Tell me about yourself',
+  'Build me a website',
+  'Search for a domain',
+  'How does the agent swarm work?',
+  'How much does a website cost?',
 ];
 
 export default function ChatPage() {
