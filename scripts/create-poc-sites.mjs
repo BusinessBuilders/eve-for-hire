@@ -395,6 +395,10 @@ function renderHome(content) {
       </div>
     </div>
   </section>
+
+  ${renderPricing(content)}
+  ${renderFaq(content)}
+
   <section class="cta-banner">
     <div class="container cta-inner">
       <h2>Ready to get started?</h2>
@@ -402,6 +406,47 @@ function renderHome(content) {
       <a href="contact.html" class="btn btn-white">${esc(content.ctaText)}</a>
     </div>
   </section>`);
+}
+
+function renderPricing(content) {
+  if (!content.pricing) return '';
+  return `
+  <section class="features" id="pricing" style="background: var(--bg-soft)">
+    <div class="container">
+      <h2 class="section-title">${esc(content.pricing.title)}</h2>
+      <p style="text-align:center; color:var(--fg-muted); margin-top:-2rem; margin-bottom:3rem">${esc(content.pricing.description)}</p>
+      <div class="feature-grid">
+        ${content.pricing.tiers.map(tier => `
+          <div class="feature-card" style="${tier.featured ? 'border-color:var(--primary); transform:scale(1.05); z-index:1;' : ''}">
+            <h3 class="feature-title">${esc(tier.name)}</h3>
+            <p class="service-price" style="font-size:2.5rem; margin-bottom:1rem">${esc(tier.price)}</p>
+            <ul style="list-style:none; margin-bottom:2rem; flex-grow:1; display:flex; flex-direction:column; gap:0.5rem">
+              ${tier.features.map(f => `<li style="display:flex; gap:0.5rem; font-size:0.95rem; color:var(--fg-muted)">
+                <span style="color:var(--primary)">✓</span> ${esc(f)}
+              </li>`).join('')}
+            </ul>
+            <a href="contact.html" class="btn ${tier.featured ? 'btn-primary' : 'btn-outline'}" style="width:100%">Get Started</a>
+          </div>`).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderFaq(content) {
+  if (!content.faq || content.faq.length === 0) return '';
+  return `
+  <section class="features" id="faq">
+    <div class="container" style="max-width: 800px">
+      <h2 class="section-title">Common Questions</h2>
+      <div style="display:flex; flex-direction:column; gap:1rem">
+        ${content.faq.map(item => `
+          <div class="feature-card" style="padding:1.5rem">
+            <h3 style="font-size:1.1rem; margin-bottom:0.5rem; color:var(--fg)">${esc(item.question)}</h3>
+            <p style="color:var(--fg-muted); font-size:0.95rem">${esc(item.answer)}</p>
+          </div>`).join('')}
+      </div>
+    </div>
+  </section>`;
 }
 
 function renderAbout(content) {
@@ -560,7 +605,26 @@ const POC_SITES = [
         { icon: '📍', title: 'All Austin Coverage', description: 'Serving Austin, Round Rock, Cedar Park, Pflugerville, and surrounding areas.' },
         { icon: '⭐', title: 'Licensed & Insured', description: 'Fully licensed Texas plumbers with liability insurance on every job.' },
       ],
-      about: "Mike's Plumbing has served the Austin area for over 12 years. Founded by Mike Johnson, a master plumber with 20+ years of experience, we built our reputation on honest pricing, fast response times, and quality workmanship. When you're dealing with a plumbing emergency, you can count on us.",
+      howItWorks: [
+        { icon: '📞', title: 'Call Us', description: 'Available 24/7 for emergency plumbing help.' },
+        { icon: '🔍', title: 'Diagnosis', description: 'Expert analysis of your plumbing issue.' },
+        { icon: '🛠️', title: 'The Fix', description: 'Fast, professional repair using high-quality parts.' },
+        { icon: '✅', title: 'Peace of Mind', description: 'A job well done with our satisfaction guarantee.' },
+      ],
+      pricing: {
+        title: 'Transparent Pricing',
+        description: 'No hidden fees. Just honest, professional plumbing service.',
+        tiers: [
+          { name: 'Standard Call', price: '$89', features: ['Diagnosis included', 'Up-front quote', 'Basic repairs'] },
+          { name: 'Emergency Rush', price: '$149', features: ['60-min response', 'Priority dispatch', '24/7 availability', 'Master Plumber'], featured: true },
+          { name: 'Commercial', price: 'Custom', features: ['Scheduled maintenance', 'Large-scale systems', 'Dedicated account lead'] }
+        ]
+      },
+      faq: [
+        { question: 'Do you offer emergency service?', answer: 'Yes, we are available 24/7 for any plumbing emergency in the Austin area.' },
+        { question: 'Is your work guaranteed?', answer: 'Absolutely. We offer a 100% satisfaction guarantee on all labor and parts.' },
+        { question: 'Are you licensed and insured?', answer: 'We are fully licensed Texas Master Plumbers and carry full liability insurance.' }
+      ],
       servicesPage: {
         intro: "From emergency repairs to planned installations, here's what we handle.",
         items: [
