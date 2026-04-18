@@ -1,0 +1,33 @@
+{
+  "version": "1.6.0",
+  "personas": {
+    "Trustworthy Pro": {
+      "primaryColor": "#1e3a8a",
+      "accentColor": "#f97316",
+      "theme": "classic",
+      "fontFamily": "var(--font-body)",
+      "borderRadius": "8px"
+    },
+    "Modern Creative": {
+      "primaryColor": "#7c3aed",
+      "accentColor": "#10b981",
+      "theme": "cinematic",
+      "fontFamily": "var(--font-body)",
+      "borderRadius": "16px"
+    },
+    "Boutique Premium": {
+      "primaryColor": "#111827",
+      "accentColor": "#fbbf24",
+      "theme": "cinematic",
+      "fontFamily": "var(--font-heading)",
+      "borderRadius": "4px"
+    },
+    "High-Energy Startup": {
+      "primaryColor": "#ec4899",
+      "accentColor": "#06b6d4",
+      "theme": "classic",
+      "fontFamily": "var(--font-body)",
+      "borderRadius": "12px"
+    }
+  }
+}
