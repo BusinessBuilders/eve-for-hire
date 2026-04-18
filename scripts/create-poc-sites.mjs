@@ -32,7 +32,7 @@ function esc(s) {
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 function css(content) {
-  const { primaryColor: primary, accentColor: accent, backgroundColor: bg, softBackgroundColor: bgSoft, theme, radius = '12px' } = content;
+  const { primaryColor: primary, accentColor: accent, theme, radius = '12px' } = content;
   const isCinematic = theme === 'cinematic';
 
   if (isCinematic) {
@@ -42,28 +42,36 @@ function css(content) {
       :root {
         --primary: ${primary};
         --accent: ${accent};
+        --primary-glow: color-mix(in srgb, ${primary}, transparent 60%);
         --fg: #e2e8f0;
         --fg-muted: #94a3b8;
         --bg: #0a0a10;
+        --nav-bg: rgba(10, 10, 16, 0.85);
         --surface: #0f0f1a;
         --border: rgba(255, 255, 255, 0.08);
         --glass: rgba(255, 255, 255, 0.03);
         --radius: 16px;
         --font: 'Outfit', system-ui, sans-serif;
         --font-heading: 'Bebas Neue', system-ui, sans-serif;
+        --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.4);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       html { scroll-behavior: smooth; }
       body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.6; }
+      
+      .reveal-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+      .reveal-anim.visible { opacity: 1; transform: translateY(0); }
 
       .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
       /* ── Header ── */
-      .header { position: sticky; top: 0; background: rgba(10, 10, 16, 0.8); backdrop-filter: blur(12px);
+      .header { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border); z-index: 100; }
       .nav { display: flex; align-items: center; gap: 1rem; height: 72px; }
-      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: var(--primary); letter-spacing: 0.02em;
-        text-decoration: none; flex-shrink: 0; }
+      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: #fff; letter-spacing: 0.02em;
+        text-decoration: none; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+      .logo::before { content: ""; display: block; width: 32px; height: 32px; background: var(--primary); border-radius: 6px; box-shadow: 0 0 15px var(--primary-glow); }
       .nav-links { display: flex; gap: 0.5rem; flex: 1; }
       .nav-link { padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
         font-size: 0.95rem; color: var(--fg-muted); transition: all 0.2s ease; }
@@ -73,12 +81,12 @@ function css(content) {
       /* ── Buttons ── */
       .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 28px;
         border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; }
+        transition: var(--transition); cursor: pointer; border: none; }
       .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
       .btn-primary { 
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); 
         color: #fff;
-        box-shadow: 0 0 20px color-mix(in srgb, var(--primary), transparent 60%);
+        box-shadow: 0 0 20px var(--primary-glow);
       }
       .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
       .btn-outline:hover { background: var(--primary); color: #fff; }
@@ -106,17 +114,35 @@ function css(content) {
       .features { padding: 100px 0; background: var(--surface); }
       .section-title { font-family: var(--font-heading); font-size: 2.5rem; letter-spacing: 0.02em; margin-bottom: 48px;
         text-align: center; color: #fff; }
+      .glow-text { text-shadow: 0 0 20px var(--primary-glow); }
       .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
-      .feature-card { 
+      .feature-card, .glass-card { 
         background: var(--glass); border-radius: var(--radius); padding: 40px 32px;
         backdrop-filter: blur(12px); border: 1px solid var(--border);
-        transition: all 0.4s ease;
+        transition: var(--transition);
       }
-      .feature-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+      .feature-card:hover, .glass-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: var(--shadow-xl); }
       .feature-icon { font-size: 2.5rem; margin-bottom: 20px; }
       .feature-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
       .feature-desc { color: var(--fg-muted); font-size: 1rem; }
       .service-price { margin-top: 16px; font-weight: 600; color: var(--primary); font-size: 1.1rem; font-family: var(--font-heading); }
+
+      /* ── How It Works ── */
+      .steps { padding: 100px 0; position: relative; }
+      .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 48px; position: relative; }
+      .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; position: relative; z-index: 2; }
+      .step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-family: var(--font-heading);
+        font-size: 1.5rem; box-shadow: 0 0 20px var(--primary-glow); margin-bottom: 8px; }
+      .step-title { font-size: 1.25rem; font-weight: 700; color: #fff; }
+      .step-desc { color: var(--fg-muted); font-size: 0.95rem; font-weight: 300; }
+      
+      @media (min-width: 900px) {
+        .step-item:not(:last-child)::after {
+          content: ""; position: absolute; top: 24px; left: calc(50% + 40px); width: calc(100% - 80px);
+          height: 2px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.3;
+        }
+      }
 
       /* ── About ── */
       .about { padding: 100px 0; }
@@ -124,14 +150,8 @@ function css(content) {
       .about-content { flex: 1; display: flex; flex-direction: column; gap: 24px; }
       .about-content .section-title { text-align: left; margin-bottom: 0; }
       .about-text { color: var(--fg-muted); font-size: 1.1rem; font-weight: 300; }
-      .about-visual { flex: 0 0 240px; display: flex; align-items: center; justify-content: center; }
-      .about-blob { width: 200px; height: 200px; border-radius: 40px;
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        display: flex; align-items: center; justify-content: center;
-        font-size: 5rem; font-family: var(--font-heading); color: #fff;
-        box-shadow: 0 0 40px color-mix(in srgb, var(--primary), transparent 70%);
-        transform: rotate(-3deg);
-      }
+      .about-visual { flex: 1; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
+      .premium-illustration { width: 100%; max-width: 400px; height: auto; filter: drop-shadow(0 0 30px var(--primary-glow)); }
 
       /* ── CTA Banner ── */
       .cta-banner { background: var(--surface); padding: 100px 0; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -148,6 +168,17 @@ function css(content) {
       .contact-icon { font-size: 1.5rem; flex-shrink: 0; color: var(--primary); }
       .contact-detail a { color: #fff; text-decoration: none; }
       .contact-detail a:hover { color: var(--primary); }
+      
+      .map-placeholder { width: 100%; height: 250px; background: var(--surface); border-radius: 12px; margin-top: 24px;
+        border: 1px solid var(--border); position: relative; overflow: hidden; }
+      .map-grid { position: absolute; inset: 0; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; }
+      .map-pin { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; background: var(--primary); border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg); box-shadow: 0 0 20px var(--primary-glow); }
+      .map-pin::after { content: ""; position: absolute; inset: 6px; background: #fff; border-radius: 50%; }
+      .map-pin-pulse { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; transform: translate(-12px, -12px);
+        border: 2px solid var(--primary); border-radius: 50%; animation: ping 2s infinite; }
+      @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
       .contact-form-wrap .section-title { text-align: left; margin-bottom: 32px; }
       .contact-form { display: flex; flex-direction: column; gap: 24px; }
       .form-group { display: flex; flex-direction: column; gap: 10px; }
@@ -173,6 +204,11 @@ function css(content) {
       .footer-copy { font-size: 0.9rem; }
       .footer-email { color: var(--primary); font-size: 0.95rem; text-decoration: none; }
 
+      /* ── Trust Badges ── */
+      .trust-row { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-top: 48px; }
+      .trust-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--fg-muted); 
+        background: var(--glass); padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); }
+
       /* ── Responsive ── */
       @media (max-width: 900px) {
         .about-inner { flex-direction: column; gap: 48px; text-align: center; }
@@ -187,7 +223,7 @@ function css(content) {
     `;
   }
 
-  // Classic Theme (Existing logic but cleaned up for the script)
+  // Classic Theme
   return `
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -204,6 +240,10 @@ function css(content) {
     html { scroll-behavior: smooth; }
     body { font-family: var(--font-body); color: var(--fg); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; }
     h1, h2, h3, h4, .logo { font-family: var(--font-heading); }
+    
+    .reveal-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .reveal-anim.visible { opacity: 1; transform: translateY(0); }
+
     .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
     .header { position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100; }
@@ -220,12 +260,11 @@ function css(content) {
       border-radius: var(--radius); font-weight: 700; font-size: 0.95rem; text-decoration: none;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; gap: 8px; }
     .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-    .btn:active { transform: translateY(0); }
     .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: color-mix(in srgb, var(--primary), black 10%); }
     .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
     .btn-outline:hover { background: var(--primary); color: #fff; }
     .btn-white { background: #fff; color: var(--primary); }
+    
     .hero { padding: 120px 0 100px; background: var(--fg); position: relative; overflow: hidden; color: #fff; text-align: center; }
     .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); opacity: 0.9; }
     .hero::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0); background-size: 32px 32px; }
@@ -235,6 +274,7 @@ function css(content) {
     .hero-headline { font-size: clamp(2.25rem, 6vw, 3.75rem); font-weight: 800; line-height: 1.1;
       letter-spacing: -0.04em; max-width: 850px; }
     .hero-sub { font-size: 1.25rem; opacity: 0.9; max-width: 650px; font-weight: 400; }
+    
     .features { padding: 100px 0; background: var(--bg-soft); }
     .section-title { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 48px; text-align: center; color: var(--fg); }
     .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
@@ -245,6 +285,13 @@ function css(content) {
     .feature-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: var(--fg); }
     .feature-desc { color: var(--fg-muted); font-size: 1rem; flex-grow: 1; }
     .service-price { margin-top: 16px; font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+    
+    .steps { padding: 100px 0; background: var(--bg); }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 48px; }
+    .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+    .step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem; }
+    
     .about { padding: 100px 0; }
     .about-inner { display: flex; align-items: center; gap: 80px; }
     .about-content { flex: 1; display: flex; flex-direction: column; gap: 24px; }
@@ -255,54 +302,43 @@ function css(content) {
       background: linear-gradient(135deg, var(--primary), var(--accent));
       display: flex; align-items: center; justify-content: center;
       font-size: 5rem; font-weight: 900; color: #fff; box-shadow: var(--shadow-lg); transform: rotate(-3deg); }
+    
     .cta-banner { background: var(--primary); color: #fff; padding: 100px 0; text-align: center; position: relative; overflow: hidden; }
-    .cta-banner::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); opacity: 0.9; }
     .cta-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 24px; }
     .cta-inner h2 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; }
-    .cta-inner p { opacity: 0.9; font-size: 1.2rem; max-width: 600px; }
+    
     .contact-section { padding: 100px 0; }
     .contact-inner { display: grid; grid-template-columns: 1fr 1.5fr; gap: 80px; align-items: start; }
     .contact-details { display: flex; flex-direction: column; gap: 24px; }
-    .contact-details .section-title { text-align: left; margin-bottom: 8px; }
     .contact-detail { display: flex; align-items: flex-start; gap: 16px; font-size: 1.05rem; }
     .contact-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
-    .contact-detail a { color: var(--primary); text-decoration: none; font-weight: 600; }
-    .contact-detail a:hover { text-decoration: underline; }
     .contact-form-wrap { background: var(--bg-soft); padding: 48px; border-radius: var(--radius); }
-    .contact-form-wrap .section-title { text-align: left; margin-bottom: 32px; }
     .contact-form { display: flex; flex-direction: column; gap: 20px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-group label { font-size: 0.9rem; font-weight: 600; color: var(--fg); }
     .form-group input, .form-group textarea {
       padding: 12px 16px; border-radius: 8px; border: 2px solid #e2e8f0;
-      font-family: var(--font-body); font-size: 1rem; color: var(--fg);
-      background: var(--bg); transition: all 0.2s; resize: vertical; }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
-    .cf-status { font-size: 1rem; border-radius: 8px; padding: 16px; display: none; margin-top: 16px; font-weight: 500; }
-    .cf-status:not(:empty) { display: block; }
-    .cf-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .cf-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+      font-family: var(--font-body); font-size: 1rem; background: var(--bg); resize: vertical; }
+    
+    .cf-status { font-size: 0.9rem; border-radius: 8px; padding: 10px 14px; display: none; }
     .footer { background: #0f172a; color: #94a3b8; padding: 64px 0 40px; }
     .footer-inner { display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
     .footer-nav { display: flex; gap: 2rem; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; }
-    .footer-nav a { color: #94a3b8; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .footer-nav a { color: #94a3b8; text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
     .footer-nav a:hover { color: #fff; }
-    .footer-name { font-weight: 800; color: #fff; font-size: 1.25rem; letter-spacing: -0.03em; }
-    .footer-copy { font-size: 0.9rem; }
-    .footer-email { color: var(--accent); font-size: 0.95rem; text-decoration: none; font-weight: 600; }
+    
+    .trust-row { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 32px; }
+    .trust-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: rgba(255,255,255,0.8); 
+      background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 50px; }
+
     @media (max-width: 900px) {
       .contact-inner { grid-template-columns: 1fr; gap: 60px; }
       .about-inner { flex-direction: column; gap: 48px; text-align: center; }
       .about-content .section-title { text-align: center; }
       .about-visual { order: -1; }
     }
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .hero { padding: 100px 0 80px; }
-    }
   `;
 }
-
 
 // ─── Page builder ─────────────────────────────────────────────────────────────
 function page(content, currentPage, mainHtml) {
@@ -320,7 +356,7 @@ function page(content, currentPage, mainHtml) {
 
   const fonts = isCinematic
     ? '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">'
-    : '<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">';
+    : '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -328,7 +364,7 @@ function page(content, currentPage, mainHtml) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="${esc(content.subheadline)}" />
-  <title>${esc(content.businessName)}</title>
+  <title>${esc(content.businessName)} | ${esc(content.tagline)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   ${fonts}
@@ -339,7 +375,7 @@ function page(content, currentPage, mainHtml) {
     <nav class="nav container">
       <a href="index.html" class="logo">${esc(content.businessName)}</a>
       <div class="nav-links">${navLinks}</div>
-      <a href="${mailtoHref}" class="btn btn-outline nav-cta">Contact Us</a>
+      <a href="${mailtoHref}" class="btn btn-primary nav-cta">Get Started</a>
     </nav>
   </header>
   <main>${mainHtml}</main>
@@ -353,25 +389,95 @@ function page(content, currentPage, mainHtml) {
       </div>
       <p class="footer-name">${esc(content.businessName)}</p>
       <p class="footer-copy">&copy; ${new Date().getFullYear()} ${esc(content.businessName)}. All rights reserved.</p>
-      ${content.contactEmail ? `<a href="mailto:${esc(content.contactEmail)}" class="footer-email">${esc(content.contactEmail)}</a>` : ''}
     </div>
   </footer>
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal-anim').forEach(el => observer.observe(el));
+  </script>
 </body>
 </html>`;
 }
 
-
 function renderHome(content) {
+  const isCinematic = content.theme === 'cinematic';
+  const trustBadgesHtml = content.trustBadges?.length
+    ? `<div class="trust-row">
+        ${content.trustBadges.map(b => `<div class="trust-badge"><span>${b.icon}</span> <span>${esc(b.label)}</span></div>`).join('\n        ')}
+      </div>`
+    : '';
+
+  const howItWorksHtml = content.howItWorks?.length
+    ? `<section class="steps reveal-anim" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <div class="steps-grid">
+        ${content.howItWorks.map((s, i) => `<div class="step-item">
+          <div class="step-number">${i + 1}</div>
+          <h3 class="step-title">${esc(s.title)}</h3>
+          <p class="step-desc">${esc(s.description)}</p>
+        </div>`).join('\n        ')}
+      </div>
+    </div>
+  </section>`
+    : '';
+
+  const pricingHtml = content.pricing?.length
+    ? `<section class="features reveal-anim" id="pricing" style="background: var(--bg);">
+    <div class="container">
+      <h2 class="section-title">Simple Pricing</h2>
+      <div class="feature-grid">
+        ${content.pricing.map(p => `<div class="feature-card ${p.isFeatured ? 'glass-card' : ''}" style="${p.isFeatured ? 'border-color: var(--primary);' : ''}">
+          <h3 class="feature-title">${esc(p.tier)}</h3>
+          <p class="service-price">${esc(p.price)}${p.unit ? `<span>${esc(p.unit)}</span>` : ''}</p>
+          <ul style="list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; text-align: left; flex-grow: 1;">
+            ${p.features.map(f => `<li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> ${esc(f)}</li>`).join('')}
+          </ul>
+          <a href="contact.html" class="btn ${p.isFeatured ? 'btn-primary' : 'btn-outline'}" style="margin-top: 2rem;">${esc(p.cta || content.ctaText)}</a>
+        </div>`).join('\n        ')}
+      </div>
+    </div>
+  </section>`
+    : '';
+
+  const faqHtml = content.faq?.length
+    ? `<section class="about reveal-anim" id="faq" style="background: var(--bg-soft);">
+    <div class="container" style="max-width: 800px;">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        ${content.faq.map(f => `<div class="feature-card" style="padding: 2rem; text-align: left;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--fg);">${esc(f.question)}</h3>
+          <p style="color: var(--fg-muted); font-size: 1rem;">${esc(f.answer)}</p>
+        </div>`).join('\n        ')}
+      </div>
+    </div>
+  </section>`
+    : '';
+
+  const aboutIllustration = isCinematic
+    ? `<svg class="premium-illustration" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="200" cy="200" r="150" stroke="url(#p0)" stroke-width="2" stroke-dasharray="10 10"/>
+        <rect x="150" y="150" width="100" height="100" rx="20" fill="url(#p0)" fill-opacity="0.2" stroke="url(#p0)" stroke-width="2"/>
+        <defs><linearGradient id="p0" x1="50" y1="50" x2="350" y2="350"><stop stop-color="var(--primary)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
+      </svg>`
+    : `<div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>`;
+
   return page(content, 'index.html', `
-  <section class="hero">
+  <section class="hero reveal-anim">
     <div class="container hero-inner">
       <p class="tagline">${esc(content.tagline)}</p>
       <h1 class="hero-headline">${esc(content.headline)}</h1>
       <p class="hero-sub">${esc(content.subheadline)}</p>
-      <a href="contact.html" class="btn btn-primary">${esc(content.ctaText)}</a>
+      <div style="display:flex; gap:16px; justify-content:center;">
+        <a href="contact.html" class="btn btn-primary">${esc(content.ctaText)}</a>
+        <a href="#features" class="btn btn-outline">Explore Services</a>
+      </div>
+      ${trustBadgesHtml}
     </div>
   </section>
-  <section class="features" id="features">
+  <section class="features reveal-anim" id="features">
     <div class="container">
       <h2 class="section-title">What We Offer</h2>
       <div class="feature-grid">
@@ -383,109 +489,57 @@ function renderHome(content) {
       </div>
     </div>
   </section>
-  <section class="about" id="about">
+  ${howItWorksHtml}
+  ${pricingHtml}
+  <section class="about reveal-anim" id="about">
     <div class="container about-inner">
       <div class="about-content">
         <h2 class="section-title">About Us</h2>
         <p class="about-text">${esc(content.about)}</p>
         <a href="about.html" class="btn btn-primary">Our Story &rarr;</a>
       </div>
-      <div class="about-visual" aria-hidden="true">
-        <div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>
-      </div>
+      <div class="about-visual" aria-hidden="true">${aboutIllustration}</div>
     </div>
   </section>
-
-  ${renderPricing(content)}
-  ${renderFaq(content)}
-
-  <section class="cta-banner">
+  ${faqHtml}
+  <section class="cta-banner reveal-anim">
     <div class="container cta-inner">
       <h2>Ready to get started?</h2>
-      <p>Reach out today &mdash; we&rsquo;d love to work with you.</p>
       <a href="contact.html" class="btn btn-white">${esc(content.ctaText)}</a>
     </div>
   </section>`);
-}
-
-function renderPricing(content) {
-  if (!content.pricing) return '';
-  return `
-  <section class="features" id="pricing" style="background: var(--bg-soft)">
-    <div class="container">
-      <h2 class="section-title">${esc(content.pricing.title)}</h2>
-      <p style="text-align:center; color:var(--fg-muted); margin-top:-2rem; margin-bottom:3rem">${esc(content.pricing.description)}</p>
-      <div class="feature-grid">
-        ${content.pricing.tiers.map(tier => `
-          <div class="feature-card" style="${tier.featured ? 'border-color:var(--primary); transform:scale(1.05); z-index:1;' : ''}">
-            <h3 class="feature-title">${esc(tier.name)}</h3>
-            <p class="service-price" style="font-size:2.5rem; margin-bottom:1rem">${esc(tier.price)}</p>
-            <ul style="list-style:none; margin-bottom:2rem; flex-grow:1; display:flex; flex-direction:column; gap:0.5rem">
-              ${tier.features.map(f => `<li style="display:flex; gap:0.5rem; font-size:0.95rem; color:var(--fg-muted)">
-                <span style="color:var(--primary)">✓</span> ${esc(f)}
-              </li>`).join('')}
-            </ul>
-            <a href="contact.html" class="btn ${tier.featured ? 'btn-primary' : 'btn-outline'}" style="width:100%">Get Started</a>
-          </div>`).join('')}
-      </div>
-    </div>
-  </section>`;
-}
-
-function renderFaq(content) {
-  if (!content.faq || content.faq.length === 0) return '';
-  return `
-  <section class="features" id="faq">
-    <div class="container" style="max-width: 800px">
-      <h2 class="section-title">Common Questions</h2>
-      <div style="display:flex; flex-direction:column; gap:1rem">
-        ${content.faq.map(item => `
-          <div class="feature-card" style="padding:1.5rem">
-            <h3 style="font-size:1.1rem; margin-bottom:0.5rem; color:var(--fg)">${esc(item.question)}</h3>
-            <p style="color:var(--fg-muted); font-size:0.95rem">${esc(item.answer)}</p>
-          </div>`).join('')}
-      </div>
-    </div>
-  </section>`;
 }
 
 function renderAbout(content) {
   const story = content.aboutPage?.story ?? content.about;
   const mission = content.aboutPage?.mission ?? `${esc(content.businessName)} is dedicated to delivering excellent results for every client.`;
   return page(content, 'about.html', `
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
-      <h1 class="hero-headline">About ${esc(content.businessName)}</h1>
-      <p class="hero-sub">${esc(content.tagline)}</p>
+      <h1 class="hero-headline">About Us</h1>
     </div>
   </section>
-  <section class="about" id="story">
+  <section class="about reveal-anim" id="story">
     <div class="container about-inner">
       <div class="about-content">
         <h2 class="section-title">Our Story</h2>
         <p class="about-text">${esc(story)}</p>
         <h2 class="section-title" style="margin-top:2rem">Our Mission</h2>
         <p class="about-text">${esc(mission)}</p>
-        <a href="contact.html" class="btn btn-primary" style="margin-top:1rem">${esc(content.ctaText)}</a>
-      </div>
-      <div class="about-visual" aria-hidden="true">
-        <div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>
       </div>
     </div>
   </section>`);
 }
 
 function renderServices(content) {
-  const intro = content.servicesPage?.intro ?? `Here's what ${esc(content.businessName)} can do for you.`;
   const items = content.servicesPage?.items ?? content.features.map(f => ({ ...f }));
   return page(content, 'services.html', `
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
       <h1 class="hero-headline">Our Services</h1>
-      <p class="hero-sub">${intro}</p>
     </div>
   </section>
-  <section class="features" id="services">
+  <section class="features reveal-anim" id="services">
     <div class="container">
       <div class="feature-grid">
         ${items.map(s => `<div class="feature-card">
@@ -496,84 +550,45 @@ function renderServices(content) {
         </div>`).join('\n')}
       </div>
     </div>
-  </section>
-  <section class="cta-banner">
-    <div class="container cta-inner">
-      <h2>Interested in working together?</h2>
-      <a href="contact.html" class="btn btn-white">${esc(content.ctaText)}</a>
-    </div>
   </section>`);
 }
 
 function renderContact(content, domain) {
   const cp = content.contactPage ?? {};
+  const isCinematic = content.theme === 'cinematic';
   const detailRows = [
-    cp.address ? `<div class="contact-detail"><span class="contact-icon">📍</span><span>${esc(cp.address)}</span></div>` : '',
-    cp.phone ? `<div class="contact-detail"><span class="contact-icon">📞</span><a href="tel:${esc(cp.phone)}">${esc(cp.phone)}</a></div>` : '',
-    cp.hours ? `<div class="contact-detail"><span class="contact-icon">🕐</span><span>${esc(cp.hours)}</span></div>` : '',
-    content.contactEmail ? `<div class="contact-detail"><span class="contact-icon">✉️</span><a href="mailto:${esc(content.contactEmail)}">${esc(content.contactEmail)}</a></div>` : '',
+    cp.address ? `<div class="contact-detail"><span>📍</span><span>${esc(cp.address)}</span></div>` : '',
+    cp.phone ? `<div class="contact-detail"><span>📞</span><a href="tel:${esc(cp.phone)}">${esc(cp.phone)}</a></div>` : '',
+    content.contactEmail ? `<div class="contact-detail"><span>✉️</span><a href="mailto:${esc(content.contactEmail)}">${esc(content.contactEmail)}</a></div>` : '',
   ].filter(Boolean).join('\n');
 
-  const contactApiUrl = `https://${domain}/api/contact/${domain}`;
+  const mapHtml = isCinematic ? `<div class="map-placeholder reveal-anim"><div class="map-grid"></div><div class="map-pin-pulse"></div><div class="map-pin"></div></div>` : '';
 
   return page(content, 'contact.html', `
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
       <h1 class="hero-headline">Contact Us</h1>
-      <p class="hero-sub">We&rsquo;d love to hear from you.</p>
     </div>
   </section>
-  <section class="contact-section">
+  <section class="contact-section reveal-anim">
     <div class="container contact-inner">
-      ${detailRows ? `<div class="contact-details">
+      <div class="contact-details">
         <h2 class="section-title">Get in Touch</h2>
         ${detailRows}
-      </div>` : ''}
+        ${mapHtml}
+      </div>
       <div class="contact-form-wrap">
         <h2 class="section-title">Send a Message</h2>
         <form class="contact-form" id="contact-form">
-          <div class="form-group">
-            <label for="cf-name">Your Name</label>
-            <input type="text" id="cf-name" name="name" placeholder="Jane Smith" required />
-          </div>
-          <div class="form-group">
-            <label for="cf-email">Email Address</label>
-            <input type="email" id="cf-email" name="email" placeholder="jane@example.com" required />
-          </div>
-          <div class="form-group">
-            <label for="cf-message">Message</label>
-            <textarea id="cf-message" name="message" rows="5" placeholder="How can we help?" required></textarea>
-          </div>
+          <div class="form-group"><label>Your Name</label><input type="text" name="name" required /></div>
+          <div class="form-group"><label>Email Address</label><input type="email" name="email" required /></div>
+          <div class="form-group"><label>Message</label><textarea name="message" rows="5" required></textarea></div>
           <button type="submit" class="btn btn-primary">${esc(content.ctaText)}</button>
-          <div class="cf-status cf-success" id="cf-success"></div>
-          <div class="cf-status cf-error" id="cf-error"></div>
+          <div class="cf-status" id="cf-status"></div>
         </form>
       </div>
     </div>
-  </section>
-  <script>
-    document.getElementById('contact-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const btn = this.querySelector('button[type=submit]');
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-      const data = { name: this.name.value, email: this.email.value, message: this.message.value };
-      try {
-        const r = await fetch('${contactApiUrl}', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        if (r.ok) {
-          document.getElementById('cf-success').textContent = 'Message sent! We will be in touch shortly.';
-          this.reset();
-        } else {
-          throw new Error('Server error');
-        }
-      } catch {
-        document.getElementById('cf-error').textContent = 'Something went wrong. Please try again or email us directly.';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '${esc(content.ctaText)}';
-      }
-    });
-  </script>`);
+  </section>`);
 }
 
 // ─── PoC Site Definitions ─────────────────────────────────────────────────────
@@ -588,66 +603,40 @@ const POC_SITES = [
       desiredDomain: 'mikes-plumbing-austin.com',
       domainPath: 'new',
       style: 'Professional navy and orange, trustworthy and industrial-grade',
-      chatSummary: 'Mike runs emergency plumbing services in Austin, TX. Offers emergency repairs, drain cleaning, water heater installation, and general plumbing. Available 24/7 across Austin and surrounding areas.',
+      chatSummary: 'Mike runs emergency plumbing services in Austin, TX.',
     },
     content: {
       businessName: "Mike's Plumbing",
       tagline: "Austin's #1 Emergency Plumber — 24/7",
       headline: "Fast Plumbing Help When You Need It Most",
-      subheadline: "Emergency plumbing services across Austin, TX — available 24/7. We fix leaks, clogs, water heaters, and more with same-day response.",
+      subheadline: "Emergency plumbing services across Austin, TX — available 24/7.",
       ctaText: "Request Service Now",
       theme: 'classic',
       features: [
-        { icon: '🚨', title: '24/7 Emergency Service', description: 'We answer calls day and night — no extra charge for after-hours emergencies.' },
-        { icon: '🚰', title: 'Drain Cleaning', description: 'Fast, effective drain clearing for kitchens, bathrooms, and main sewer lines.' },
-        { icon: '🔥', title: 'Water Heater Experts', description: 'Installation, repair, and replacement of all water heater types.' },
-        { icon: '🔧', title: 'General Plumbing', description: 'Leaks, pipe repairs, fixture installs — we handle it all.' },
-        { icon: '📍', title: 'All Austin Coverage', description: 'Serving Austin, Round Rock, Cedar Park, Pflugerville, and surrounding areas.' },
-        { icon: '⭐', title: 'Licensed & Insured', description: 'Fully licensed Texas plumbers with liability insurance on every job.' },
+        { icon: '🚨', title: '24/7 Emergency Service', description: 'We answer calls day and night.' },
+        { icon: '🚰', title: 'Drain Cleaning', description: 'Fast, effective drain clearing.' },
+        { icon: '⭐', title: 'Licensed & Insured', description: 'Fully licensed Texas plumbers.' },
       ],
       howItWorks: [
-        { icon: '📞', title: 'Call Us', description: 'Available 24/7 for emergency plumbing help.' },
-        { icon: '🔍', title: 'Diagnosis', description: 'Expert analysis of your plumbing issue.' },
-        { icon: '🛠️', title: 'The Fix', description: 'Fast, professional repair using high-quality parts.' },
-        { icon: '✅', title: 'Peace of Mind', description: 'A job well done with our satisfaction guarantee.' },
+        { title: 'Request Service', description: 'Fill out our fast online form or call us directly.' },
+        { title: 'Fast Dispatch', description: 'Our nearest licensed plumber is sent to your location immediately.' },
+        { title: 'Problem Solved', description: 'Expert diagnosis and repair done right the first time.' },
       ],
-      pricing: {
-        title: 'Transparent Pricing',
-        description: 'No hidden fees. Just honest, professional plumbing service.',
-        tiers: [
-          { name: 'Standard Call', price: '$89', features: ['Diagnosis included', 'Up-front quote', 'Basic repairs'] },
-          { name: 'Emergency Rush', price: '$149', features: ['60-min response', 'Priority dispatch', '24/7 availability', 'Master Plumber'], featured: true },
-          { name: 'Commercial', price: 'Custom', features: ['Scheduled maintenance', 'Large-scale systems', 'Dedicated account lead'] }
-        ]
-      },
+      pricing: [
+        { tier: "Emergency Fix", price: "$89", unit: " + parts", features: ["24/7 Availability", "Priority Dispatch", "Licensed Plumber"], isFeatured: true },
+        { tier: "Maintenance", price: "$149", unit: " / visit", features: ["Full System Check", "Drain Cleaning", "Preventative Care"] }
+      ],
       faq: [
-        { question: 'Do you offer emergency service?', answer: 'Yes, we are available 24/7 for any plumbing emergency in the Austin area.' },
-        { question: 'Is your work guaranteed?', answer: 'Absolutely. We offer a 100% satisfaction guarantee on all labor and parts.' },
-        { question: 'Are you licensed and insured?', answer: 'We are fully licensed Texas Master Plumbers and carry full liability insurance.' }
+        { question: "Do you offer 24/7 emergency services?", answer: "Yes! We have plumbers on standby around the clock in Austin." },
+        { question: "Are you licensed and insured?", answer: "Absolutely. All our technicians are fully licensed Texas plumbers." }
       ],
-      servicesPage: {
-        intro: "From emergency repairs to planned installations, here's what we handle.",
-        items: [
-          { icon: '🚨', title: 'Emergency Repairs', description: 'Burst pipes, major leaks, sewage backups — we respond within 60 minutes.', price: 'From $150' },
-          { icon: '🚰', title: 'Drain Cleaning', description: 'Hydro-jetting and snake service for all drain types.', price: 'From $99' },
-          { icon: '🔥', title: 'Water Heater Install', description: 'Traditional tank and tankless water heater installation.', price: 'From $299' },
-          { icon: '🔧', title: 'Pipe Repair & Replacement', description: 'Copper, PVC, PEX — we repair and replace all pipe materials.', price: 'From $125' },
-          { icon: '🚿', title: 'Fixture Installation', description: 'Faucets, toilets, sinks, showers, and more.', price: 'From $85' },
-          { icon: '🔍', title: 'Camera Inspection', description: 'Video sewer line inspection to diagnose hidden issues.', price: 'From $195' },
-        ],
-      },
-      aboutPage: {
-        story: "Mike Johnson started Mike's Plumbing in 2012 after 8 years working for large plumbing corporations. He wanted to build a company that actually cared about customers — no hidden fees, no upselling, just honest work at fair prices. Today, Mike's team of 6 licensed plumbers serves the entire greater Austin area.",
-        mission: "Our mission is to be Austin's most trusted plumber by showing up fast, diagnosing correctly, and fixing it right the first time.",
-      },
-      contactPage: {
-        address: '4521 N Lamar Blvd, Austin, TX 78751',
-        phone: '(512) 555-0147',
-        hours: 'Mon–Sun: 24/7 Emergency Service',
-      },
+      trustBadges: [
+        { icon: '⭐', label: '5-Star Rated' },
+        { icon: '🛡️', label: 'Licensed & Insured' },
+      ],
+      about: "Mike's Plumbing has served the Austin area for over 12 years.",
       primaryColor: '#1e3a8a',
       accentColor: '#f97316',
-      radius: '8px',
       contactEmail: 'mike@mikes-plumbing-austin.com',
     },
   },
@@ -657,53 +646,44 @@ const POC_SITES = [
     customerName: 'Sofia Reyes',
     requirements: {
       businessType: 'Upscale Hair Salon',
-      purpose: 'Showcase services and portfolio, online appointment booking, luxury brand presentation',
+      purpose: 'Showcase services and portfolio',
       desiredDomain: 'glowstudiopdx.com',
       domainPath: 'new',
-      style: 'Rose gold and cream, chic and feminine, luxury feel',
-      chatSummary: 'Glow Studio is an upscale hair salon in Portland, Oregon. Specializes in color treatments, balayage, cuts, styling, and blowouts. Luxury experience focus.',
+      style: 'Rose gold and cream, luxury feel',
+      chatSummary: 'Glow Studio is an upscale hair salon in Portland, Oregon.',
     },
     content: {
       businessName: 'Glow Studio',
       tagline: 'Portland\'s Premier Luxury Hair Salon',
       headline: 'Transform Your Look, Elevate Your Confidence',
-      subheadline: 'Expert color treatments, precision cuts, and luxury styling in the heart of Portland, OR — where every visit is an experience.',
+      subheadline: 'Expert color treatments and luxury styling in Portland.',
       ctaText: 'Book Your Appointment',
       theme: 'cinematic',
       features: [
-        { icon: '✨', title: 'Balayage & Color', description: 'Custom color artistry from subtle sun-kissed highlights to bold transformations.' },
-        { icon: '✂️', title: 'Precision Cuts', description: 'Tailored cuts designed to complement your face shape and lifestyle.' },
-        { icon: '💇', title: 'Blowouts & Styling', description: 'Professional blowouts and styling for any occasion, from everyday to events.' },
-        { icon: '🌿', title: 'Treatments & Care', description: 'Deep conditioning, keratin, and scalp treatments for healthy, luminous hair.' },
-        { icon: '👑', title: 'Luxury Experience', description: 'Complimentary beverage, scalp massage, and a calming studio atmosphere.' },
-        { icon: '📅', title: 'Easy Booking', description: 'Book online in minutes — flexible scheduling to fit your busy life.' },
+        { icon: '✨', title: 'Balayage & Color', description: 'Custom color artistry.' },
+        { icon: '✂️', title: 'Precision Cuts', description: 'Tailored cuts.' },
+        { icon: '👑', title: 'Luxury Experience', description: 'Calming studio atmosphere.' },
       ],
-      about: "Glow Studio was founded by Sofia Reyes, a nationally recognized colorist with 15 years of experience. Located in Portland's Pearl District, our studio blends artistry with luxury to create a truly elevated salon experience. We use only the finest professional-grade products from Oribe and Kérastase.",
-      servicesPage: {
-        intro: 'Every service is personalized to your unique hair goals and lifestyle.',
-        items: [
-          { icon: '✨', title: 'Full Balayage', description: 'Hand-painted color for a natural, sun-kissed look that grows out beautifully.', price: 'From $220' },
-          { icon: '🎨', title: 'Color Correction', description: 'Expert correction of previous color mishaps, safely and beautifully.', price: 'From $300' },
-          { icon: '💛', title: 'Highlights & Lowlights', description: 'Foil highlights and lowlights for dimension and depth.', price: 'From $165' },
-          { icon: '✂️', title: 'Haircut & Style', description: 'Precision cut with blowout and styling consultation.', price: 'From $85' },
-          { icon: '💇', title: 'Express Blowout', description: 'Professional blowout to perfection — smooth, voluminous, or beachy.', price: 'From $65' },
-          { icon: '🌿', title: 'Keratin Treatment', description: 'Smooth and strengthen hair with our smoothing keratin treatment.', price: 'From $350' },
-          { icon: '💆', title: 'Scalp Treatment', description: 'Nourishing scalp therapy for healthy, vibrant hair growth.', price: 'From $75' },
-        ],
-      },
-      aboutPage: {
-        story: "Sofia Reyes opened Glow Studio in 2016 after training under master colorists in New York and Paris. She returned to Portland with a vision: a neighborhood luxury salon where clients feel seen, celebrated, and transformed. Every stylist at Glow Studio is handpicked for their artistry and warmth.",
-        mission: "To be the studio where Portland women come to feel their most beautiful — through expert craft, genuine care, and an atmosphere that feels like a retreat.",
-      },
-      contactPage: {
-        address: '1234 NW Glisan St, Portland, OR 97209',
-        phone: '(503) 555-0289',
-        hours: 'Tue–Sat: 9am–7pm | Sun: 10am–5pm',
-      },
+      howItWorks: [
+        { title: 'Consultation', description: 'Discuss your hair goals with our master stylists.' },
+        { title: 'Luxury Treatment', description: 'Relax while we transform your look with premium products.' },
+        { title: 'Elevated Confidence', description: 'Walk out feeling beautiful and empowered.' },
+      ],
+      pricing: [
+        { tier: "Signature Cut", price: "$120", unit: " + styling", features: ["Master Stylist", "Deep Conditioning", "Scalp Massage"], isFeatured: true },
+        { tier: "Balayage Luxe", price: "$350", unit: " / starting", features: ["Custom Color Artistry", "Tonal Gloss", "Luxury Finish"] }
+      ],
+      faq: [
+        { question: "Which products do you use?", answer: "We exclusively use Oribe and Oway organic luxury hair care." },
+        { question: "How long does a color appointment take?", answer: "Typically 3-4 hours depending on the complexity of your transformation." }
+      ],
+      trustBadges: [
+        { icon: '✨', label: 'Luxury Experience' },
+        { icon: '💎', label: 'Premium Products' },
+      ],
+      about: "Glow Studio was founded by Sofia Reyes, a nationally recognized colorist.",
       primaryColor: '#8E585E',
       accentColor: '#D4AF37',
-      backgroundColor: '#FFF9F0',
-      softBackgroundColor: '#FAF5E9',
       contactEmail: 'hello@glowstudiopdx.com',
     },
   },
@@ -713,48 +693,42 @@ const POC_SITES = [
     customerName: 'Maria Gutierrez',
     requirements: {
       businessType: 'Family Mexican Restaurant',
-      purpose: 'Show full menu, tell family story, contact page with address and hours, photo gallery',
+      purpose: 'Show full menu',
       desiredDomain: 'casabonitatacos.com',
       domainPath: 'new',
-      style: 'Warm Mexican colors: red, green, and gold. Family friendly and festive.',
-      chatSummary: 'Casa Bonita Tacos is a family-owned Mexican restaurant in Denver, CO. Family-owned for 15 years, authentic Mexican food (tacos, burritos, enchiladas, guacamole). Family friendly with festive atmosphere.',
+      style: 'Warm Mexican colors',
+      chatSummary: 'Casa Bonita Tacos is a family-owned Mexican restaurant in Denver, CO.',
     },
     content: {
       businessName: 'Casa Bonita Tacos',
       tagline: 'Authentic Mexican Flavors Since 2009',
       headline: 'Where Family Recipes Meet Denver Nights',
-      subheadline: "Family-owned for 15 years, Casa Bonita Tacos serves Denver's most authentic tacos, burritos, and enchiladas with love — just like abuela made them.",
+      subheadline: "Serving Denver's most authentic tacos and burritos.",
       ctaText: 'See Our Menu',
       theme: 'cinematic',
       features: [
-        { icon: '🌮', title: 'Authentic Tacos', description: 'Street-style tacos with handmade tortillas and family recipes passed down generations.' },
-        { icon: '🫔', title: 'Burritos & Enchiladas', description: 'Hearty, flavor-packed classics made fresh every day.' },
-        { icon: '🥑', title: 'Fresh Guacamole', description: 'Made tableside with ripe avocados, lime, cilantro, and a secret touch.' },
-        { icon: '👨‍👩‍👧‍👦', title: 'Family Friendly', description: "A warm, festive space welcoming families, date nights, and everyone in between." },
-        { icon: '🎉', title: 'Festive Atmosphere', description: 'Colorful decor, live music on weekends, and the energy of a true Mexican celebration.' },
-        { icon: '🍹', title: 'Margaritas & More', description: "Hand-crafted margaritas, agua frescas, and a full bar menu." },
+        { icon: '🌮', title: 'Authentic Tacos', description: 'Street-style tacos.' },
+        { icon: '🥑', title: 'Fresh Guacamole', description: 'Made tableside.' },
+        { icon: '🎉', title: 'Festive Atmosphere', description: 'Colorful decor.' },
       ],
-      about: "Casa Bonita Tacos has been a Denver institution since Maria and Roberto Gutierrez opened our doors in 2009. What started as a small family dream has grown into a beloved neighborhood restaurant, but our recipes — handed down from Roberto's grandmother in Oaxaca — have never changed. We cook everything fresh, every day.",
-      servicesPage: {
-        intro: "Our menu celebrates the rich flavors of authentic Mexican cuisine.",
-        items: [
-          { icon: '🌮', title: 'Street Tacos (3-pack)', description: 'Al pastor, carne asada, or chicken with onion, cilantro, and salsa verde.', price: '$12.99' },
-          { icon: '🫔', title: 'Signature Burrito', description: 'Stuffed with rice, beans, your choice of meat, cheese, and house salsa.', price: '$13.99' },
-          { icon: '🧀', title: 'Cheese Enchiladas', description: 'Corn tortillas, house cheese blend, topped with red or green chile.', price: '$11.99' },
-          { icon: '🥑', title: 'Tableside Guacamole', description: 'Fresh avocados prepared at your table with chips.', price: '$9.99' },
-          { icon: '🍹', title: 'Classic Margarita', description: 'Fresh lime juice, triple sec, and your choice of tequila, on the rocks or frozen.', price: '$10.99' },
-          { icon: '🌯', title: 'Family Combo Platter', description: 'Tacos, enchiladas, rice, beans — feeds the whole family.', price: '$42.99' },
-        ],
-      },
-      aboutPage: {
-        story: "In 2009, Maria and Roberto Gutierrez bet everything on a dream — an authentic Mexican restaurant in Denver's Baker neighborhood. Roberto's grandmother Esperanza had spent 40 years perfecting the recipes in Oaxaca, and Roberto spent 5 years as a chef in Mexico City before bringing those flavors to Colorado. Today, their children work alongside them, and Esperanza's recipes are still the heart of every dish.",
-        mission: "To bring the soul of authentic Mexican home cooking to Denver — one taco at a time — and to make every guest feel like family.",
-      },
-      contactPage: {
-        address: '345 W 10th Ave, Denver, CO 80204',
-        phone: '(720) 555-0312',
-        hours: 'Mon–Thu: 11am–9pm | Fri–Sat: 11am–11pm | Sun: 11am–8pm',
-      },
+      howItWorks: [
+        { title: 'Pick Your Favorites', description: 'Browse our menu of authentic Oaxacan family recipes.' },
+        { title: 'Fresh Preparation', description: 'Our chefs cook your meal fresh to order with love.' },
+        { title: 'Enjoy Like Family', description: 'Experience the warm festive atmosphere of our dining room.' },
+      ],
+      pricing: [
+        { tier: "Taco Platter", price: "$14.99", unit: " / platter", features: ["3 Signature Tacos", "Handmade Tortillas", "Rice & Beans"], isFeatured: true },
+        { tier: "Family Feast", price: "$55", unit: " (Serves 4)", features: ["12 Tacos", "Large Guacamole", "Churros for Dessert"] }
+      ],
+      faq: [
+        { question: "Do you have vegetarian options?", answer: "Yes! Our Hibiscus Tacos and Rajas con Crema are local favorites." },
+        { question: "Can I book a table online?", answer: "We are currently walk-in only to keep things festive and fair for everyone!" }
+      ],
+      trustBadges: [
+        { icon: '🌮', label: 'Authentic Recipes' },
+        { icon: '👨‍👩‍👧‍👦', label: 'Family Owned' },
+      ],
+      about: "Casa Bonita Tacos has been a Denver institution since 2009.",
       primaryColor: '#b91c1c',
       accentColor: '#d97706',
       contactEmail: 'hola@casabonitatacos.com',
@@ -770,83 +744,46 @@ function initDb() {
 }
 
 function createOrderDirect(db, site) {
-  const id = randomUUID();
-  const now = new Date().toISOString();
-  const identifier = `EVE-POC-${site.domain.split('.')[0].toUpperCase().slice(0, 8)}`;
   const idempotencyKey = `poc-demo-${site.domain}`;
-
-  // Check if already exists
   const existing = db.prepare('SELECT id FROM orders WHERE idempotency_key = ?').get(idempotencyKey);
-  if (existing) {
-    console.log(`  → Order already exists for ${site.domain}: ${existing.id}`);
-    return existing.id;
-  }
+  if (existing) return existing.id;
 
-  const auditTrail = [
-    { at: now, from: 'new', to: 'qualifying', event: 'START_QUALIFYING' },
-    { at: now, from: 'qualifying', to: 'payment_pending', event: 'REQUIREMENTS_READY', note: 'PoC demo — no payment required' },
-    { at: now, from: 'payment_pending', to: 'paid', event: 'PAYMENT_SUCCEEDED', note: 'PoC demo — waived payment' },
-    { at: now, from: 'paid', to: 'domain_purchasing', event: 'START_DOMAIN' },
-    { at: now, from: 'domain_purchasing', to: 'building', event: 'DOMAIN_PURCHASED', note: 'PoC demo — domain pre-configured' },
-  ];
-
-  // Get next sequence number
+  const now = new Date().toISOString();
   db.prepare("UPDATE meta SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT) WHERE key = 'next_seq'").run();
   const seqRow = db.prepare("SELECT CAST(value AS INTEGER) AS seq FROM meta WHERE key = 'next_seq'").get();
   const seq = seqRow.seq;
 
+  const id = randomUUID();
   const data = JSON.stringify({
-    id,
-    identifier: `EVE-${String(seq).padStart(4, '0')}`,
-    customerEmail: site.customerEmail,
-    customerName: site.customerName,
-    state: 'building',
-    idempotencyKey,
-    requirements: site.requirements,
-    domain: { domain: site.domain, registeredAt: now },
-    auditTrail,
-    createdAt: now,
-    updatedAt: now,
+    id, identifier: `EVE-${String(seq).padStart(4, '0')}`,
+    customerEmail: site.customerEmail, customerName: site.customerName,
+    state: 'building', idempotencyKey,
+    requirements: site.requirements, domain: { domain: site.domain, registeredAt: now },
+    auditTrail: [], createdAt: now, updatedAt: now,
   });
 
-  db.prepare(`
-    INSERT INTO orders (id, idempotency_key, state, seq, data, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, idempotencyKey, 'building', seq, data, now, now);
-
-  console.log(`  → Created order ${identifier} (${id}) for ${site.domain}`);
+  db.prepare('INSERT INTO orders (id, idempotency_key, state, seq, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, idempotencyKey, 'building', seq, data, now, now);
   return id;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 const db = initDb();
-
 mkdirSync(OUT_DIR, { recursive: true });
 
 for (const site of POC_SITES) {
-  console.log(`\nBuilding site: ${site.domain}`);
-
-  // Create order
-  const orderId = createOrderDirect(db, site);
-
-  // Generate HTML pages
+  console.log(`Building: ${site.domain}`);
+  createOrderDirect(db, site);
   const siteDir = path.join(OUT_DIR, site.domain);
   mkdirSync(siteDir, { recursive: true });
-
   const pages = {
     'index.html': renderHome(site.content),
     'about.html': renderAbout(site.content),
     'services.html': renderServices(site.content),
     'contact.html': renderContact(site.content, site.domain),
   };
-
   for (const [filename, html] of Object.entries(pages)) {
     writeFileSync(path.join(siteDir, filename), html, 'utf8');
-    console.log(`  ✓ ${filename} (${html.length} bytes)`);
   }
-
-  console.log(`  ✓ Order: ${orderId}`);
 }
-
 db.close();
-console.log('\n✅ All 3 PoC sites generated in scripts/poc-output/');
+console.log('\n✅ All 3 PoC sites regenerated in scripts/poc-output/');
