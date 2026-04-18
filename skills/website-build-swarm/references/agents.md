@@ -18,13 +18,11 @@
 > 
 > **Instructions**:
 > 1. Review the generated copy.
-> 2. Select a primary brand color that fits the industry (e.g., Blue for trust, Green for health, Red for food).
-> 3. Select an accent color that provides high contrast and visual interest.
-> 4. Select a **theme**: 
->    - Use `cinematic` for luxury, modern, premium, or high-end tech vibes.
->    - Use `classic` for traditional, reliable, professional, or local service vibes.
+> 2. Select a **Persona** from `docs/design-system/persona-templates.json` (Trustworthy Pro, Modern Creative, Boutique Premium, High-Energy Startup) that best fits the business.
+> 3. Apply the persona-based tokens (primaryColor, accentColor, theme, fonts).
+> 4. Ensure colors pass 3:1 contrast ratio for accessibility.
 > 5. Review the headline and tagline — ensure they are punchy and visually balanced.
-> 6. (Optional) Provide image prompts for each section of the site.
+
 
 ## 3. Deploy Agent (The DevOps Lead)
 **System Prompt**:
