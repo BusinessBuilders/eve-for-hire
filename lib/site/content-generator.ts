@@ -79,6 +79,32 @@ export const SiteContentSchema = z.object({
     .max(4)
     .optional()
     .describe('3-4 steps explaining how the service works'),
+  pricing: z
+    .array(
+      z.object({
+        tier: z.string().describe('Tier name, e.g. "Basic"'),
+        price: z.string().describe('Price, e.g. "$99"'),
+        unit: z.string().optional().describe('Unit, e.g. "/mo"'),
+        features: z.array(z.string()).describe('List of features included in this tier'),
+        isFeatured: z.boolean().optional().describe('Whether this is the recommended tier'),
+        cta: z.string().optional().describe('CTA label for this tier'),
+      }),
+    )
+    .min(1)
+    .max(3)
+    .optional()
+    .describe('Pricing tiers for the business'),
+  faq: z
+    .array(
+      z.object({
+        question: z.string().describe('Frequently asked question'),
+        answer: z.string().describe('Answer to the question'),
+      }),
+    )
+    .min(2)
+    .max(6)
+    .optional()
+    .describe('Frequently asked questions'),
   trustBadges: z
     .array(
       z.object({
@@ -215,6 +241,14 @@ function buildPrompt(req: OrderRequirements): string {
     { "title": string, "description": string },
     ... (3 to 4 steps)
   ],
+  "pricing": [
+    { "tier": string, "price": string, "unit"?: string, "features": string[], "isFeatured"?: boolean, "cta"?: string },
+    ... (1 to 3 tiers)
+  ],
+  "faq": [
+    { "question": string, "answer": string },
+    ... (2 to 6 items)
+  ],
   "trustBadges": [
     { "icon": string (emoji), "label": string },
     ... (2 to 4 badges)
@@ -301,6 +335,12 @@ function applyFallbacks(
           { title: 'Get a Plan', description: 'We create a custom strategy for your needs.' },
           { title: 'See Results', description: 'Watch your business grow with our help.' },
         ],
+    pricing: Array.isArray(raw.pricing)
+      ? (raw.pricing as SiteContent['pricing'])
+      : undefined,
+    faq: Array.isArray(raw.faq)
+      ? (raw.faq as SiteContent['faq'])
+      : undefined,
     trustBadges: Array.isArray(raw.trustBadges)
       ? (raw.trustBadges as SiteContent['trustBadges'])
       : [

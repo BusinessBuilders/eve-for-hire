@@ -39,19 +39,120 @@ export function renderSiteHtml(content: SiteContent, domain: string): string {
 // ─── Page renderers ───────────────────────────────────────────────────────────
 
 function renderHome(content: SiteContent, _domain: string): string {
+  const isCinematic = content.theme === 'cinematic';
+  const trustBadgesHtml = content.trustBadges?.length
+    ? `<div class="trust-row reveal-anim">
+        ${content.trustBadges
+          .map(
+            (b) => `<div class="trust-badge"><span>${b.icon}</span> <span>${esc(b.label)}</span></div>`,
+          )
+          .join('\n        ')}
+      </div>`
+    : '';
+
+  const howItWorksHtml = content.howItWorks?.length
+    ? `<section class="steps reveal-anim" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title glow-text">How It Works</h2>
+      <div class="steps-grid">
+        ${content.howItWorks
+          .map(
+            (s, i) => `<div class="step-item">
+          <div class="step-number">${i + 1}</div>
+          <h3 class="step-title">${esc(s.title)}</h3>
+          <p class="step-desc">${esc(s.description)}</p>
+        </div>`,
+          )
+          .join('\n        ')}
+      </div>
+    </div>
+  </section>`
+    : '';
+
+  const pricingHtml = content.pricing?.length
+    ? `<section class="features reveal-anim" id="pricing" style="background: var(--bg);">
+    <div class="container">
+      <h2 class="section-title glow-text">Simple Pricing</h2>
+      <div class="feature-grid">
+        ${content.pricing
+          .map(
+            (p) => `<div class="feature-card ${p.isFeatured ? 'glass-card' : ''}" style="${p.isFeatured ? 'border-color: var(--primary);' : ''}">
+          <h3 class="feature-title">${esc(p.tier)}</h3>
+          <p class="service-price glow-text">${esc(p.price)}${p.unit ? `<span>${esc(p.unit)}</span>` : ''}</p>
+          <ul style="list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; text-align: left; flex-grow: 1;">
+            ${p.features.map((f) => `<li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> ${esc(f)}</li>`).join('')}
+          </ul>
+          <a href="contact.html" class="btn ${p.isFeatured ? 'btn-primary' : 'btn-outline'}" style="margin-top: 2rem;">${esc(p.cta || content.ctaText)}</a>
+        </div>`,
+          )
+          .join('\n        ')}
+      </div>
+    </div>
+  </section>`
+    : '';
+
+  const faqHtml = content.faq?.length
+    ? `<section class="about reveal-anim" id="faq" style="background: var(--surface);">
+    <div class="container" style="max-width: 800px;">
+      <h2 class="section-title glow-text">Frequently Asked Questions</h2>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        ${content.faq
+          .map(
+            (f) => `<div class="glass-card" style="padding: 2rem; text-align: left;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: #fff;">${esc(f.question)}</h3>
+          <p style="color: var(--fg-muted); font-size: 1rem; font-weight: 300;">${esc(f.answer)}</p>
+        </div>`,
+          )
+          .join('\n        ')}
+      </div>
+    </div>
+  </section>`
+    : '';
+
+  const aboutIllustration = isCinematic
+    ? `<svg class="premium-illustration" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="200" cy="200" r="150" stroke="url(#paint0_linear)" stroke-width="2" stroke-dasharray="10 10"/>
+        <circle cx="200" cy="200" r="100" stroke="url(#paint1_linear)" stroke-width="4"/>
+        <path d="M200 50V350M50 200H350" stroke="url(#paint2_linear)" stroke-width="1" opacity="0.3"/>
+        <rect x="150" y="150" width="100" height="100" rx="20" fill="url(#paint3_linear)" fill-opacity="0.2" stroke="url(#paint3_linear)" stroke-width="2"/>
+        <defs>
+          <linearGradient id="paint0_linear" x1="50" y1="50" x2="350" y2="350" gradientUnits="userSpaceOnUse">
+            <stop stop-color="var(--primary)"/>
+            <stop offset="1" stop-color="var(--accent)"/>
+          </linearGradient>
+          <linearGradient id="paint1_linear" x1="100" y1="100" x2="300" y2="300" gradientUnits="userSpaceOnUse">
+            <stop stop-color="var(--primary)"/>
+            <stop offset="1" stop-color="var(--accent)"/>
+          </linearGradient>
+          <linearGradient id="paint2_linear" x1="200" y1="50" x2="200" y2="350" gradientUnits="userSpaceOnUse">
+            <stop stop-color="var(--primary)"/>
+            <stop offset="1" stop-color="var(--accent)"/>
+          </linearGradient>
+          <linearGradient id="paint3_linear" x1="150" y1="150" x2="250" y2="250" gradientUnits="userSpaceOnUse">
+            <stop stop-color="var(--primary)"/>
+            <stop offset="1" stop-color="var(--accent)"/>
+          </linearGradient>
+        </defs>
+      </svg>`
+    : `<div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>`;
+
   return page(content, 'index.html', `
-  <section class="hero">
+  <section class="hero reveal-anim">
     <div class="container hero-inner">
       <p class="tagline">${esc(content.tagline)}</p>
-      <h1 class="hero-headline">${esc(content.headline)}</h1>
+      <h1 class="hero-headline glow-text">${esc(content.headline)}</h1>
       <p class="hero-sub">${esc(content.subheadline)}</p>
-      <a href="contact.html" class="btn btn-primary">${esc(content.ctaText)}</a>
+      <div class="flex-center" style="display:flex; gap:16px; justify-content:center;">
+        <a href="contact.html" class="btn btn-primary">${esc(content.ctaText)}</a>
+        <a href="#features" class="btn btn-outline">Explore Services</a>
+      </div>
+      ${trustBadgesHtml}
     </div>
   </section>
 
-  <section class="features" id="features">
+  <section class="features reveal-anim" id="features">
     <div class="container">
-      <h2 class="section-title">What We Offer</h2>
+      <h2 class="section-title glow-text">What We Offer</h2>
       <div class="feature-grid">
         ${content.features
           .map(
@@ -66,39 +167,28 @@ function renderHome(content: SiteContent, _domain: string): string {
     </div>
   </section>
 
-  ${renderHowItWorks(content)}
-  ${renderPricing(content)}
-  ${renderFaq(content)}
-  ${renderGeolocation(content)}
+  ${howItWorksHtml}
 
-  <section class="about" id="about">
+  ${pricingHtml}
+
+  <section class="about reveal-anim" id="about">
     <div class="container about-inner">
       <div class="about-content">
-        <h2 class="section-title">About Us</h2>
+        <h2 class="section-title glow-text">About Us</h2>
         <p class="about-text">${esc(content.about)}</p>
         <a href="about.html" class="btn btn-primary">Our Story &rarr;</a>
       </div>
-      <div class="about-visual about-visual-v13" aria-hidden="true">
-        <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" class="premium-svg">
-          <defs>
-            <linearGradient id="grad-about" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="var(--primary)" />
-              <stop offset="100%" stop-color="var(--accent)" />
-            </linearGradient>
-          </defs>
-          <rect x="50" y="50" width="300" height="300" rx="48" fill="url(#grad-about)" opacity="0.1" />
-          <rect x="80" y="80" width="240" height="240" rx="32" fill="url(#grad-about)" />
-          <path d="M160 200L190 230L240 180" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
-          <circle cx="320" cy="80" r="40" fill="var(--accent)" />
-          <text x="320" y="92" text-anchor="middle" fill="white" font-family="var(--font-heading)" font-weight="900" font-size="32">${esc(content.businessName.slice(0, 1))}</text>
-        </svg>
+      <div class="about-visual" aria-hidden="true">
+        ${aboutIllustration}
       </div>
     </div>
   </section>
 
-  <section class="cta-banner">
+  ${faqHtml}
+
+  <section class="cta-banner reveal-anim">
     <div class="container cta-inner">
-      <h2>Ready to get started?</h2>
+      <h2 class="glow-text">Ready to get started?</h2>
       <p>Reach out today &mdash; we&rsquo;d love to work with you.</p>
       <a href="contact.html" class="btn btn-white">${esc(content.ctaText)}</a>
     </div>
@@ -112,37 +202,39 @@ function renderAbout(content: SiteContent): string {
     content.aboutPage?.mission ??
     `${esc(content.businessName)} is dedicated to delivering excellent results for every client.`;
 
+  const isCinematic = content.theme === 'cinematic';
+  const aboutIllustration = isCinematic
+    ? `<svg class="premium-illustration" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="200" cy="200" r="120" stroke="var(--primary)" stroke-width="2" stroke-dasharray="8 8" opacity="0.5"/>
+        <path d="M100 200C100 144.772 144.772 100 200 100C255.228 100 300 144.772 300 200C300 255.228 255.228 300 200 300" stroke="url(#paint_about)" stroke-width="6" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="paint_about" x1="100" y1="100" x2="300" y2="300" gradientUnits="userSpaceOnUse">
+            <stop stop-color="var(--primary)"/>
+            <stop offset="1" stop-color="var(--accent)"/>
+          </linearGradient>
+        </defs>
+      </svg>`
+    : `<div class="about-blob">${esc(content.businessName.slice(0, 1))}</div>`;
+
   return page(content, 'about.html', `
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
-      <h1 class="hero-headline">About ${esc(content.businessName)}</h1>
+      <h1 class="hero-headline glow-text">About ${esc(content.businessName)}</h1>
       <p class="hero-sub">${esc(content.tagline)}</p>
     </div>
   </section>
 
-  <section class="about" id="story">
+  <section class="about reveal-anim" id="story">
     <div class="container about-inner">
       <div class="about-content">
-        <h2 class="section-title">Our Story</h2>
+        <h2 class="section-title glow-text">Our Story</h2>
         <p class="about-text">${esc(story)}</p>
-        <h2 class="section-title" style="margin-top:2rem">Our Mission</h2>
+        <h2 class="section-title glow-text" style="margin-top:2rem">Our Mission</h2>
         <p class="about-text">${esc(mission)}</p>
         <a href="contact.html" class="btn btn-primary" style="margin-top:1rem">${esc(content.ctaText)}</a>
       </div>
-      <div class="about-visual about-visual-v13" aria-hidden="true">
-        <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" class="premium-svg">
-          <defs>
-            <linearGradient id="grad-about" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="var(--primary)" />
-              <stop offset="100%" stop-color="var(--accent)" />
-            </linearGradient>
-          </defs>
-          <rect x="50" y="50" width="300" height="300" rx="48" fill="url(#grad-about)" opacity="0.1" />
-          <rect x="80" y="80" width="240" height="240" rx="32" fill="url(#grad-about)" />
-          <path d="M160 200L190 230L240 180" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
-          <circle cx="320" cy="80" r="40" fill="var(--accent)" />
-          <text x="320" y="92" text-anchor="middle" fill="white" font-family="var(--font-heading)" font-weight="900" font-size="32">${esc(content.businessName.slice(0, 1))}</text>
-        </svg>
+      <div class="about-visual" aria-hidden="true">
+        ${aboutIllustration}
       </div>
     </div>
   </section>
@@ -161,14 +253,14 @@ function renderServices(content: SiteContent): string {
   }));
 
   return page(content, 'services.html', `
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
-      <h1 class="hero-headline">Our Services</h1>
+      <h1 class="hero-headline glow-text">Our Services</h1>
       <p class="hero-sub">${intro}</p>
     </div>
   </section>
 
-  <section class="features" id="services">
+  <section class="features reveal-anim" id="services">
     <div class="container">
       <div class="feature-grid">
         ${items
@@ -177,7 +269,7 @@ function renderServices(content: SiteContent): string {
           <div class="feature-icon">${s.icon}</div>
           <h3 class="feature-title">${esc(s.title)}</h3>
           <p class="feature-desc">${esc(s.description)}</p>
-          ${s.price ? `<p class="service-price">${esc(s.price)}</p>` : ''}
+          ${s.price ? `<p class="service-price glow-text">${esc(s.price)}</p>` : ''}
         </div>`,
           )
           .join('\n        ')}
@@ -185,9 +277,9 @@ function renderServices(content: SiteContent): string {
     </div>
   </section>
 
-  <section class="cta-banner">
+  <section class="cta-banner reveal-anim">
     <div class="container cta-inner">
-      <h2>Interested in working together?</h2>
+      <h2 class="glow-text">Interested in working together?</h2>
       <a href="contact.html" class="btn btn-white">${esc(content.ctaText)}</a>
     </div>
   </section>
@@ -196,6 +288,7 @@ function renderServices(content: SiteContent): string {
 
 function renderContact(content: SiteContent, domain: string): string {
   const cp = content.contactPage;
+  const isCinematic = content.theme === 'cinematic';
 
   const detailRows = [
     cp?.address
@@ -214,26 +307,35 @@ function renderContact(content: SiteContent, domain: string): string {
     .filter(Boolean)
     .join('\n        ');
 
+  const mapHtml = isCinematic
+    ? `<div class="map-placeholder reveal-anim">
+        <div class="map-grid"></div>
+        <div class="map-pin-pulse"></div>
+        <div class="map-pin"></div>
+      </div>`
+    : '';
+
   return page(content, 'contact.html', `
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
-      <h1 class="hero-headline">Contact Us</h1>
+      <h1 class="hero-headline glow-text">Contact Us</h1>
       <p class="hero-sub">We&rsquo;d love to hear from you.</p>
     </div>
   </section>
 
-  <section class="contact-section">
+  <section class="contact-section reveal-anim">
     <div class="container contact-inner">
       ${
-        detailRows
+        detailRows || mapHtml
           ? `<div class="contact-details">
-        <h2 class="section-title">Get In Touch</h2>
+        <h2 class="section-title glow-text">Get In Touch</h2>
         ${detailRows}
+        ${mapHtml}
       </div>`
           : ''
       }
       <div class="contact-form-wrap">
-        <h2 class="section-title">Send a Message</h2>
+        <h2 class="section-title glow-text">Send a Message</h2>
         <form class="contact-form" id="contact-form">
           <div class="form-group">
             <label for="cf-name">Your Name</label>
@@ -333,7 +435,7 @@ function page(
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="${esc(content.subheadline)}" />
-  <title>${esc(content.businessName)}</title>
+  <title>${esc(content.businessName)} | ${esc(content.tagline)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   ${fonts}
@@ -346,7 +448,7 @@ function page(
     <nav class="nav container">
       <a href="index.html" class="logo">${esc(content.businessName)}</a>
       <div class="nav-links">${navLinks}</div>
-      <a href="${mailtoHref}" class="btn btn-outline nav-cta">Contact Us</a>
+      <a href="${mailtoHref}" class="btn btn-primary nav-cta">Get Started</a>
     </nav>
   </header>
 
@@ -371,6 +473,34 @@ function page(
       }
     </div>
   </footer>
+
+  <script>
+    // Reveal animations on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-anim').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Stagger feature cards
+    document.querySelectorAll('.feature-grid').forEach(grid => {
+      const cards = grid.querySelectorAll('.feature-card');
+      cards.forEach((card, i) => {
+        card.style.transitionDelay = (i * 0.1) + 's';
+      });
+    });
+  </script>
 </body>
 </html>`;
 }
@@ -399,28 +529,36 @@ function css(content: SiteContent): string {
       :root {
         --primary: ${primary};
         --accent: ${accent};
+        --primary-glow: color-mix(in srgb, ${primary}, transparent 60%);
         --fg: #e2e8f0;
         --fg-muted: #94a3b8;
         --bg: #0a0a10;
+        --nav-bg: rgba(10, 10, 16, 0.85);
         --surface: #0f0f1a;
         --border: rgba(255, 255, 255, 0.08);
         --glass: rgba(255, 255, 255, 0.03);
         --radius: 16px;
         --font: 'Outfit', system-ui, sans-serif;
         --font-heading: 'Bebas Neue', system-ui, sans-serif;
+        --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.4);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       html { scroll-behavior: smooth; }
       body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.6; }
+      
+      .reveal-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+      .reveal-anim.visible { opacity: 1; transform: translateY(0); }
 
       .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
       /* ── Header ── */
-      .header { position: sticky; top: 0; background: rgba(10, 10, 16, 0.8); backdrop-filter: blur(12px);
+      .header { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border); z-index: 100; }
       .nav { display: flex; align-items: center; gap: 1rem; height: 72px; }
-      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: var(--primary); letter-spacing: 0.02em;
-        text-decoration: none; flex-shrink: 0; }
+      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: #fff; letter-spacing: 0.02em;
+        text-decoration: none; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+      .logo::before { content: ""; display: block; width: 32px; height: 32px; background: var(--primary); border-radius: 6px; box-shadow: 0 0 15px var(--primary-glow); }
       .nav-links { display: flex; gap: 0.5rem; flex: 1; }
       .nav-link { padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
         font-size: 0.95rem; color: var(--fg-muted); transition: all 0.2s ease; }
@@ -430,12 +568,12 @@ function css(content: SiteContent): string {
       /* ── Buttons ── */
       .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 28px;
         border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; }
+        transition: var(--transition); cursor: pointer; border: none; }
       .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
       .btn-primary { 
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); 
         color: #fff;
-        box-shadow: 0 0 20px color-mix(in srgb, var(--primary), transparent 60%);
+        box-shadow: 0 0 20px var(--primary-glow);
       }
       .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
       .btn-outline:hover { background: var(--primary); color: #fff; }
@@ -463,17 +601,35 @@ function css(content: SiteContent): string {
       .features { padding: 100px 0; background: var(--surface); }
       .section-title { font-family: var(--font-heading); font-size: 2.5rem; letter-spacing: 0.02em; margin-bottom: 48px;
         text-align: center; color: #fff; }
+      .glow-text { text-shadow: 0 0 20px var(--primary-glow); }
       .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
-      .feature-card { 
+      .feature-card, .glass-card { 
         background: var(--glass); border-radius: var(--radius); padding: 40px 32px;
         backdrop-filter: blur(12px); border: 1px solid var(--border);
-        transition: all 0.4s ease;
+        transition: var(--transition);
       }
-      .feature-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+      .feature-card:hover, .glass-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: var(--shadow-xl); }
       .feature-icon { font-size: 2.5rem; margin-bottom: 20px; }
       .feature-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
       .feature-desc { color: var(--fg-muted); font-size: 1rem; }
       .service-price { margin-top: 16px; font-weight: 600; color: var(--primary); font-size: 1.1rem; font-family: var(--font-heading); }
+
+      /* ── How It Works ── */
+      .steps { padding: 100px 0; position: relative; }
+      .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 48px; position: relative; }
+      .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; position: relative; z-index: 2; }
+      .step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-family: var(--font-heading);
+        font-size: 1.5rem; box-shadow: 0 0 20px var(--primary-glow); margin-bottom: 8px; }
+      .step-title { font-size: 1.25rem; font-weight: 700; color: #fff; }
+      .step-desc { color: var(--fg-muted); font-size: 0.95rem; font-weight: 300; }
+      
+      @media (min-width: 900px) {
+        .step-item:not(:last-child)::after {
+          content: ""; position: absolute; top: 24px; left: calc(50% + 40px); width: calc(100% - 80px);
+          height: 2px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.3;
+        }
+      }
 
       /* ── About ── */
       .about { padding: 100px 0; }
@@ -481,14 +637,8 @@ function css(content: SiteContent): string {
       .about-content { flex: 1; display: flex; flex-direction: column; gap: 24px; }
       .about-content .section-title { text-align: left; margin-bottom: 0; }
       .about-text { color: var(--fg-muted); font-size: 1.1rem; font-weight: 300; }
-      .about-visual { flex: 0 0 240px; display: flex; align-items: center; justify-content: center; }
-      .about-blob { width: 200px; height: 200px; border-radius: 40px;
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        display: flex; align-items: center; justify-content: center;
-        font-size: 5rem; font-family: var(--font-heading); color: #fff;
-        box-shadow: 0 0 40px color-mix(in srgb, var(--primary), transparent 70%);
-        transform: rotate(-3deg);
-      }
+      .about-visual { flex: 1; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
+      .premium-illustration { width: 100%; max-width: 400px; height: auto; filter: drop-shadow(0 0 30px var(--primary-glow)); }
 
       /* ── CTA Banner ── */
       .cta-banner { background: var(--surface); padding: 100px 0; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -505,6 +655,17 @@ function css(content: SiteContent): string {
       .contact-icon { font-size: 1.5rem; flex-shrink: 0; color: var(--primary); }
       .contact-detail a { color: #fff; text-decoration: none; }
       .contact-detail a:hover { color: var(--primary); }
+      
+      .map-placeholder { width: 100%; height: 250px; background: var(--surface); border-radius: 12px; margin-top: 24px;
+        border: 1px solid var(--border); position: relative; overflow: hidden; }
+      .map-grid { position: absolute; inset: 0; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; }
+      .map-pin { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; background: var(--primary); border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg); box-shadow: 0 0 20px var(--primary-glow); }
+      .map-pin::after { content: ""; position: absolute; inset: 6px; background: #fff; border-radius: 50%; }
+      .map-pin-pulse { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; transform: translate(-12px, -12px);
+        border: 2px solid var(--primary); border-radius: 50%; animation: ping 2s infinite; }
+      @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
       .contact-form-wrap .section-title { text-align: left; margin-bottom: 32px; }
       .contact-form { display: flex; flex-direction: column; gap: 24px; }
       .form-group { display: flex; flex-direction: column; gap: 10px; }
@@ -529,6 +690,11 @@ function css(content: SiteContent): string {
       .footer-name { font-family: var(--font-heading); color: #fff; font-size: 1.5rem; letter-spacing: 0.02em; }
       .footer-copy { font-size: 0.9rem; }
       .footer-email { color: var(--primary); font-size: 0.95rem; text-decoration: none; }
+
+      /* ── Trust Badges ── */
+      .trust-row { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-top: 48px; }
+      .trust-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--fg-muted); 
+        background: var(--glass); padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); }
 
       /* ── Responsive ── */
       @media (max-width: 900px) {
@@ -677,126 +843,6 @@ function css(content: SiteContent): string {
   `;
 }
 
-
-function renderHowItWorks(content: SiteContent): string {
-  if (!content.howItWorks || content.howItWorks.length === 0) return '';
-
-  return `
-  <section class="how-it-works section-padding">
-    <div class="container">
-      <h2 class="section-title">How It Works</h2>
-      <div class="step-grid">
-        ${content.howItWorks
-          .map(
-            (step, i) => `
-          <div class="step-card">
-            <div class="step-number">${i + 1}</div>
-            <h3 class="step-title">${esc(step.title)}</h3>
-            <p class="step-desc">${esc(step.description)}</p>
-          </div>`,
-          )
-          .join('')}
-      </div>
-    </div>
-  </section>`;
-}
-
-function renderFaq(content: SiteContent): string {
-  if (!content.faq || content.faq.length === 0) return '';
-
-  return `
-  <section class="faq section-padding">
-    <div class="container" style="max-width: 800px">
-      <h2 class="section-title">Common Questions</h2>
-      <div style="display:flex; flex-direction:column; gap:var(--space-4)">
-        ${content.faq
-          .map(
-            (item) => `
-          <div class="glass" style="padding:1.5rem; border-radius:var(--radius)">
-            <h3 style="font-size:1.1rem; margin-bottom:0.5rem; color:var(--fg)">${esc(item.question)}</h3>
-            <p style="color:var(--fg-muted); font-size:0.95rem">${esc(item.answer)}</p>
-          </div>`,
-          )
-          .join('')}
-      </div>
-    </div>
-  </section>`;
-}
-
-function renderPricing(content: SiteContent): string {
-  if (!content.pricing) return '';
-
-  return `
-  <section class="pricing section-padding" style="background: var(--bg-soft)">
-    <div class="container">
-      <h2 class="section-title">${esc(content.pricing.title)}</h2>
-      <p style="text-align:center; color:var(--fg-muted); margin-top:-2rem; margin-bottom:3rem">${esc(content.pricing.description)}</p>
-      <div class="feature-grid">
-        ${content.pricing.tiers
-          .map(
-            (tier) => `
-          <div class="feature-card ${tier.featured ? 'glass' : ''}" style="${tier.featured ? 'border-color:var(--primary); transform:scale(1.05); z-index:1;' : ''}">
-            <h3 class="feature-title">${esc(tier.name)}</h3>
-            <p class="service-price" style="font-size:2.5rem; margin-bottom:1rem">${esc(tier.price)}</p>
-            <ul style="list-style:none; margin-bottom:2rem; flex-grow:1; display:flex; flex-direction:column; gap:0.5rem">
-              ${tier.features
-                .map(
-                  (f) => `<li style="display:flex; gap:0.5rem; font-size:0.95rem; color:var(--fg-muted)">
-                <span style="color:var(--primary)">✓</span> ${esc(f)}
-              </li>`,
-                )
-                .join('')}
-            </ul>
-            <a href="contact.html" class="btn ${tier.featured ? 'btn-primary' : 'btn-outline'}" style="width:100%">Get Started</a>
-          </div>`,
-          )
-          .join('')}
-      </div>
-    </div>
-  </section>`;
-}
-
-function renderGeolocation(content: SiteContent): string {
-  if (!content.location) return '';
-
-  return `
-  <section class="geolocation-section section-padding">
-    <div class="container geo-inner">
-      <div class="geo-map-wrap">
-        <div class="geo-map-bg"></div>
-        <div class="geo-pulse"></div>
-        <div class="geo-marker"></div>
-      </div>
-      <div class="geo-content">
-        <h2 class="section-title">Serving ${esc(content.location.city)}</h2>
-        <p class="about-text">We provide fast, reliable service within a ${content.location.serviceRadius}-mile radius of ${esc(content.location.city)}. Our team is currently active and ready to help.</p>
-        <div class="geo-status" id="geo-status">
-          <div class="geo-dot" id="geo-dot"></div>
-          <span id="geo-text">Ready to check your area...</span>
-        </div>
-        <button class="btn btn-outline" onclick="simulateGeo()" id="geo-btn">Check Service Area</button>
-      </div>
-    </div>
-    <script>
-      function simulateGeo() {
-        const btn = document.getElementById('geo-btn');
-        const dot = document.getElementById('geo-dot');
-        const text = document.getElementById('geo-text');
-        
-        btn.disabled = true;
-        btn.textContent = 'Locating...';
-        dot.className = 'geo-dot';
-        text.textContent = 'Identifying your location...';
-
-        setTimeout(() => {
-          dot.className = 'geo-dot active';
-          text.textContent = 'We\\'re in your area! 📍 Estimated arrival: 15-30 mins.';
-          btn.textContent = 'Area Verified';
-        }, 1500);
-      }
-    </script>
-  </section>`;
-}
 
 function isColorLight(hex: string): boolean {
   const r = parseInt(hex.slice(1, 3), 16);
