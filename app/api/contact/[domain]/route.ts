@@ -147,7 +147,8 @@ export async function POST(
       console.error(`[contact] email send failed for ${domain}:`, err);
     }
   } else {
-    console.warn('[contact] SMTP not configured — skipping email forwarding');
+    console.warn(`[contact] SMTP not configured — skipping email forwarding for ${domain}`);
+    console.log(`[contact] Message from ${name.trim()} <${email.trim()}>: ${message.trim()}`);
   }
 
   return Response.json({ ok: true }, { headers: CORS });

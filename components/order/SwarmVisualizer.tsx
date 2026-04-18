@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import type { Order, OrderState } from '@/lib/order/types';
+import React, { useEffect, useState, useMemo } from 'react';
+import type { Order, OrderState, AuditEntry } from '@/lib/order/types';
 import styles from './SwarmVisualizer.module.css';
 
 interface SwarmVisualizerProps {
   orderId: string;
   initialOrder: Order;
+}
+
+interface AgentConfig {
+  id: string;
+  name: string;
+  icon: string;
+  label: string;
+  isActive: (order: Order) => boolean;
+  isDone: (order: Order) => boolean;
 }
 
 export default function SwarmVisualizer({ orderId, initialOrder }: SwarmVisualizerProps) {
@@ -35,22 +44,58 @@ export default function SwarmVisualizer({ orderId, initialOrder }: SwarmVisualiz
     return () => clearInterval(interval);
   }, [orderId, order.state]);
 
-  const agents: { state: OrderState; agent: string; icon: string; label: string }[] = [
-    { state: 'paid', agent: 'Orchestrator', icon: '🤖', label: 'Payment Confirmed' },
-    { state: 'domain_purchasing', agent: 'Domain Agent', icon: '🌐', label: 'Securing Domain' },
-    { state: 'building', agent: 'Content Agent', icon: '✍️', label: 'Generating Assets' },
-    { state: 'deploying', agent: 'Deploy Agent', icon: '🚀', label: 'Pushing to Production' },
-    { state: 'live', agent: 'QA Agent', icon: '✅', label: 'Final Verification' },
-  ];
+  const agents: AgentConfig[] = useMemo(() => [
+    {
+      id: 'domain',
+      name: 'Domain Agent',
+      icon: '🌐',
+      label: 'Securing Domain',
+      isActive: (o) => o.state === 'domain_purchasing',
+      isDone: (o) => !['new', 'qualifying', 'payment_pending', 'paid', 'domain_purchasing'].includes(o.state) || o.state === 'live'
+    },
+    {
+      id: 'content',
+      name: 'Content Agent',
+      icon: '✍️',
+      label: 'Generating Copy',
+      isActive: (o) => o.state === 'building' && !o.auditTrail.some(e => e.note?.toLowerCase().includes('design')),
+      isDone: (o) => o.auditTrail.some(e => e.note?.toLowerCase().includes('design')) || ['deploying', 'live'].includes(o.state)
+    },
+    {
+      id: 'design',
+      name: 'Design Agent',
+      icon: '🎨',
+      label: 'Refining Visuals',
+      isActive: (o) => o.state === 'building' && o.auditTrail.some(e => e.note?.toLowerCase().includes('design')) && !o.auditTrail.some(e => e.note?.toLowerCase().includes('deploy')),
+      isDone: (o) => o.auditTrail.some(e => e.note?.toLowerCase().includes('deploy')) || ['deploying', 'live'].includes(o.state)
+    },
+    {
+      id: 'deploy',
+      name: 'Deploy Agent',
+      icon: '🚀',
+      label: 'Pushing to VPS',
+      isActive: (o) => o.state === 'building' && o.auditTrail.some(e => e.note?.toLowerCase().includes('deploy')),
+      isDone: (o) => o.state === 'deploying' || o.state === 'live'
+    },
+    {
+      id: 'qa',
+      name: 'QA Agent',
+      icon: '✅',
+      label: 'Final Verification',
+      isActive: (o) => o.state === 'deploying',
+      isDone: (o) => o.state === 'live'
+    }
+  ], []);
 
-  const getAgentStatus = (agentState: OrderState) => {
-    const orderStateIndex = agents.findIndex(a => a.state === order.state);
-    const agentStateIndex = agents.findIndex(a => a.state === agentState);
+  const latestAudit = useMemo(() => {
+    if (!order.auditTrail || order.auditTrail.length === 0) return null;
+    return [...order.auditTrail].reverse().find(e => e.note);
+  }, [order.auditTrail]);
 
-    if (orderStateIndex > agentStateIndex || order.state === 'live') return 'done';
-    if (orderStateIndex === agentStateIndex) return 'active';
-    return 'pending';
-  };
+  const recentActivity = useMemo(() => {
+    if (!order.auditTrail) return [];
+    return [...order.auditTrail].reverse().filter(e => e.note).slice(0, 3);
+  }, [order.auditTrail]);
 
   return (
     <div className={styles.swarmVisualizer}>
@@ -60,20 +105,19 @@ export default function SwarmVisualizer({ orderId, initialOrder }: SwarmVisualiz
       </div>
 
       <div className={styles.agentSwarm}>
-        {agents.slice(1).map((agent) => {
-          const status = getAgentStatus(agent.state);
-          const isActive = status === 'active';
-          const isDone = status === 'done';
-          const isPending = status === 'pending';
+        {agents.map((agent) => {
+          const isActive = agent.isActive(order);
+          const isDone = agent.isDone(order) && !isActive;
+          const isPending = !isActive && !isDone;
 
           return (
             <div 
-              key={agent.state} 
+              key={agent.id} 
               className={`${styles.agentNode} ${isActive ? styles.active : ''} ${isDone ? styles.done : ''} ${isPending ? styles.pending : ''}`}
             >
               <div className={styles.agentIcon}>{agent.icon}</div>
               <div className={styles.agentInfo}>
-                <div className={styles.agentName}>{agent.agent}</div>
+                <div className={styles.agentName}>{agent.name}</div>
                 <div className={styles.agentStatus}>
                   {isDone ? 'Complete' : isActive ? 'Processing...' : 'Awaiting Task'}
                 </div>
@@ -82,6 +126,28 @@ export default function SwarmVisualizer({ orderId, initialOrder }: SwarmVisualiz
             </div>
           );
         })}
+      </div>
+
+      <div className={styles.statusFeed}>
+        <div className={styles.feedTitle}>Swarm Intelligence Feed</div>
+        <div className={styles.feedContent}>
+          {latestAudit ? (
+            <div className={styles.latestNote}>
+              {latestAudit.note}
+            </div>
+          ) : (
+            <div className={styles.latestNote}>Waiting for swarm activity...</div>
+          )}
+          
+          <div className={styles.activityLog}>
+            {recentActivity.map((entry, i) => (
+              <div key={i} className={styles.logEntry}>
+                <span>{entry.event.replace(/_/g, ' ')}</span>
+                <span>{new Date(entry.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
