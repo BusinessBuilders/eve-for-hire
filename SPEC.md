@@ -701,3 +701,22 @@ These are speculative but represent non-dilutive revenue sources that no traditi
 ---
 
 *This document is a living spec. Update when pricing, features, strategic priorities, or market conditions change. Version history tracked in git.*
+
+## 13. Deep Insights (Brainstormed)
+
+### Investor-Grade Competitive Moats & Defensibility Analysis
+**Moat 6: The API Integration Moat (Defensibility)**
+Unlike standard web builders, the Agentic Swarm integrates deeply via API (e.g., Stripe, local CRMs, scheduling tools) autonomously. The switching cost becomes prohibitive once Eve acts as the central orchestrator for a business's digital presence, creating a sticky ecosystem.
+
+**Defensibility Analysis:**
+- **Short-term:** Speed to market and low CAC.
+- **Medium-term:** Proprietary dataset of SME intents and conversion-optimized prompts.
+- **Long-term:** Embedded ecosystem where Eve manages not just the site, but leads and customer interactions directly.
+
+### Expansion Scenarios (Additional)
+**Scenario F: The Acquisition Channel for B2B Services**
+Eve acts as a lead generation funnel for high-margin B2B services (insurance, accounting, legal). By knowing exactly when a business is formed (via domain registration and site creation), Eve can broker highly targeted B2B services, generating affiliate revenue that eclipses the core subscription model.
+
+### Technical Differentiators (Expanded)
+- **Swarm Intelligence vs Single LLM:** Utilizing specialized sub-agents prevents context window degradation and allows localized optimizations (e.g. Design agent uses different temperature and prompt structures than the Content agent).
+- **Deterministic State Machines for Non-Deterministic Outputs:** Orchestrating LLMs within strict, programmatic pipelines ensures 99.9% uptime and reliable deployment, abstracting away hallucinations and runtime errors.
