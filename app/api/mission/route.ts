@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const GOAL = 100_000; // $100,000 for Unitree G1 humanoid robot
+const GOAL = 43_000; // $43,000 for Unitree G1 humanoid robot
 
 export async function GET() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -17,12 +17,9 @@ export async function GET() {
 
   let totalCents = 0;
   try {
-    // Auto-paginate through all charges so the total is always accurate
-    for await (const charge of stripe.charges.list({ limit: 100 })) {
-      if (charge.paid && !charge.refunded) {
-        totalCents += charge.amount;
-      }
-    }
+    // Read the balance instead of paginating through all charges to prevent O(N) performance issues
+    const balance = await stripe.balance.retrieve();
+    totalCents = balance.available.reduce((sum, b) => sum + b.amount, 0) + balance.pending.reduce((sum, b) => sum + b.amount, 0);
   } catch (err) {
     console.error('[mission] Stripe query failed:', err);
     return NextResponse.json(
