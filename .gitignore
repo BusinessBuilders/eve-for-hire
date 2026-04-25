@@ -4,9 +4,9 @@ node_modules/
 .env*.local
 out/
 # SQLite database and WAL/SHM sidecar files
-data/*.db
-data/*.db-shm
-data/*.db-wal
+**/*.db
+**/*.db-shm
+**/*.db-wal
 .vercel
 tsconfig.tsbuildinfo
 
@@ -15,3 +15,12 @@ tsconfig.tsbuildinfo
 scripts/poc-output/
 *.content.json
 which
+
+# Agent and Task temporary files
+agent_list.txt
+agents.json
+agents_formatted.txt
+plan.json
+task[0-9].json
+test-ai*.ts
+update.json

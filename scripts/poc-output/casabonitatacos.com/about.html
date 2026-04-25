@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Family-owned for 15 years, Casa Bonita Tacos serves Denver&#x27;s most authentic tacos, burritos, and enchiladas with love — just like abuela made them." />
-  <title>Casa Bonita Tacos</title>
+  <meta name="description" content="Serving Denver&#x27;s most authentic tacos and burritos." />
+  <title>Casa Bonita Tacos | Authentic Mexican Flavors Since 2009</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -14,28 +14,36 @@
       :root {
         --primary: #b91c1c;
         --accent: #d97706;
+        --primary-glow: color-mix(in srgb, #b91c1c, transparent 60%);
         --fg: #e2e8f0;
         --fg-muted: #94a3b8;
         --bg: #0a0a10;
+        --nav-bg: rgba(10, 10, 16, 0.85);
         --surface: #0f0f1a;
         --border: rgba(255, 255, 255, 0.08);
         --glass: rgba(255, 255, 255, 0.03);
         --radius: 16px;
         --font: 'Outfit', system-ui, sans-serif;
         --font-heading: 'Bebas Neue', system-ui, sans-serif;
+        --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.4);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       html { scroll-behavior: smooth; }
       body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.6; }
+      
+      .reveal-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+      .reveal-anim.visible { opacity: 1; transform: translateY(0); }
 
       .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
       /* ── Header ── */
-      .header { position: sticky; top: 0; background: rgba(10, 10, 16, 0.8); backdrop-filter: blur(12px);
+      .header { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--border); z-index: 100; }
       .nav { display: flex; align-items: center; gap: 1rem; height: 72px; }
-      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: var(--primary); letter-spacing: 0.02em;
-        text-decoration: none; flex-shrink: 0; }
+      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: #fff; letter-spacing: 0.02em;
+        text-decoration: none; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+      .logo::before { content: ""; display: block; width: 32px; height: 32px; background: var(--primary); border-radius: 6px; box-shadow: 0 0 15px var(--primary-glow); }
       .nav-links { display: flex; gap: 0.5rem; flex: 1; }
       .nav-link { padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
         font-size: 0.95rem; color: var(--fg-muted); transition: all 0.2s ease; }
@@ -45,12 +53,12 @@
       /* ── Buttons ── */
       .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 28px;
         border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; }
+        transition: var(--transition); cursor: pointer; border: none; }
       .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
       .btn-primary { 
         background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); 
         color: #fff;
-        box-shadow: 0 0 20px color-mix(in srgb, var(--primary), transparent 60%);
+        box-shadow: 0 0 20px var(--primary-glow);
       }
       .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
       .btn-outline:hover { background: var(--primary); color: #fff; }
@@ -78,17 +86,35 @@
       .features { padding: 100px 0; background: var(--surface); }
       .section-title { font-family: var(--font-heading); font-size: 2.5rem; letter-spacing: 0.02em; margin-bottom: 48px;
         text-align: center; color: #fff; }
+      .glow-text { text-shadow: 0 0 20px var(--primary-glow); }
       .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
-      .feature-card { 
+      .feature-card, .glass-card { 
         background: var(--glass); border-radius: var(--radius); padding: 40px 32px;
         backdrop-filter: blur(12px); border: 1px solid var(--border);
-        transition: all 0.4s ease;
+        transition: var(--transition);
       }
-      .feature-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+      .feature-card:hover, .glass-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: var(--shadow-xl); }
       .feature-icon { font-size: 2.5rem; margin-bottom: 20px; }
       .feature-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
       .feature-desc { color: var(--fg-muted); font-size: 1rem; }
       .service-price { margin-top: 16px; font-weight: 600; color: var(--primary); font-size: 1.1rem; font-family: var(--font-heading); }
+
+      /* ── How It Works ── */
+      .steps { padding: 100px 0; position: relative; }
+      .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 48px; position: relative; }
+      .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; position: relative; z-index: 2; }
+      .step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-family: var(--font-heading);
+        font-size: 1.5rem; box-shadow: 0 0 20px var(--primary-glow); margin-bottom: 8px; }
+      .step-title { font-size: 1.25rem; font-weight: 700; color: #fff; }
+      .step-desc { color: var(--fg-muted); font-size: 0.95rem; font-weight: 300; }
+      
+      @media (min-width: 900px) {
+        .step-item:not(:last-child)::after {
+          content: ""; position: absolute; top: 24px; left: calc(50% + 40px); width: calc(100% - 80px);
+          height: 2px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.3;
+        }
+      }
 
       /* ── About ── */
       .about { padding: 100px 0; }
@@ -96,14 +122,8 @@
       .about-content { flex: 1; display: flex; flex-direction: column; gap: 24px; }
       .about-content .section-title { text-align: left; margin-bottom: 0; }
       .about-text { color: var(--fg-muted); font-size: 1.1rem; font-weight: 300; }
-      .about-visual { flex: 0 0 240px; display: flex; align-items: center; justify-content: center; }
-      .about-blob { width: 200px; height: 200px; border-radius: 40px;
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        display: flex; align-items: center; justify-content: center;
-        font-size: 5rem; font-family: var(--font-heading); color: #fff;
-        box-shadow: 0 0 40px color-mix(in srgb, var(--primary), transparent 70%);
-        transform: rotate(-3deg);
-      }
+      .about-visual { flex: 1; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
+      .premium-illustration { width: 100%; max-width: 400px; height: auto; filter: drop-shadow(0 0 30px var(--primary-glow)); }
 
       /* ── CTA Banner ── */
       .cta-banner { background: var(--surface); padding: 100px 0; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -120,6 +140,17 @@
       .contact-icon { font-size: 1.5rem; flex-shrink: 0; color: var(--primary); }
       .contact-detail a { color: #fff; text-decoration: none; }
       .contact-detail a:hover { color: var(--primary); }
+      
+      .map-placeholder { width: 100%; height: 250px; background: var(--surface); border-radius: 12px; margin-top: 24px;
+        border: 1px solid var(--border); position: relative; overflow: hidden; }
+      .map-grid { position: absolute; inset: 0; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; }
+      .map-pin { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; background: var(--primary); border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg); box-shadow: 0 0 20px var(--primary-glow); }
+      .map-pin::after { content: ""; position: absolute; inset: 6px; background: #fff; border-radius: 50%; }
+      .map-pin-pulse { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; transform: translate(-12px, -12px);
+        border: 2px solid var(--primary); border-radius: 50%; animation: ping 2s infinite; }
+      @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
       .contact-form-wrap .section-title { text-align: left; margin-bottom: 32px; }
       .contact-form { display: flex; flex-direction: column; gap: 24px; }
       .form-group { display: flex; flex-direction: column; gap: 10px; }
@@ -145,6 +176,11 @@
       .footer-copy { font-size: 0.9rem; }
       .footer-email { color: var(--primary); font-size: 0.95rem; text-decoration: none; }
 
+      /* ── Trust Badges ── */
+      .trust-row { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-top: 48px; }
+      .trust-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--fg-muted); 
+        background: var(--glass); padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); }
+
       /* ── Responsive ── */
       @media (max-width: 900px) {
         .about-inner { flex-direction: column; gap: 48px; text-align: center; }
@@ -163,27 +199,22 @@
     <nav class="nav container">
       <a href="index.html" class="logo">Casa Bonita Tacos</a>
       <div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="about.html" class="nav-link nav-active">About</a><a href="services.html" class="nav-link">Services</a><a href="contact.html" class="nav-link">Contact</a></div>
-      <a href="mailto:hola@casabonitatacos.com" class="btn btn-outline nav-cta">Contact Us</a>
+      <a href="mailto:hola@casabonitatacos.com" class="btn btn-primary nav-cta">Get Started</a>
     </nav>
   </header>
   <main>
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
-      <h1 class="hero-headline">About Casa Bonita Tacos</h1>
-      <p class="hero-sub">Authentic Mexican Flavors Since 2009</p>
+      <h1 class="hero-headline">About Us</h1>
     </div>
   </section>
-  <section class="about" id="story">
+  <section class="about reveal-anim" id="story">
     <div class="container about-inner">
       <div class="about-content">
         <h2 class="section-title">Our Story</h2>
-        <p class="about-text">In 2009, Maria and Roberto Gutierrez bet everything on a dream — an authentic Mexican restaurant in Denver&#x27;s Baker neighborhood. Roberto&#x27;s grandmother Esperanza had spent 40 years perfecting the recipes in Oaxaca, and Roberto spent 5 years as a chef in Mexico City before bringing those flavors to Colorado. Today, their children work alongside them, and Esperanza&#x27;s recipes are still the heart of every dish.</p>
+        <p class="about-text">Casa Bonita Tacos has been a Denver institution since 2009.</p>
         <h2 class="section-title" style="margin-top:2rem">Our Mission</h2>
-        <p class="about-text">To bring the soul of authentic Mexican home cooking to Denver — one taco at a time — and to make every guest feel like family.</p>
-        <a href="contact.html" class="btn btn-primary" style="margin-top:1rem">See Our Menu</a>
-      </div>
-      <div class="about-visual" aria-hidden="true">
-        <div class="about-blob">C</div>
+        <p class="about-text">Casa Bonita Tacos is dedicated to delivering excellent results for every client.</p>
       </div>
     </div>
   </section></main>
@@ -197,8 +228,13 @@
       </div>
       <p class="footer-name">Casa Bonita Tacos</p>
       <p class="footer-copy">&copy; 2026 Casa Bonita Tacos. All rights reserved.</p>
-      <a href="mailto:hola@casabonitatacos.com" class="footer-email">hola@casabonitatacos.com</a>
     </div>
   </footer>
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal-anim').forEach(el => observer.observe(el));
+  </script>
 </body>
 </html>

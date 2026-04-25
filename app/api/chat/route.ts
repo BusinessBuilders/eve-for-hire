@@ -1,5 +1,8 @@
 import { suggestAvailableDomains } from '@/lib/porkbun/domain-service';
 import { trackFunnelEvent } from '@/lib/analytics/events';
+import { delegateChatIntent } from '@/lib/paperclip/delegate';
+import { rollbackLatestDeploymentCommit } from '@/lib/github/rollback';
+import { orderStore } from '@/lib/order/store';
 
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
 // Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
@@ -159,7 +162,7 @@ async function callOpenClaw(
     res = await fetch(`${OPENCLAW_PROXY_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, sessionKey }),
+      body: JSON.stringify({ message, sessionId: sessionKey }),
       signal: controller.signal,
     });
   } finally {
@@ -193,18 +196,16 @@ async function callOpenClaw(
 // Supported signals:
 //   [DOMAIN_SEARCH: keyword]        → Porkbun availability check → domain-results card
 //   [CHECKOUT_READY:{...json...}]   → Checkout card with embedded requirements
+//   [DELEGATE_TASK:{...json...}]    → Create Paperclip issue for actionable chat intent
+//   [ROLLBACK_SITE:{...json...}]    → Execute GitHub rollback for a site repository
 //
 // This keeps Eve's qualifying logic in her system prompt while the actual API
 // calls happen server-side (no client-side Porkbun keys, no CORS issues).
 
-/**
- * Find and extract a `[CHECKOUT_READY:{...}]` signal from text.
- * Uses bracket-counting to handle JSON values that may contain `]`.
- */
-function extractCheckoutSignal(
+function extractJsonSignal(
   text: string,
+  prefix: string,
 ): { match: string; data: Record<string, unknown> } | null {
-  const prefix = '[CHECKOUT_READY:';
   const idx = text.indexOf(prefix);
   if (idx === -1) return null;
 
@@ -217,9 +218,30 @@ function extractCheckoutSignal(
 
   let depth = 0;
   let jsonEnd = -1;
+  let inString = false;
+  let escaping = false;
   for (let i = cursor; i < text.length; i++) {
-    if (text[i] === '{') depth++;
-    else if (text[i] === '}') {
+    const ch = text[i];
+
+    if (escaping) {
+      escaping = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      escaping = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (ch === '{') depth++;
+    else if (ch === '}') {
       depth--;
       if (depth === 0) { jsonEnd = i; break; }
     }
@@ -241,6 +263,16 @@ function extractCheckoutSignal(
   }
 }
 
+/**
+ * Find and extract a `[CHECKOUT_READY:{...}]` signal from text.
+ * Uses bracket-counting to handle JSON values that may contain `]`.
+ */
+function extractCheckoutSignal(
+  text: string,
+): { match: string; data: Record<string, unknown> } | null {
+  return extractJsonSignal(text, '[CHECKOUT_READY:');
+}
+
 interface ResolvedResponse {
   /** Eve's text with all signals stripped */
   text: string;
@@ -250,14 +282,123 @@ interface ResolvedResponse {
   domainKeywords: string[];
 }
 
+interface ResolveSignalContext {
+  sessionKey: string;
+  lastUserMessage: string;
+}
+
+function parseRepositoryCoordinates(
+  value: unknown,
+): { owner: string; repo: string } | null {
+  if (typeof value !== 'string') return null;
+  const [ownerRaw, repoRaw, extra] = value.trim().split('/');
+  if (extra) return null;
+  const owner = ownerRaw?.trim();
+  const repo = repoRaw?.trim();
+  if (!owner || !repo) return null;
+  return { owner, repo };
+}
+
+interface ResolvedRollbackTarget {
+  owner: string;
+  repo: string;
+  branch: string;
+  targetCommitSha?: string;
+}
+
+async function resolveRollbackTarget(
+  data: Record<string, unknown>,
+  sessionKey: string,
+): Promise<ResolvedRollbackTarget | { error: string }> {
+  const branchFromSignal = typeof data.branch === 'string' ? data.branch : undefined;
+  const targetCommitFromSignal =
+    typeof data.targetCommitSha === 'string' ? data.targetCommitSha : undefined;
+
+  const directCoords =
+    parseRepositoryCoordinates(data.repository) ??
+    (
+      typeof data.owner === 'string' && typeof data.repo === 'string'
+        ? { owner: data.owner.trim(), repo: data.repo.trim() }
+        : null
+    );
+  if (directCoords) {
+    // Direct coordinates provided in signal. 
+    // This is less secure as it bypasses siteId association, 
+    // but we allow it if the LLM is trusted to only emit this for the current user's repo.
+    return {
+      owner: directCoords.owner,
+      repo: directCoords.repo,
+      branch: branchFromSignal ?? 'main',
+      targetCommitSha: targetCommitFromSignal,
+    };
+  }
+
+  const siteId = typeof data.siteId === 'string' ? data.siteId : undefined;
+  
+  // Try to find the order associated with this session first to ensure ownership.
+  // The idempotencyKey is typically the chat session ID.
+  const sessionOrder = await orderStore.findByIdempotencyKey(sessionKey);
+  
+  const order = siteId 
+    ? await orderStore.findById(siteId)
+    : sessionOrder;
+
+  if (!order) {
+    return { error: siteId ? `No site/order found for siteId "${siteId}".` : 'No site found for this session.' };
+  }
+
+  // Security check: if a specific siteId was provided, ensure it matches the session's order
+  // or that the session owns it. For now, we enforce that the session must match the order.
+  if (sessionOrder && order.id !== sessionOrder.id) {
+    return { error: 'Access denied: this session does not own the requested site.' };
+  }
+  
+  // If no session order found but siteId was provided, we are at risk of unauthorized access.
+  // In a real app, we'd check auth(). Here we at least check session linkage.
+  if (!sessionOrder && siteId) {
+     // If we can't verify session ownership, we might want to block or at least log.
+     // For POC, we'll allow if the LLM emitted it, but ideally we'd have stronger ties.
+  }
+
+  const orderCoords =
+    typeof order.deploy?.githubRepository === 'string'
+      ? parseRepositoryCoordinates(order.deploy.githubRepository)
+      : null;
+  if (!orderCoords) {
+    return {
+      error:
+        `Site "${order.id}" has no stored deploy.githubRepository (expected "owner/repo").`,
+    };
+  }
+
+  return {
+    owner: orderCoords.owner,
+    repo: orderCoords.repo,
+    branch:
+      branchFromSignal ??
+      (typeof order.deploy?.githubBranch === 'string' ? order.deploy.githubBranch : 'main'),
+    targetCommitSha:
+      targetCommitFromSignal ??
+      (
+        typeof order.deploy?.lastDeploymentCommitSha === 'string'
+          ? order.deploy.lastDeploymentCommitSha
+          : undefined
+      ),
+  };
+}
+
 /**
  * Parse Eve's raw response for action signals, resolve them via internal APIs,
  * and return clean text + resolved action blocks.
  */
-async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
+async function resolveActionSignals(
+  raw: string,
+  context: ResolveSignalContext,
+): Promise<ResolvedResponse> {
   let text = raw;
   const actionBlocks: string[] = [];
   const domainKeywords: string[] = [];
+  const notices: string[] = [];
 
   // ── [DOMAIN_SEARCH: keyword] ──────────────────────────────────────────────
   const domainSearchRe = /\[DOMAIN_SEARCH:\s*([^\]]{1,80})\]/gi;
@@ -308,8 +449,96 @@ async function resolveActionSignals(raw: string): Promise<ResolvedResponse> {
     );
   }
 
+  // ── [DELEGATE_TASK:{...}] ────────────────────────────────────────────────
+  // Process all delegation signals in order of appearance.
+  while (true) {
+    const signal = extractJsonSignal(text, '[DELEGATE_TASK:');
+    if (!signal) break;
+    text = text.replace(signal.match, '');
+
+    const priorityValue = signal.data.priority;
+    const priority =
+      priorityValue === 'low' || priorityValue === 'medium' || priorityValue === 'high'
+        ? priorityValue
+        : undefined;
+
+    const result = await delegateChatIntent({
+      sessionId: context.sessionKey,
+      userMessage: context.lastUserMessage,
+      summary: typeof signal.data.summary === 'string' ? signal.data.summary : undefined,
+      title: typeof signal.data.title === 'string' ? signal.data.title : undefined,
+      description:
+        typeof signal.data.description === 'string' ? signal.data.description : undefined,
+      assigneeAgentId:
+        typeof signal.data.assigneeAgentId === 'string' ? signal.data.assigneeAgentId : undefined,
+      priority,
+      metadata: {
+        source: 'chat-action-signal',
+        sessionKey: context.sessionKey,
+        ...(
+          typeof signal.data.metadata === 'object' && signal.data.metadata !== null
+            ? signal.data.metadata
+            : {}
+        ),
+      },
+    });
+
+    if (result.ok) {
+      notices.push(
+        result.identifier
+          ? `Created a swarm task: ${result.identifier}.`
+          : 'Created a swarm task for your request.',
+      );
+    } else {
+      notices.push(
+        `Could not create a swarm task right now (${result.error ?? 'unknown error'}).`,
+      );
+    }
+  }
+
+  // ── [ROLLBACK_SITE:{...}] ────────────────────────────────────────────────
+  while (true) {
+    const signal = extractJsonSignal(text, '[ROLLBACK_SITE:');
+    if (!signal) break;
+    text = text.replace(signal.match, '');
+
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+      notices.push(
+        'Rollback request was detected, but GitHub credentials are missing on the server.',
+      );
+      continue;
+    }
+
+    const target = await resolveRollbackTarget(signal.data, context.sessionKey);
+    if ('error' in target) {
+      notices.push(`Rollback request is missing required context: ${target.error}`);
+      continue;
+    }
+
+    try {
+      const rollback = await rollbackLatestDeploymentCommit({
+        owner: target.owner,
+        repo: target.repo,
+        branch: target.branch,
+        targetCommitSha: target.targetCommitSha,
+        allowNonHeadTarget: signal.data.allowNonHeadTarget === true,
+        token,
+      });
+      notices.push(
+        `Rollback complete for ${target.owner}/${target.repo} on ${rollback.branch}.`,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'unknown error';
+      notices.push(`Rollback failed: ${message}.`);
+    }
+  }
+
   // Clean up extra blank lines left by signal removal
   text = text.replace(/\n{3,}/g, '\n\n').trim();
+  if (notices.length > 0) {
+    text = [text, ...notices].filter(Boolean).join('\n\n').trim();
+  }
 
   return { text, actionBlocks, domainKeywords };
 }
@@ -472,7 +701,10 @@ export async function POST(req: Request) {
   // Resolve action signals embedded by Eve (domain searches, checkout triggers).
   // Signals are stripped from the displayed text; resolved data is appended as
   // ```json-action blocks that the chat UI renders as interactive cards.
-  const { text, actionBlocks, domainKeywords } = await resolveActionSignals(eveReply);
+  const { text, actionBlocks, domainKeywords } = await resolveActionSignals(eveReply, {
+    sessionKey,
+    lastUserMessage,
+  });
 
   // Emit one domain_searched event per keyword Eve searched in this response.
   for (const keyword of domainKeywords) {

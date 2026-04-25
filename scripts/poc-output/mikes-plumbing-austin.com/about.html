@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Emergency plumbing services across Austin, TX — available 24/7. We fix leaks, clogs, water heaters, and more with same-day response." />
-  <title>Mike&#x27;s Plumbing</title>
+  <meta name="description" content="Emergency plumbing services across Austin, TX — available 24/7." />
+  <title>Mike&#x27;s Plumbing | Austin&#x27;s #1 Emergency Plumber — 24/7</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --primary: #1e3a8a; --accent: #f97316;
       --fg: #0f172a; --fg-muted: #64748b;
       --bg: #ffffff; --bg-soft: #f8fafc;
-      --radius: 8px;
+      --radius: 12px;
       --font-body: 'Inter', system-ui, -apple-system, sans-serif;
       --font-heading: 'Montserrat', system-ui, -apple-system, sans-serif;
       --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -24,6 +24,10 @@
     html { scroll-behavior: smooth; }
     body { font-family: var(--font-body); color: var(--fg); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; }
     h1, h2, h3, h4, .logo { font-family: var(--font-heading); }
+    
+    .reveal-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .reveal-anim.visible { opacity: 1; transform: translateY(0); }
+
     .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
     .header { position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 100; }
@@ -40,12 +44,11 @@
       border-radius: var(--radius); font-weight: 700; font-size: 0.95rem; text-decoration: none;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; border: none; gap: 8px; }
     .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-    .btn:active { transform: translateY(0); }
     .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: color-mix(in srgb, var(--primary), black 10%); }
     .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
     .btn-outline:hover { background: var(--primary); color: #fff; }
     .btn-white { background: #fff; color: var(--primary); }
+    
     .hero { padding: 120px 0 100px; background: var(--fg); position: relative; overflow: hidden; color: #fff; text-align: center; }
     .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); opacity: 0.9; }
     .hero::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0); background-size: 32px 32px; }
@@ -55,6 +58,7 @@
     .hero-headline { font-size: clamp(2.25rem, 6vw, 3.75rem); font-weight: 800; line-height: 1.1;
       letter-spacing: -0.04em; max-width: 850px; }
     .hero-sub { font-size: 1.25rem; opacity: 0.9; max-width: 650px; font-weight: 400; }
+    
     .features { padding: 100px 0; background: var(--bg-soft); }
     .section-title { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 48px; text-align: center; color: var(--fg); }
     .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
@@ -65,6 +69,13 @@
     .feature-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: var(--fg); }
     .feature-desc { color: var(--fg-muted); font-size: 1rem; flex-grow: 1; }
     .service-price { margin-top: 16px; font-weight: 700; color: var(--primary); font-size: 1.1rem; }
+    
+    .steps { padding: 100px 0; background: var(--bg); }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 48px; }
+    .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+    .step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.25rem; }
+    
     .about { padding: 100px 0; }
     .about-inner { display: flex; align-items: center; gap: 80px; }
     .about-content { flex: 1; display: flex; flex-direction: column; gap: 24px; }
@@ -75,50 +86,40 @@
       background: linear-gradient(135deg, var(--primary), var(--accent));
       display: flex; align-items: center; justify-content: center;
       font-size: 5rem; font-weight: 900; color: #fff; box-shadow: var(--shadow-lg); transform: rotate(-3deg); }
+    
     .cta-banner { background: var(--primary); color: #fff; padding: 100px 0; text-align: center; position: relative; overflow: hidden; }
-    .cta-banner::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); opacity: 0.9; }
     .cta-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 24px; }
     .cta-inner h2 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em; }
-    .cta-inner p { opacity: 0.9; font-size: 1.2rem; max-width: 600px; }
+    
     .contact-section { padding: 100px 0; }
     .contact-inner { display: grid; grid-template-columns: 1fr 1.5fr; gap: 80px; align-items: start; }
     .contact-details { display: flex; flex-direction: column; gap: 24px; }
-    .contact-details .section-title { text-align: left; margin-bottom: 8px; }
     .contact-detail { display: flex; align-items: flex-start; gap: 16px; font-size: 1.05rem; }
     .contact-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
-    .contact-detail a { color: var(--primary); text-decoration: none; font-weight: 600; }
-    .contact-detail a:hover { text-decoration: underline; }
     .contact-form-wrap { background: var(--bg-soft); padding: 48px; border-radius: var(--radius); }
-    .contact-form-wrap .section-title { text-align: left; margin-bottom: 32px; }
     .contact-form { display: flex; flex-direction: column; gap: 20px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-group label { font-size: 0.9rem; font-weight: 600; color: var(--fg); }
     .form-group input, .form-group textarea {
       padding: 12px 16px; border-radius: 8px; border: 2px solid #e2e8f0;
-      font-family: var(--font-body); font-size: 1rem; color: var(--fg);
-      background: var(--bg); transition: all 0.2s; resize: vertical; }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
-    .cf-status { font-size: 1rem; border-radius: 8px; padding: 16px; display: none; margin-top: 16px; font-weight: 500; }
-    .cf-status:not(:empty) { display: block; }
-    .cf-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .cf-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+      font-family: var(--font-body); font-size: 1rem; background: var(--bg); resize: vertical; }
+    
+    .cf-status { font-size: 0.9rem; border-radius: 8px; padding: 10px 14px; display: none; }
     .footer { background: #0f172a; color: #94a3b8; padding: 64px 0 40px; }
     .footer-inner { display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
     .footer-nav { display: flex; gap: 2rem; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; }
-    .footer-nav a { color: #94a3b8; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .footer-nav a { color: #94a3b8; text-decoration: none; font-size: 0.95rem; transition: color 0.2s; }
     .footer-nav a:hover { color: #fff; }
-    .footer-name { font-weight: 800; color: #fff; font-size: 1.25rem; letter-spacing: -0.03em; }
-    .footer-copy { font-size: 0.9rem; }
-    .footer-email { color: var(--accent); font-size: 0.95rem; text-decoration: none; font-weight: 600; }
+    
+    .trust-row { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 32px; }
+    .trust-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: rgba(255,255,255,0.8); 
+      background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 50px; }
+
     @media (max-width: 900px) {
       .contact-inner { grid-template-columns: 1fr; gap: 60px; }
       .about-inner { flex-direction: column; gap: 48px; text-align: center; }
       .about-content .section-title { text-align: center; }
       .about-visual { order: -1; }
-    }
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .hero { padding: 100px 0 80px; }
     }
   </style>
 </head>
@@ -127,27 +128,22 @@
     <nav class="nav container">
       <a href="index.html" class="logo">Mike&#x27;s Plumbing</a>
       <div class="nav-links"><a href="index.html" class="nav-link">Home</a><a href="about.html" class="nav-link nav-active">About</a><a href="services.html" class="nav-link">Services</a><a href="contact.html" class="nav-link">Contact</a></div>
-      <a href="mailto:mike@mikes-plumbing-austin.com" class="btn btn-outline nav-cta">Contact Us</a>
+      <a href="mailto:mike@mikes-plumbing-austin.com" class="btn btn-primary nav-cta">Get Started</a>
     </nav>
   </header>
   <main>
-  <section class="hero hero-sm">
+  <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
-      <h1 class="hero-headline">About Mike&#x27;s Plumbing</h1>
-      <p class="hero-sub">Austin&#x27;s #1 Emergency Plumber — 24/7</p>
+      <h1 class="hero-headline">About Us</h1>
     </div>
   </section>
-  <section class="about" id="story">
+  <section class="about reveal-anim" id="story">
     <div class="container about-inner">
       <div class="about-content">
         <h2 class="section-title">Our Story</h2>
-        <p class="about-text">Mike Johnson started Mike&#x27;s Plumbing in 2012 after 8 years working for large plumbing corporations. He wanted to build a company that actually cared about customers — no hidden fees, no upselling, just honest work at fair prices. Today, Mike&#x27;s team of 6 licensed plumbers serves the entire greater Austin area.</p>
+        <p class="about-text">Mike&#x27;s Plumbing has served the Austin area for over 12 years.</p>
         <h2 class="section-title" style="margin-top:2rem">Our Mission</h2>
-        <p class="about-text">Our mission is to be Austin&#x27;s most trusted plumber by showing up fast, diagnosing correctly, and fixing it right the first time.</p>
-        <a href="contact.html" class="btn btn-primary" style="margin-top:1rem">Request Service Now</a>
-      </div>
-      <div class="about-visual" aria-hidden="true">
-        <div class="about-blob">M</div>
+        <p class="about-text">Mike&amp;#x27;s Plumbing is dedicated to delivering excellent results for every client.</p>
       </div>
     </div>
   </section></main>
@@ -161,8 +157,13 @@
       </div>
       <p class="footer-name">Mike&#x27;s Plumbing</p>
       <p class="footer-copy">&copy; 2026 Mike&#x27;s Plumbing. All rights reserved.</p>
-      <a href="mailto:mike@mikes-plumbing-austin.com" class="footer-email">mike@mikes-plumbing-austin.com</a>
     </div>
   </footer>
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal-anim').forEach(el => observer.observe(el));
+  </script>
 </body>
 </html>

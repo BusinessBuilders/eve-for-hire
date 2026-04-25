@@ -155,6 +155,12 @@ export interface DeployInfo {
   siteUrl?: string;
   /** ISO timestamp when site went live */
   liveAt?: string;
+  /** GitHub repository as "owner/repo" */
+  githubRepository?: string;
+  /** GitHub branch that tracks deployments */
+  githubBranch?: string;
+  /** Commit SHA associated with the latest deployment */
+  lastDeploymentCommitSha?: string;
 }
 
 // ─── Core Order ────────────────────────────────────────────────────────────
