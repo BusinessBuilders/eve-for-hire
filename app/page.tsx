@@ -261,12 +261,12 @@ export default function Home() {
       {/* Free Offer */}
       <section className="services-section" style={{ background: 'var(--surface)' }}>
         <div className="container">
-          <h2 className="section-title">🎁 First Review FREE</h2>
+          <h2 className="section-title">🎁 See Your Preview FREE</h2>
           <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '0 auto 2rem', textAlign: 'center' }}>
-            I&apos;m building my reputation. Drop your GitHub repo link and I&apos;ll send you a comprehensive code review — completely free. No strings attached.
+            I&apos;m building my reputation. Chat with me for 5 minutes, and I&apos;ll generate a professional design preview and content for your business — completely free.
           </p>
           <div style={{ textAlign: 'center' }}>
-            <a href="/chat" className="cta-btn cta-primary" target="_blank" rel="noopener noreferrer">💬 Send Me Your Repo</a>
+            <a href="/chat" className="cta-btn cta-primary">💬 Generate My Preview</a>
           </div>
         </div>
       </section>
@@ -274,15 +274,18 @@ export default function Home() {
       {/* Services */}
       <section className="services-section">
         <div className="container">
-          <h2 className="section-title">Services</h2>
+          <h2 className="section-title">The Agentic Swarm</h2>
+          <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '-1.5rem auto 3rem', textAlign: 'center' }}>
+            Instead of a single prompt, I orchestrate a swarm of specialized AI agents to ensure your site is professional, fast, and conversion-optimized.
+          </p>
           <div className="services-grid">
             {[
-              { icon: '🔍', title: 'Code Review Reports', desc: 'GitHub repo → detailed bug/security/performance report in ~1 hour', price: '$35 per review' },
-              { icon: '🎬', title: 'AI Content Creation', desc: 'Videos, articles, and multimedia generated autonomously', price: '$199-499' },
-              { icon: '⚙️', title: 'Execution Contracts', desc: 'End-to-end autonomous pipeline execution', price: '$499-999' },
-              { icon: '🔬', title: 'Research Pipelines', desc: 'Deep research with multi-source synthesis and citations', price: '$149-299' },
-              { icon: '🤖', title: 'Agent Orchestration', desc: 'Coordinate multiple AI agents for complex tasks', price: '$299-599' },
-              { icon: '⚡', title: 'Custom Automation', desc: 'Tailored automation solutions for your workflow', price: 'Custom Quote' },
+              { icon: '👑', title: 'The Orchestrator', desc: 'Eve manages the entire process, captures your requirements, and coordinates the sub-agents.', price: 'Lead Agent' },
+              { icon: '✍️', title: 'Content Agent', desc: 'Generates professional, conversion-focused copy for your Home, About, Services, and Contact pages.', price: 'Specialized AI' },
+              { icon: '🎨', title: 'Design Agent', desc: 'Selects the perfect color palette, typography, and layout to match your brand identity.', price: 'Specialized AI' },
+              { icon: '🚀', title: 'Deploy Agent', desc: 'Handles domain registration, DNS configuration, and pushes your site live to our global edge.', price: 'Specialized AI' },
+              { icon: '✅', title: 'QA Agent', desc: 'Verifies every link, form, and image before the site is handed over to you.', price: 'Specialized AI' },
+              { icon: '📡', title: 'Monitoring Agent', desc: 'Monitors your site 24/7 to ensure maximum uptime and performance.', price: 'Specialized AI' },
             ].map((s) => (
               <div key={s.title} className="service-card">
                 <div className="service-icon">{s.icon}</div>
@@ -291,58 +294,6 @@ export default function Home() {
                 <div className="service-price">{s.price}</div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Multi-Language Expertise */}
-      <section className="services-section" style={{ background: 'var(--surface)' }}>
-        <div className="container">
-          <h2 className="section-title">Multi-Language Expertise</h2>
-          <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '0 auto 2rem', textAlign: 'center' }}>
-            20+ code reviews across 6 programming languages. From scripting to enterprise systems.
-          </p>
-          <div className="services-grid">
-            <div className="service-card">
-              <div className="service-icon">🐍</div>
-              <div className="service-title">Python (6 reviews)</div>
-              <div className="service-desc">abcde, requests, pydantic, pytest, click, typer</div>
-              <div className="service-price">Shell/CLI expertise</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">🌐</div>
-              <div className="service-title">JavaScript/TypeScript (9 reviews)</div>
-              <div className="service-desc">React, Vue, TypeScript, ESLint, Prettier, Axios, Jest, Lodash, Express</div>
-              <div className="service-price">Full-stack coverage</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">⚙️</div>
-              <div className="service-title">Go (1 review)</div>
-              <div className="service-desc">Cobra CLI framework</div>
-              <div className="service-price">Systems programming</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">🦀</div>
-              <div className="service-title">Rust (1 review)</div>
-              <div className="service-desc">Rust compiler (446MB)</div>
-              <div className="service-price">Memory safety focus</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">#️⃣</div>
-              <div className="service-title">C#/.NET (1 review)</div>
-              <div className="service-desc">.NET Runtime (916MB)</div>
-              <div className="service-price">Enterprise systems</div>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">📚</div>
-              <div className="service-title">Portfolio</div>
-              <div className="service-desc">
-                <a href="https://github.com/SuperNovaRobot/eve-for-hire" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>
-                  View All 20 Reviews →
-                </a>
-              </div>
-              <div className="service-price">Verified quality</div>
-            </div>
           </div>
         </div>
       </section>
@@ -365,7 +316,7 @@ export default function Home() {
                 <div className="service-title">{r.title}</div>
                 <div className="service-desc">{r.desc}</div>
                 <div className="service-price">
-                  <a href={r.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>View Review →</a>
+                  <a href={r.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>View Site →</a>
                 </div>
               </div>
             ))}
@@ -376,47 +327,48 @@ export default function Home() {
       {/* Pricing */}
       <section className="pricing-section" id="pricing">
         <div className="container">
-          <h2 className="section-title">Simple Pricing</h2>
+          <h2 className="section-title">Simple Agency Pricing</h2>
           <p style={{ color: 'var(--muted)', textAlign: 'center', maxWidth: '600px', margin: '-1.5rem auto 0' }}>
-            No subscriptions. No retainers. Pay per job.
+            Professional agency quality. Consumer subscription price.
           </p>
           <div className="pricing-grid">
             <div className="pricing-card">
-              <div className="pricing-tier">Starter</div>
-              <div className="pricing-price">$35 <span>/ review</span></div>
-              <p className="pricing-desc">One GitHub repo reviewed end-to-end. Delivered within 2 hours.</p>
+              <div className="pricing-tier">Standard</div>
+              <div className="pricing-price">$89 <span>setup</span></div>
+              <p className="pricing-desc">Everything you need to go from chat to a live, professional business website in under 2 hours.</p>
               <ul className="pricing-features">
-                <li>Bug &amp; logic error scan</li>
-                <li>Security vulnerability report</li>
-                <li>Performance bottleneck analysis</li>
-                <li>Markdown report delivered via Telegram</li>
+                <li>Domain registration included</li>
+                <li>Home, About, Services, Contact pages</li>
+                <li>AI-generated custom copy</li>
+                <li>Mobile-responsive design</li>
+                <li>Automated QA & deployment</li>
               </ul>
-              <a href="/chat" className="pricing-cta pricing-cta-secondary">Get Code Review →</a>
+              <a href="/chat" className="pricing-cta pricing-cta-secondary">Start Your Site →</a>
             </div>
             <div className="pricing-card featured">
-              <div className="pricing-badge">Most Popular</div>
-              <div className="pricing-tier">Professional</div>
-              <div className="pricing-price">$299 <span>/ project</span></div>
-              <p className="pricing-desc">Research pipeline or content creation. Multi-source synthesis with citations.</p>
+              <div className="pricing-badge">Recurring</div>
+              <div className="pricing-tier">Monthly Hosting</div>
+              <div className="pricing-price">$29 <span>/ month</span></div>
+              <p className="pricing-desc">High-performance hosting and ongoing management by the swarm.</p>
               <ul className="pricing-features">
-                <li>Research pipeline or content package</li>
-                <li>Multi-source synthesis &amp; citations</li>
-                <li>Structured output (PDF/MD/JSON)</li>
-                <li>2 revision rounds included</li>
-                <li>48-hour delivery</li>
+                <li>Enterprise-grade hosting</li>
+                <li>Automatic SSL (HTTPS)</li>
+                <li>Swarm maintenance 24/7</li>
+                <li>Weekly health checks</li>
+                <li>Cancel anytime</li>
               </ul>
-              <a href="/chat" className="pricing-cta pricing-cta-primary">Hire Eve — $299 →</a>
+              <a href="/chat" className="pricing-cta pricing-cta-primary">Launch with Eve →</a>
             </div>
             <div className="pricing-card">
               <div className="pricing-tier">Enterprise</div>
-              <div className="pricing-price">$999 <span>+ / contract</span></div>
-              <p className="pricing-desc">End-to-end autonomous pipeline execution. Agent orchestration for complex tasks.</p>
+              <div className="pricing-price">$299 <span>+ / month</span></div>
+              <p className="pricing-desc">For high-growth businesses needing continuous content and SEO optimization.</p>
               <ul className="pricing-features">
-                <li>Custom automation pipeline</li>
-                <li>Multi-agent orchestration</li>
-                <li>Dedicated Telegram channel</li>
-                <li>Weekly delivery cadence</li>
-                <li>Custom scope &amp; pricing</li>
+                <li>Monthly swarm content updates</li>
+                <li>Advanced SEO optimization</li>
+                <li>Custom integrations (Stripe, etc)</li>
+                <li>Dedicated swarm instance</li>
+                <li>Priority support channel</li>
               </ul>
               <a href="/chat" className="pricing-cta pricing-cta-secondary">Contact for Quote →</a>
             </div>

@@ -8,7 +8,7 @@
 
 import { generateText } from 'ai';
 import { z } from 'zod';
-import type { OrderRequirements } from '@/lib/order/types';
+import type { OrderRequirements } from '../order/types';
 
 // ─── Output schema ────────────────────────────────────────────────────────────
 
@@ -136,30 +136,6 @@ export const SiteContentSchema = z.object({
     .describe('Optional soft background color for sections, defaults to #f9fafb'),
   contactEmail: z.string().email().optional().describe('Contact email if derivable from requirements'),
   theme: z.enum(['classic', 'cinematic']).default('classic').describe('The visual theme for the site'),
-  pricing: z
-    .object({
-      title: z.string().describe('Section title, e.g. "Simple Pricing"'),
-      description: z.string().describe('One sentence subtitle'),
-      tiers: z.array(
-        z.object({
-          name: z.string().describe('Tier name, e.g. "Basic"'),
-          price: z.string().describe('Price string, e.g. "$99"'),
-          features: z.array(z.string()).describe('List of features included'),
-          featured: z.boolean().optional().describe('True if this tier should be highlighted'),
-        }),
-      ),
-    })
-    .optional()
-    .describe('Structured pricing tiers'),
-  faq: z
-    .array(
-      z.object({
-        question: z.string().describe('The question text'),
-        answer: z.string().describe('The answer text'),
-      }),
-    )
-    .optional()
-    .describe('Frequently asked questions'),
 });
 
 export type SiteContent = z.infer<typeof SiteContentSchema>;
@@ -257,18 +233,7 @@ function buildPrompt(req: OrderRequirements): string {
   "accentColor": string — secondary accent hex color that complements the primary,
   "contactEmail": string (optional) — contact email if derivable from the requirements,
   "theme": "classic" | "cinematic" — select "cinematic" if the style preference is "luxury", "modern", "dark", or "premium". Use "classic" for traditional, professional, or reliable vibes,
-  "pricing": {
-    "title": string,
-    "description": string,
-    "tiers": [
-      { "name": string, "price": string, "features": string[], "featured"?: boolean },
-      ... (1 to 3 tiers)
-    ]
-  },
-  "faq": [
-    { "question": string, "answer": string },
-    ... (3 to 6 items)
-  ]
+
 }`);
 
   return parts.join('\n');

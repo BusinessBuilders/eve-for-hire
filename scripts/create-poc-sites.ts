@@ -6,22 +6,20 @@
  *   2. Glow Studio — glowstudiopdx.com
  *   3. Casa Bonita Tacos — casabonitatacos.com
  *
- * Usage: node scripts/create-poc-sites.mjs
+ * Usage: npx tsx scripts/create-poc-sites.ts
  * Output: scripts/poc-output/{domain}/ with index.html, about.html, services.html, contact.html
  */
 
-import Database from 'better-sqlite3';
+import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, '..', 'data', 'orders.db');
-const OUT_DIR = path.join(__dirname, 'poc-output');
+const prisma = new PrismaClient();
+const OUT_DIR = path.join(process.cwd(), 'scripts', 'poc-output');
 
 // ─── HTML escape ──────────────────────────────────────────────────────────────
-function esc(s) {
+function esc(s: string) {
   return String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -31,7 +29,7 @@ function esc(s) {
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
-function css(content) {
+function css(content: any) {
   const { primaryColor: primary, accentColor: accent, theme, radius = '12px' } = content;
   const isCinematic = theme === 'cinematic';
 
@@ -341,7 +339,7 @@ function css(content) {
 }
 
 // ─── Page builder ─────────────────────────────────────────────────────────────
-function page(content, currentPage, mainHtml) {
+function page(content: any, currentPage: string, mainHtml: string) {
   const isCinematic = content.theme === 'cinematic';
   const navLinks = [
     { href: 'index.html', label: 'Home' },
@@ -401,11 +399,11 @@ function page(content, currentPage, mainHtml) {
 </html>`;
 }
 
-function renderHome(content) {
+function renderHome(content: any) {
   const isCinematic = content.theme === 'cinematic';
   const trustBadgesHtml = content.trustBadges?.length
     ? `<div class="trust-row">
-        ${content.trustBadges.map(b => `<div class="trust-badge"><span>${b.icon}</span> <span>${esc(b.label)}</span></div>`).join('\n        ')}
+        ${content.trustBadges.map((b: any) => `<div class="trust-badge"><span>${b.icon}</span> <span>${esc(b.label)}</span></div>`).join('\n        ')}
       </div>`
     : '';
 
@@ -414,7 +412,7 @@ function renderHome(content) {
     <div class="container">
       <h2 class="section-title">How It Works</h2>
       <div class="steps-grid">
-        ${content.howItWorks.map((s, i) => `<div class="step-item">
+        ${content.howItWorks.map((s: any, i: number) => `<div class="step-item">
           <div class="step-number">${i + 1}</div>
           <h3 class="step-title">${esc(s.title)}</h3>
           <p class="step-desc">${esc(s.description)}</p>
@@ -429,11 +427,11 @@ function renderHome(content) {
     <div class="container">
       <h2 class="section-title">Simple Pricing</h2>
       <div class="feature-grid">
-        ${content.pricing.map(p => `<div class="feature-card ${p.isFeatured ? 'glass-card' : ''}" style="${p.isFeatured ? 'border-color: var(--primary);' : ''}">
+        ${content.pricing.map((p: any) => `<div class="feature-card ${p.isFeatured ? 'glass-card' : ''}" style="${p.isFeatured ? 'border-color: var(--primary);' : ''}">
           <h3 class="feature-title">${esc(p.tier)}</h3>
           <p class="service-price">${esc(p.price)}${p.unit ? `<span>${esc(p.unit)}</span>` : ''}</p>
           <ul style="list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; text-align: left; flex-grow: 1;">
-            ${p.features.map(f => `<li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> ${esc(f)}</li>`).join('')}
+            ${p.features.map((f: any) => `<li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> ${esc(f)}</li>`).join('')}
           </ul>
           <a href="contact.html" class="btn ${p.isFeatured ? 'btn-primary' : 'btn-outline'}" style="margin-top: 2rem;">${esc(p.cta || content.ctaText)}</a>
         </div>`).join('\n        ')}
@@ -447,7 +445,7 @@ function renderHome(content) {
     <div class="container" style="max-width: 800px;">
       <h2 class="section-title">Frequently Asked Questions</h2>
       <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        ${content.faq.map(f => `<div class="feature-card" style="padding: 2rem; text-align: left;">
+        ${content.faq.map((f: any) => `<div class="feature-card" style="padding: 2rem; text-align: left;">
           <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--fg);">${esc(f.question)}</h3>
           <p style="color: var(--fg-muted); font-size: 1rem;">${esc(f.answer)}</p>
         </div>`).join('\n        ')}
@@ -481,7 +479,7 @@ function renderHome(content) {
     <div class="container">
       <h2 class="section-title">What We Offer</h2>
       <div class="feature-grid">
-        ${content.features.map(f => `<div class="feature-card">
+        ${content.features.map((f: any) => `<div class="feature-card">
           <div class="feature-icon">${f.icon}</div>
           <h3 class="feature-title">${esc(f.title)}</h3>
           <p class="feature-desc">${esc(f.description)}</p>
@@ -510,7 +508,7 @@ function renderHome(content) {
   </section>`);
 }
 
-function renderAbout(content) {
+function renderAbout(content: any) {
   const story = content.aboutPage?.story ?? content.about;
   const mission = content.aboutPage?.mission ?? `${esc(content.businessName)} is dedicated to delivering excellent results for every client.`;
   return page(content, 'about.html', `
@@ -531,8 +529,8 @@ function renderAbout(content) {
   </section>`);
 }
 
-function renderServices(content) {
-  const items = content.servicesPage?.items ?? content.features.map(f => ({ ...f }));
+function renderServices(content: any) {
+  const items = content.servicesPage?.items ?? content.features.map((f: any) => ({ ...f }));
   return page(content, 'services.html', `
   <section class="hero hero-sm reveal-anim">
     <div class="container hero-inner">
@@ -542,7 +540,7 @@ function renderServices(content) {
   <section class="features reveal-anim" id="services">
     <div class="container">
       <div class="feature-grid">
-        ${items.map(s => `<div class="feature-card">
+        ${items.map((s: any) => `<div class="feature-card">
           <div class="feature-icon">${s.icon}</div>
           <h3 class="feature-title">${esc(s.title)}</h3>
           <p class="feature-desc">${esc(s.description)}</p>
@@ -553,7 +551,7 @@ function renderServices(content) {
   </section>`);
 }
 
-function renderContact(content, domain) {
+function renderContact(content: any, domain: string) {
   const cp = content.contactPage ?? {};
   const isCinematic = content.theme === 'cinematic';
   const detailRows = [
@@ -737,53 +735,70 @@ const POC_SITES = [
 ];
 
 // ─── Order DB helpers ─────────────────────────────────────────────────────────
-function initDb() {
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  return db;
-}
 
-function createOrderDirect(db, site) {
+async function createOrderDirect(site: any) {
   const idempotencyKey = `poc-demo-${site.domain}`;
-  const existing = db.prepare('SELECT id FROM orders WHERE idempotency_key = ?').get(idempotencyKey);
+  
+  const existing = await prisma.order.findUnique({
+    where: { idempotencyKey }
+  });
   if (existing) return existing.id;
 
   const now = new Date().toISOString();
-  db.prepare("UPDATE meta SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT) WHERE key = 'next_seq'").run();
-  const seqRow = db.prepare("SELECT CAST(value AS INTEGER) AS seq FROM meta WHERE key = 'next_seq'").get();
-  const seq = seqRow.seq;
+  
+  return await prisma.$transaction(async (tx) => {
+    const maxSeq = await tx.order.aggregate({
+      _max: { seq: true }
+    });
+    const seq = (maxSeq._max.seq ?? 0) + 1;
+    const id = randomUUID();
+    const identifier = `EVE-${String(seq).padStart(4, '0')}`;
 
-  const id = randomUUID();
-  const data = JSON.stringify({
-    id, identifier: `EVE-${String(seq).padStart(4, '0')}`,
-    customerEmail: site.customerEmail, customerName: site.customerName,
-    state: 'building', idempotencyKey,
-    requirements: site.requirements, domain: { domain: site.domain, registeredAt: now },
-    auditTrail: [], createdAt: now, updatedAt: now,
+    const created = await tx.order.create({
+      data: {
+        id,
+        identifier,
+        seq,
+        customerEmail: site.customerEmail,
+        customerName: site.customerName,
+        state: 'building',
+        idempotencyKey,
+        requirements: JSON.stringify(site.requirements),
+        domain: JSON.stringify({ domain: site.domain, registeredAt: now }),
+        auditTrail: JSON.stringify([]),
+        createdAt: new Date(now),
+        updatedAt: new Date(now),
+      }
+    });
+    return created.id;
   });
-
-  db.prepare('INSERT INTO orders (id, idempotency_key, state, seq, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, idempotencyKey, 'building', seq, data, now, now);
-  return id;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-const db = initDb();
-mkdirSync(OUT_DIR, { recursive: true });
+async function main() {
+  mkdirSync(OUT_DIR, { recursive: true });
 
-for (const site of POC_SITES) {
-  console.log(`Building: ${site.domain}`);
-  createOrderDirect(db, site);
-  const siteDir = path.join(OUT_DIR, site.domain);
-  mkdirSync(siteDir, { recursive: true });
-  const pages = {
-    'index.html': renderHome(site.content),
-    'about.html': renderAbout(site.content),
-    'services.html': renderServices(site.content),
-    'contact.html': renderContact(site.content, site.domain),
-  };
-  for (const [filename, html] of Object.entries(pages)) {
-    writeFileSync(path.join(siteDir, filename), html, 'utf8');
+  for (const site of POC_SITES) {
+    console.log(`Building: ${site.domain}`);
+    await createOrderDirect(site);
+    const siteDir = path.join(OUT_DIR, site.domain);
+    mkdirSync(siteDir, { recursive: true });
+    const pages = {
+      'index.html': renderHome(site.content),
+      'about.html': renderAbout(site.content),
+      'services.html': renderServices(site.content),
+      'contact.html': renderContact(site.content, site.domain),
+    };
+    for (const [filename, html] of Object.entries(pages)) {
+      writeFileSync(path.join(siteDir, filename), html, 'utf8');
+    }
   }
+  await prisma.$disconnect();
+  console.log('\n✅ All 3 PoC sites regenerated and orders created/updated in Prisma.');
 }
-db.close();
-console.log('\n✅ All 3 PoC sites regenerated in scripts/poc-output/');
+
+main().catch(async (e) => {
+  console.error(e);
+  await prisma.$disconnect();
+  process.exit(1);
+});

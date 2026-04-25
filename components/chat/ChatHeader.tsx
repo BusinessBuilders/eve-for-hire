@@ -7,7 +7,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
   const [raised, setRaised] = useState(0);
-  const goal = 100000;
+  const goal = 43000;
 
   useEffect(() => {
     fetch('/api/mission')

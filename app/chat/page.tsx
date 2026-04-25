@@ -47,8 +47,13 @@ export default function ChatPage() {
   const transportRef = useRef(
     new DefaultChatTransport({
       api: '/api/chat',
-      headers: (): Record<string, string> =>
-        sessionIdRef.current ? { 'x-eve-session': sessionIdRef.current } : {},
+      fetch: async (url, options) => {
+        const fetchHeaders = new Headers(options?.headers || {});
+        if (sessionIdRef.current) {
+          fetchHeaders.set('x-eve-session', sessionIdRef.current);
+        }
+        return fetch(url, { ...options, headers: fetchHeaders });
+      },
     }),
   );
 

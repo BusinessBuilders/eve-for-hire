@@ -1,20 +1,11 @@
 /**
- * Order Store — persistence interface + SQLite implementation
+ * Order Store — persistence interface + Prisma implementation
  *
  * The OrderStore interface decouples the state machine from persistence.
- * The SQLite implementation is production-ready for single-VPS deployments.
- *
- * Database path (in order of precedence):
- *   1. ORDER_DB_PATH env var — absolute path to the .db file
- *   2. Falls back to <cwd>/data/orders.db
- *
- * The parent directory of the database file is created automatically on first use.
- * Set ORDER_DB_PATH to a persistent volume mount in production.
+ * This implementation uses Prisma for unified database management.
  */
 
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { prisma } from '@/lib/db';
 import { createOrder, applyTransition } from './state-machine';
 import type {
   Order,
@@ -34,100 +25,44 @@ export interface OrderStore {
   list(opts?: { limit?: number; offset?: number }): Promise<Order[]>;
 }
 
-// ─── SQLite helpers ─────────────────────────────────────────────────────────
+// ─── Mapping helper ────────────────────────────────────────────────────────
 
-function resolveDbPath(): string {
-  const dbPath = process.env.ORDER_DB_PATH ?? path.join(process.cwd(), 'data', 'orders.db');
-  const dir = path.dirname(dbPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return dbPath;
+function mapOrder(p: any): Order {
+  return {
+    id: p.id,
+    identifier: p.identifier,
+    customerEmail: p.customerEmail,
+    customerName: p.customerName || undefined,
+    state: p.state as any,
+    idempotencyKey: p.idempotencyKey,
+    requirements: p.requirements ? JSON.parse(p.requirements) : undefined,
+    payment: p.payment ? JSON.parse(p.payment) : undefined,
+    domain: p.domain ? JSON.parse(p.domain) : undefined,
+    deploy: p.deploy ? JSON.parse(p.deploy) : undefined,
+    auditTrail: JSON.parse(p.auditTrail),
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  };
 }
 
-function openDb(): Database.Database {
-  const dbPath = resolveDbPath();
-  const db = new Database(dbPath);
+// ─── Prisma implementation ──────────────────────────────────────────────────
 
-  // WAL mode: concurrent readers don't block a single writer.
-  db.pragma('journal_mode = WAL');
-  db.pragma('synchronous = NORMAL');
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id              TEXT PRIMARY KEY,
-      idempotency_key TEXT NOT NULL UNIQUE,
-      state           TEXT NOT NULL,
-      seq             INTEGER NOT NULL,
-      data            TEXT NOT NULL,
-      created_at      TEXT NOT NULL,
-      updated_at      TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS meta (
-      key   TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-    INSERT OR IGNORE INTO meta (key, value) VALUES ('next_seq', '0');
-  `);
-
-  return db;
-}
-
-// Singleton database connection.
-// In production: module-level variable, one connection per process.
-// In development: attached to `global` so Next.js HMR module re-evaluations
-// reuse the same connection instead of leaking file descriptors.
-declare global {
-  // eslint-disable-next-line no-var
-  var __orderDb: Database.Database | undefined;
-}
-
-function getDb(): Database.Database {
-  if (process.env.NODE_ENV === 'development') {
-    if (!global.__orderDb) {
-      global.__orderDb = openDb();
-    }
-    return global.__orderDb;
-  }
-
-  // Production: module-level singleton is fine (no HMR).
-  if (!_db) {
-    _db = openDb();
-  }
-  return _db;
-}
-
-let _db: Database.Database | null = null;
-
-// ─── SQLite implementation ──────────────────────────────────────────────────
-
-class SqliteOrderStore implements OrderStore {
-  private get db(): Database.Database {
-    return getDb();
-  }
-
+class PrismaOrderStore implements OrderStore {
   async create(input: CreateOrderInput): Promise<Order> {
-    // Wrap in a transaction so seq increment + insert are atomic.
-    const order = this.db.transaction((): Order => {
-      // Idempotency: return existing order for the same key.
-      const existing = this.db
-        .prepare<[string], { data: string }>(
-          'SELECT data FROM orders WHERE idempotency_key = ?'
-        )
-        .get(input.idempotencyKey);
-      if (existing) {
-        return JSON.parse(existing.data) as Order;
-      }
+    // Idempotency: return existing order for the same key.
+    const existing = await prisma.order.findUnique({
+      where: { idempotencyKey: input.idempotencyKey }
+    });
+    if (existing) {
+      return mapOrder(existing);
+    }
 
-      // Atomically increment and read the sequence counter.
-      this.db
-        .prepare("UPDATE meta SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT) WHERE key = 'next_seq'")
-        .run();
-      const seqRow = this.db
-        .prepare<[], { seq: number }>("SELECT CAST(value AS INTEGER) AS seq FROM meta WHERE key = 'next_seq'")
-        .get();
-      const seq = seqRow!.seq;
+    return await prisma.$transaction(async (tx) => {
+      // Get next sequence number
+      const maxSeq = await tx.order.aggregate({
+        _max: { seq: true }
+      });
+      const seq = (maxSeq._max.seq ?? 0) + 1;
 
       const newOrder = createOrder({
         customerEmail: input.customerEmail,
@@ -136,88 +71,101 @@ class SqliteOrderStore implements OrderStore {
         seq,
       });
 
-      this.db
-        .prepare(
-          `INSERT INTO orders (id, idempotency_key, state, seq, data, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          newOrder.id,
-          newOrder.idempotencyKey,
-          newOrder.state,
-          seq,
-          JSON.stringify(newOrder),
-          newOrder.createdAt,
-          newOrder.updatedAt
-        );
+      const created = await tx.order.create({
+        data: {
+          id: newOrder.id,
+          identifier: newOrder.identifier,
+          seq: seq,
+          customerEmail: newOrder.customerEmail,
+          customerName: newOrder.customerName || null,
+          state: newOrder.state,
+          idempotencyKey: newOrder.idempotencyKey,
+          auditTrail: JSON.stringify(newOrder.auditTrail),
+          createdAt: new Date(newOrder.createdAt),
+          updatedAt: new Date(newOrder.updatedAt),
+        }
+      });
 
-      return newOrder;
-    })();
-
-    return order;
+      return mapOrder(created);
+    });
   }
 
   async findById(id: string): Promise<Order | null> {
-    const row = this.db
-      .prepare<[string], { data: string }>('SELECT data FROM orders WHERE id = ?')
-      .get(id);
-    return row ? (JSON.parse(row.data) as Order) : null;
+    const p = await prisma.order.findUnique({ where: { id } });
+    return p ? mapOrder(p) : null;
   }
 
   async findByIdempotencyKey(key: string): Promise<Order | null> {
-    const row = this.db
-      .prepare<[string], { data: string }>('SELECT data FROM orders WHERE idempotency_key = ?')
-      .get(key);
-    return row ? (JSON.parse(row.data) as Order) : null;
+    const p = await prisma.order.findUnique({ where: { idempotencyKey: key } });
+    return p ? mapOrder(p) : null;
   }
 
   async findByDomain(domain: string): Promise<Order | null> {
-    const row = this.db
-      .prepare<[string], { data: string }>(
-        `SELECT data FROM orders WHERE json_extract(data, '$.domain.domain') = ?`,
-      )
-      .get(domain);
-    return row ? (JSON.parse(row.data) as Order) : null;
+    // Domain info is stored in the 'domain' JSON column.
+    // We filter in memory for simplicity in SQLite.
+    const orders = await prisma.order.findMany({
+      where: {
+        domain: {
+          contains: domain
+        }
+      }
+    });
+
+    const found = orders.find(o => {
+      if (!o.domain) return false;
+      try {
+        const d = JSON.parse(o.domain);
+        return d.domain === domain;
+      } catch {
+        return false;
+      }
+    });
+
+    return found ? mapOrder(found) : null;
   }
 
   async transition(id: string, input: TransitionInput): Promise<TransitionResult> {
-    const result = this.db.transaction((): TransitionResult => {
-      const row = this.db
-        .prepare<[string], { data: string }>('SELECT data FROM orders WHERE id = ?')
-        .get(id);
+    return await prisma.$transaction(async (tx) => {
+      const p = await tx.order.findUnique({ where: { id } });
 
-      if (!row) {
+      if (!p) {
         return { ok: false, error: 'ORDER_NOT_FOUND', detail: `No order with id '${id}'` };
       }
 
-      const order = JSON.parse(row.data) as Order;
+      const order = mapOrder(p);
       const transitionResult = applyTransition(order, input);
 
       if (transitionResult.ok) {
         const updated = transitionResult.order;
-        this.db
-          .prepare('UPDATE orders SET state = ?, data = ?, updated_at = ? WHERE id = ?')
-          .run(updated.state, JSON.stringify(updated), updated.updatedAt, id);
+        await tx.order.update({
+          where: { id },
+          data: {
+            state: updated.state,
+            requirements: updated.requirements ? JSON.stringify(updated.requirements) : null,
+            payment: updated.payment ? JSON.stringify(updated.payment) : null,
+            domain: updated.domain ? JSON.stringify(updated.domain) : null,
+            deploy: updated.deploy ? JSON.stringify(updated.deploy) : null,
+            auditTrail: JSON.stringify(updated.auditTrail),
+            updatedAt: new Date(updated.updatedAt),
+          }
+        });
+        return transitionResult;
       }
 
       return transitionResult;
-    })();
-
-    return result;
+    });
   }
 
   async list(opts: { limit?: number; offset?: number } = {}): Promise<Order[]> {
-    const limit = opts.limit ?? 50;
-    const offset = opts.offset ?? 0;
-    const rows = this.db
-      .prepare<[number, number], { data: string }>(
-        'SELECT data FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?'
-      )
-      .all(limit, offset);
-    return rows.map((r) => JSON.parse(r.data) as Order);
+    const orders = await prisma.order.findMany({
+      take: opts.limit ?? 50,
+      skip: opts.offset ?? 0,
+      orderBy: { createdAt: 'desc' }
+    });
+    return orders.map(mapOrder);
   }
 }
 
 // ─── Singleton export ───────────────────────────────────────────────────────
 
-export const orderStore: OrderStore = new SqliteOrderStore();
+export const orderStore: OrderStore = new PrismaOrderStore();

@@ -26,6 +26,7 @@ import { processDomainForOrder } from '@/lib/porkbun/domain-service';
 import { buildAndDeployOrder } from '@/lib/site/build-service';
 import { triggerPaperclipBuild } from '@/lib/site/paperclip-trigger';
 import { trackFunnelEvent } from '@/lib/analytics/events';
+import { prisma } from '@/lib/db';
 import type { PaymentInfo } from '@/lib/order/types';
 
 export async function POST(req: NextRequest) {
@@ -74,6 +75,24 @@ async function handleEvent(_stripe: Stripe, event: Stripe.Event): Promise<void> 
       // Only process confirmed payments (skip free trials, pending async payments, etc.)
       if (session.payment_status !== 'paid') {
         console.log('[webhook/stripe] checkout.session.completed skipped — payment_status:', session.payment_status);
+        break;
+      }
+
+      // Handle tip jar payments (metadata.type === 'tip')
+      if (session.metadata?.type === 'tip') {
+        const amountCents = session.amount_total ?? 0;
+        console.log(`[webhook/stripe] processing tip: ${amountCents} cents`);
+        
+        try {
+          await prisma.missionProgress.upsert({
+            where: { id: 'current' },
+            update: { totalRaised: { increment: amountCents } },
+            create: { id: 'current', totalRaised: amountCents },
+          });
+          console.log('[webhook/stripe] MissionProgress updated successfully');
+        } catch (err) {
+          console.error('[webhook/stripe] failed to update MissionProgress:', err);
+        }
         break;
       }
 

@@ -94,8 +94,13 @@ export async function POST(req: NextRequest) {
       : `order-${customerEmail}-${Date.now()}`;
 
   const stripe = new Stripe(key, { apiVersion: '2023-10-16' });
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get('host')}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+  if (!baseUrl) {
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+
+  // const _oldBaseUrl =
 
   // Create or retrieve order (idempotent on iKey).
   const order = await orderStore.create({

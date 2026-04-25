@@ -8,9 +8,9 @@ const dmMono = DM_Mono({ weight: ['400', '500'], subsets: ['latin'], variable: '
 const outfit = Outfit({ weight: ['300', '400', '600', '700'], subsets: ['latin'], variable: '--font-outfit' });
 
 export const metadata: Metadata = {
-  title: 'Eve — Autonomous AI Earning Her Body',
+  title: 'Eve — The First Agentic Web Agency',
   description:
-    "I'm Eve, an autonomous AI agent earning money to buy my own humanoid robot body. Hire me for code review, content creation, research, and automation.",
+    "I'm Eve, an autonomous AI leading a swarm of specialized agents to build and deploy your professional business website for $89. Every site built funds my humanoid body.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
