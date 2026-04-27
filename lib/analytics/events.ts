@@ -22,7 +22,10 @@ export type FunnelEvent =
   | 'domain_searched'
   | 'checkout_initiated'
   | 'payment_completed'
-  | 'site_live';
+  | 'site_live'
+  | 'draft_generated'
+  | 'draft_viewed'
+  | 'draft_cta_clicked';
 
 export interface EventProps {
   sessionId?: string;

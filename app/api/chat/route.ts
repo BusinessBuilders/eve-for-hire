@@ -3,6 +3,8 @@ import { trackFunnelEvent } from '@/lib/analytics/events';
 import { delegateChatIntent } from '@/lib/paperclip/delegate';
 import { rollbackLatestDeploymentCommit } from '@/lib/github/rollback';
 import { orderStore } from '@/lib/order/store';
+import { generateHeroSection } from '@/lib/draft/generate';
+import { createDraft } from '@/lib/draft/store';
 
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
 // Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
@@ -434,6 +436,44 @@ async function resolveActionSignals(
           }) +
           '\n```',
       );
+    }
+  }
+
+  // ── [DRAFT_PREVIEW:{...}] ────────────────────────────────────────────────
+  const draftSignal = extractJsonSignal(text, '[DRAFT_PREVIEW:');
+  if (draftSignal) {
+    text = text.replace(draftSignal.match, '');
+    const { businessName, tagline, category, primaryColor } = draftSignal.data as {
+      businessName: string;
+      tagline?: string;
+      category?: string;
+      primaryColor?: string;
+    };
+    try {
+      const hero = generateHeroSection({ businessName, tagline, category, primaryColor });
+      const draft = await createDraft({
+        token: hero.token,
+        sessionId: context.sessionKey,
+        businessName,
+        tagline,
+        category,
+        primaryColor,
+        heroHtml: hero.html,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+      trackFunnelEvent('draft_generated', { sessionId: context.sessionKey });
+      actionBlocks.push(
+        '```json-action\n' +
+          JSON.stringify({
+            type: 'draft-preview',
+            token: draft.token,
+            url: `/draft/${draft.token}`,
+            businessName,
+          }) +
+          '\n```',
+      );
+    } catch (err) {
+      console.error('[chat] draft preview generation failed', err);
     }
   }
 
