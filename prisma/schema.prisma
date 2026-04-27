@@ -169,3 +169,21 @@ model AnalyticsEvent {
   @@index([event])
   @@index([ts])
 }
+
+model DraftPreview {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  sessionId    String
+  businessName String
+  tagline      String?
+  category     String?
+  primaryColor String   @default("#4F46E5")
+  heroHtml     String
+  viewCount    Int      @default(0)
+  ctaClicked   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@index([token])
+  @@index([sessionId])
+}
