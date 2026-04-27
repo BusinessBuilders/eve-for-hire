@@ -1,9 +1,11 @@
 import { DomainResultsCard, type DomainResult } from './DomainResultsCard';
 import { CheckoutCard, type CheckoutData } from './CheckoutCard';
+import { DraftPreviewCard, type DraftPreviewData } from './DraftPreviewCard';
 
 export type ActionData =
   | { type: 'domain-results'; keyword: string; results: DomainResult[]; error?: string }
-  | ({ type: 'checkout-ready' } & CheckoutData);
+  | ({ type: 'checkout-ready' } & CheckoutData)
+  | ({ type: 'draft-preview' } & DraftPreviewData);
 
 interface ActionBlockProps {
   raw: string;
@@ -35,6 +37,9 @@ export function ActionBlock({
   }
   if (data.type === 'checkout-ready') {
     return <CheckoutCard data={data} sessionId={sessionId} />;
+  }
+  if (data.type === 'draft-preview') {
+    return <DraftPreviewCard data={data} />;
   }
   return null;
 }
