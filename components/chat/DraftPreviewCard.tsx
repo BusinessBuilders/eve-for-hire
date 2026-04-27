@@ -17,18 +17,19 @@ export function DraftPreviewCard({ data }: DraftPreviewCardProps) {
 
   return (
     <div className={`${styles.actionCard} ${styles.draftPreviewCard}`}>
-      <div className={styles.actionCardTitle}>Draft Preview Ready</div>
+      <div className={styles.actionCardTitle}>Your First Draft Is Ready!</div>
       <div className={styles.draftPreviewBody}>
         <p className={styles.draftPreviewText}>{label}</p>
         <a
           href={data.url}
-          target="_blank"
-          rel="noopener noreferrer"
           className={styles.draftPreviewLink}
           aria-label={label}
         >
-          Open Draft Preview →
+          View Draft Preview →
         </a>
+        <p className={styles.draftPreviewSubtext}>
+          See what your professional hero section looks like before committing.
+        </p>
       </div>
     </div>
   );
