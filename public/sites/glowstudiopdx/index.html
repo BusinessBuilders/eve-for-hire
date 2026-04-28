@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Expert color treatments and luxury styling in Portland." />
+  <title>Glow Studio | Portland&#x27;s Premier Luxury Hair Salon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --primary: #8E585E;
+        --accent: #D4AF37;
+        --primary-glow: color-mix(in srgb, #8E585E, transparent 60%);
+        --fg: #e2e8f0;
+        --fg-muted: #94a3b8;
+        --bg: #0a0a10;
+        --nav-bg: rgba(10, 10, 16, 0.85);
+        --surface: #0f0f1a;
+        --border: rgba(255, 255, 255, 0.08);
+        --glass: rgba(255, 255, 255, 0.03);
+        --radius: 16px;
+        --font: 'Outfit', system-ui, sans-serif;
+        --font-heading: 'Bebas Neue', system-ui, sans-serif;
+        --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.4);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      html { scroll-behavior: smooth; }
+      body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.6; }
+      
+      .reveal-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+      .reveal-anim.visible { opacity: 1; transform: translateY(0); }
+
+      .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+      /* ── Header ── */
+      .header { position: sticky; top: 0; background: var(--nav-bg); backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border); z-index: 100; }
+      .nav { display: flex; align-items: center; gap: 1rem; height: 72px; }
+      .logo { font-family: var(--font-heading); font-size: 1.5rem; color: #fff; letter-spacing: 0.02em;
+        text-decoration: none; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+      .logo::before { content: ""; display: block; width: 32px; height: 32px; background: var(--primary); border-radius: 6px; box-shadow: 0 0 15px var(--primary-glow); }
+      .nav-links { display: flex; gap: 0.5rem; flex: 1; }
+      .nav-link { padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none;
+        font-size: 0.95rem; color: var(--fg-muted); transition: all 0.2s ease; }
+      .nav-link:hover, .nav-active { color: #fff; background: var(--glass); }
+      .nav-cta { margin-left: auto; flex-shrink: 0; }
+
+      /* ── Buttons ── */
+      .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 28px;
+        border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none;
+        transition: var(--transition); cursor: pointer; border: none; }
+      .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+      .btn-primary { 
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); 
+        color: #fff;
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+      .btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
+      .btn-outline:hover { background: var(--primary); color: #fff; }
+      .btn-white { background: #fff; color: #000; }
+
+      /* ── Hero ── */
+      .hero { padding: 140px 0 100px; position: relative; overflow: hidden; text-align: center; }
+      .hero::before {
+        content: ''; position: absolute; inset: 0;
+        background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary), transparent 85%) 0%, transparent 70%);
+        z-index: -1;
+      }
+      .hero-sm { padding: 80px 0 60px; }
+      .hero-inner { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+      .tagline { font-size: 0.9rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--primary); opacity: 0.9; }
+      .hero-headline { 
+        font-family: var(--font-heading); font-size: clamp(3rem, 8vw, 5.5rem); font-weight: 400; line-height: 1;
+        letter-spacing: 0.02em; max-width: 900px;
+        background: linear-gradient(135deg, #fff 0%, var(--fg-muted) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      }
+      .hero-sub { font-size: 1.25rem; color: var(--fg-muted); max-width: 650px; font-weight: 300; }
+
+      /* ── Features / Services ── */
+      .features { padding: 100px 0; background: var(--surface); }
+      .section-title { font-family: var(--font-heading); font-size: 2.5rem; letter-spacing: 0.02em; margin-bottom: 48px;
+        text-align: center; color: #fff; }
+      .glow-text { text-shadow: 0 0 20px var(--primary-glow); }
+      .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+      .feature-card, .glass-card { 
+        background: var(--glass); border-radius: var(--radius); padding: 40px 32px;
+        backdrop-filter: blur(12px); border: 1px solid var(--border);
+        transition: var(--transition);
+      }
+      .feature-card:hover, .glass-card:hover { border-color: var(--primary); transform: translateY(-8px); box-shadow: var(--shadow-xl); }
+      .feature-icon { font-size: 2.5rem; margin-bottom: 20px; }
+      .feature-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
+      .feature-desc { color: var(--fg-muted); font-size: 1rem; }
+      .service-price { margin-top: 16px; font-weight: 600; color: var(--primary); font-size: 1.1rem; font-family: var(--font-heading); }
+
+      /* ── How It Works ── */
+      .steps { padding: 100px 0; position: relative; }
+      .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 48px; position: relative; }
+      .step-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; position: relative; z-index: 2; }
+      .step-number { width: 48px; height: 48px; border-radius: 50%; background: var(--primary); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-family: var(--font-heading);
+        font-size: 1.5rem; box-shadow: 0 0 20px var(--primary-glow); margin-bottom: 8px; }
+      .step-title { font-size: 1.25rem; font-weight: 700; color: #fff; }
+      .step-desc { color: var(--fg-muted); font-size: 0.95rem; font-weight: 300; }
+      
+      @media (min-width: 900px) {
+        .step-item:not(:last-child)::after {
+          content: ""; position: absolute; top: 24px; left: calc(50% + 40px); width: calc(100% - 80px);
+          height: 2px; background: linear-gradient(90deg, var(--primary), transparent); opacity: 0.3;
+        }
+      }
+
+      /* ── About ── */
+      .about { padding: 100px 0; }
+      .about-inner { display: flex; align-items: center; gap: 80px; }
+      .about-content { flex: 1; display: flex; flex-direction: column; gap: 24px; }
+      .about-content .section-title { text-align: left; margin-bottom: 0; }
+      .about-text { color: var(--fg-muted); font-size: 1.1rem; font-weight: 300; }
+      .about-visual { flex: 1; min-height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
+      .premium-illustration { width: 100%; max-width: 400px; height: auto; filter: drop-shadow(0 0 30px var(--primary-glow)); }
+
+      /* ── CTA Banner ── */
+      .cta-banner { background: var(--surface); padding: 100px 0; text-align: center; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+      .cta-inner { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+      .cta-inner h2 { font-family: var(--font-heading); font-size: 3rem; color: #fff; }
+      .cta-inner p { color: var(--fg-muted); font-size: 1.2rem; max-width: 600px; font-weight: 300; }
+
+      /* ── Contact ── */
+      .contact-section { padding: 100px 0; }
+      .contact-inner { display: grid; grid-template-columns: 1fr 2fr; gap: 80px; align-items: start; }
+      .contact-details { display: flex; flex-direction: column; gap: 24px; }
+      .contact-details .section-title { text-align: left; margin-bottom: 8px; }
+      .contact-detail { display: flex; align-items: center; gap: 16px; font-size: 1.05rem; color: var(--fg-muted); }
+      .contact-icon { font-size: 1.5rem; flex-shrink: 0; color: var(--primary); }
+      .contact-detail a { color: #fff; text-decoration: none; }
+      .contact-detail a:hover { color: var(--primary); }
+      
+      .map-placeholder { width: 100%; height: 250px; background: var(--surface); border-radius: 12px; margin-top: 24px;
+        border: 1px solid var(--border); position: relative; overflow: hidden; }
+      .map-grid { position: absolute; inset: 0; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; }
+      .map-pin { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; background: var(--primary); border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg); box-shadow: 0 0 20px var(--primary-glow); }
+      .map-pin::after { content: ""; position: absolute; inset: 6px; background: #fff; border-radius: 50%; }
+      .map-pin-pulse { position: absolute; top: 40%; left: 60%; width: 24px; height: 24px; transform: translate(-12px, -12px);
+        border: 2px solid var(--primary); border-radius: 50%; animation: ping 2s infinite; }
+      @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
+      .contact-form-wrap .section-title { text-align: left; margin-bottom: 32px; }
+      .contact-form { display: flex; flex-direction: column; gap: 24px; }
+      .form-group { display: flex; flex-direction: column; gap: 10px; }
+      .form-group label { font-size: 0.9rem; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; }
+      .form-group input, .form-group textarea {
+        padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border);
+        font-family: var(--font); font-size: 1rem; color: #fff;
+        background: var(--glass); backdrop-filter: blur(8px); transition: all 0.2s; resize: vertical; }
+      .form-group input:focus, .form-group textarea:focus {
+        outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary), transparent 90%); }
+      .cf-status { font-size: 1rem; border-radius: 10px; padding: 16px; display: none; }
+      .cf-status:not(:empty) { display: block; }
+      .cf-success { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+      .cf-error { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+      /* ── Footer ── */
+      .footer { background: #050508; color: #64748b; padding: 64px 0 40px; border-top: 1px solid var(--border); }
+      .footer-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+      .footer-nav { display: flex; gap: 2rem; margin-bottom: 12px; flex-wrap: wrap; justify-content: center; }
+      .footer-nav a { color: #94a3b8; text-decoration: none; font-size: 0.95rem; }
+      .footer-nav a:hover { color: #fff; }
+      .footer-name { font-family: var(--font-heading); color: #fff; font-size: 1.5rem; letter-spacing: 0.02em; }
+      .footer-copy { font-size: 0.9rem; }
+      .footer-email { color: var(--primary); font-size: 0.95rem; text-decoration: none; }
+
+      /* ── Trust Badges ── */
+      .trust-row { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-top: 48px; }
+      .trust-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--fg-muted); 
+        background: var(--glass); padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); }
+
+      /* ── Responsive ── */
+      @media (max-width: 900px) {
+        .about-inner { flex-direction: column; gap: 48px; text-align: center; }
+        .about-content .section-title { text-align: center; }
+        .about-visual { order: -1; }
+        .contact-inner { grid-template-columns: 1fr; gap: 48px; }
+      }
+      @media (max-width: 768px) {
+        .nav-links { display: none; }
+        .hero { padding: 100px 0 72px; }
+      }
+    </style>
+</head>
+<body>
+  <header class="header">
+    <nav class="nav container">
+      <a href="index.html" class="logo">Glow Studio</a>
+      <div class="nav-links"><a href="index.html" class="nav-link nav-active">Home</a><a href="about.html" class="nav-link">About</a><a href="services.html" class="nav-link">Services</a><a href="contact.html" class="nav-link">Contact</a></div>
+      <a href="mailto:hello@glowstudiopdx.com" class="btn btn-primary nav-cta">Get Started</a>
+    </nav>
+  </header>
+  <main>
+  <section class="hero reveal-anim">
+    <div class="container hero-inner">
+      <p class="tagline">Portland&#x27;s Premier Luxury Hair Salon</p>
+      <h1 class="hero-headline">Transform Your Look, Elevate Your Confidence</h1>
+      <p class="hero-sub">Expert color treatments and luxury styling in Portland.</p>
+      <div style="display:flex; gap:16px; justify-content:center;">
+        <a href="contact.html" class="btn btn-primary">Book Your Appointment</a>
+        <a href="#features" class="btn btn-outline">Explore Services</a>
+      </div>
+      <div class="trust-row">
+        <div class="trust-badge"><span>✨</span> <span>Luxury Experience</span></div>
+        <div class="trust-badge"><span>💎</span> <span>Premium Products</span></div>
+      </div>
+    </div>
+  </section>
+  <section class="features reveal-anim" id="features">
+    <div class="container">
+      <h2 class="section-title">What We Offer</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">✨</div>
+          <h3 class="feature-title">Balayage &amp; Color</h3>
+          <p class="feature-desc">Custom color artistry.</p>
+        </div>
+<div class="feature-card">
+          <div class="feature-icon">✂️</div>
+          <h3 class="feature-title">Precision Cuts</h3>
+          <p class="feature-desc">Tailored cuts.</p>
+        </div>
+<div class="feature-card">
+          <div class="feature-icon">👑</div>
+          <h3 class="feature-title">Luxury Experience</h3>
+          <p class="feature-desc">Calming studio atmosphere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="steps reveal-anim" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <div class="steps-grid">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <h3 class="step-title">Consultation</h3>
+          <p class="step-desc">Discuss your hair goals with our master stylists.</p>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <h3 class="step-title">Luxury Treatment</h3>
+          <p class="step-desc">Relax while we transform your look with premium products.</p>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <h3 class="step-title">Elevated Confidence</h3>
+          <p class="step-desc">Walk out feeling beautiful and empowered.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="features reveal-anim" id="pricing" style="background: var(--bg);">
+    <div class="container">
+      <h2 class="section-title">Simple Pricing</h2>
+      <div class="feature-grid">
+        <div class="feature-card glass-card" style="border-color: var(--primary);">
+          <h3 class="feature-title">Signature Cut</h3>
+          <p class="service-price">$120<span> + styling</span></p>
+          <ul style="list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; text-align: left; flex-grow: 1;">
+            <li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> Master Stylist</li><li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> Deep Conditioning</li><li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> Scalp Massage</li>
+          </ul>
+          <a href="contact.html" class="btn btn-primary" style="margin-top: 2rem;">Book Your Appointment</a>
+        </div>
+        <div class="feature-card " style="">
+          <h3 class="feature-title">Balayage Luxe</h3>
+          <p class="service-price">$350<span> / starting</span></p>
+          <ul style="list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; text-align: left; flex-grow: 1;">
+            <li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> Custom Color Artistry</li><li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> Tonal Gloss</li><li style="font-size: 0.95rem; color: var(--fg-muted);"><span style="color: var(--primary); margin-right: 8px;">✓</span> Luxury Finish</li>
+          </ul>
+          <a href="contact.html" class="btn btn-outline" style="margin-top: 2rem;">Book Your Appointment</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="about reveal-anim" id="about">
+    <div class="container about-inner">
+      <div class="about-content">
+        <h2 class="section-title">About Us</h2>
+        <p class="about-text">Glow Studio was founded by Sofia Reyes, a nationally recognized colorist.</p>
+        <a href="about.html" class="btn btn-primary">Our Story &rarr;</a>
+      </div>
+      <div class="about-visual" aria-hidden="true"><svg class="premium-illustration" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="200" cy="200" r="150" stroke="url(#p0)" stroke-width="2" stroke-dasharray="10 10"/>
+        <rect x="150" y="150" width="100" height="100" rx="20" fill="url(#p0)" fill-opacity="0.2" stroke="url(#p0)" stroke-width="2"/>
+        <defs><linearGradient id="p0" x1="50" y1="50" x2="350" y2="350"><stop stop-color="var(--primary)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs>
+      </svg></div>
+    </div>
+  </section>
+  <section class="about reveal-anim" id="faq" style="background: var(--bg-soft);">
+    <div class="container" style="max-width: 800px;">
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="feature-card" style="padding: 2rem; text-align: left;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--fg);">Which products do you use?</h3>
+          <p style="color: var(--fg-muted); font-size: 1rem;">We exclusively use Oribe and Oway organic luxury hair care.</p>
+        </div>
+        <div class="feature-card" style="padding: 2rem; text-align: left;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--fg);">How long does a color appointment take?</h3>
+          <p style="color: var(--fg-muted); font-size: 1rem;">Typically 3-4 hours depending on the complexity of your transformation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="cta-banner reveal-anim">
+    <div class="container cta-inner">
+      <h2>Ready to get started?</h2>
+      <a href="contact.html" class="btn btn-white">Book Your Appointment</a>
+    </div>
+  </section></main>
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-nav">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <p class="footer-name">Glow Studio</p>
+      <p class="footer-copy">&copy; 2026 Glow Studio. All rights reserved.</p>
+    </div>
+  </footer>
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal-anim').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
