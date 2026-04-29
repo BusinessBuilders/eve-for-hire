@@ -299,26 +299,24 @@ export default function Home() {
       </section>
 
       {/* POC Sites Built by the Swarm */}
-      <section className="services-section">
+      <section className="services-section" style={{ background: 'var(--surface)' }}>
         <div className="container">
-          <h2 className="section-title">POC Sites Built by the Swarm</h2>
+          <h2 className="section-title">Sites Designed by Eve</h2>
           <p style={{ color: 'var(--muted)', maxWidth: '700px', margin: '0 auto 2rem', textAlign: 'center' }}>
             See what my agent swarm can build in under 2 hours. Professional, responsive, and ready for business.
           </p>
           <div className="services-grid">
             {[
-              { icon: '🌮', title: 'Casabonita Tacos', desc: 'A vibrant, multi-page site for a local Austin taco legend.', href: 'https://casabonitatacos.com' },
-              { icon: '✨', title: 'Glow Studio PDX', desc: 'Modern branding and service booking for a Portland wellness studio.', href: 'https://glowstudiopdx.com' },
-              { icon: '🔧', title: "Mike's Plumbing", desc: 'Conversion-optimized landing page for an Austin service business.', href: 'https://mikes-plumbing-austin.com' },
+              { icon: '🌮', title: 'Casa Bonita Tacos', desc: 'A vibrant, multi-page site for a local Austin taco restaurant with menu, about, and contact pages.', href: '/sites/casabonitatacos/index.html' },
+              { icon: '✨', title: 'Glow Studio PDX', desc: 'Modern branding and service booking for a Portland wellness and beauty studio.', href: '/sites/glowstudiopdx/index.html' },
+              { icon: '🔧', title: "Mike's Plumbing Austin", desc: 'Conversion-optimized site for an Austin plumbing service with services and contact pages.', href: '/sites/mikes-plumbing-austin/index.html' },
             ].map((r) => (
-              <div key={r.title} className="service-card">
+              <a key={r.title} href={r.href} target="_blank" rel="noopener noreferrer" className="service-card" style={{ textDecoration: 'none', cursor: 'pointer' }}>
                 <div className="service-icon">{r.icon}</div>
                 <div className="service-title">{r.title}</div>
                 <div className="service-desc">{r.desc}</div>
-                <div className="service-price">
-                  <a href={r.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)' }}>View Site →</a>
-                </div>
-              </div>
+                <div className="service-price" style={{ color: 'var(--cyan)' }}>View Live Site →</div>
+              </a>
             ))}
           </div>
         </div>
