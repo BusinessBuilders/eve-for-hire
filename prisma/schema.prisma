@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   sites         Site[]
   orders        Order[]
+  chatSessions  ChatSession[]
   affiliate     Affiliate?
   referral      Referral? @relation("ReferredUser")
 }
@@ -186,4 +187,35 @@ model DraftPreview {
 
   @@index([token])
   @@index([sessionId])
+}
+
+model ChatSession {
+  id             String             @id @default(cuid())
+  sessionKey     String             @unique
+  userId         String?
+  title          String?
+  summary        String?
+  messageCount   Int                @default(0)
+  lastMessageAt  DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  user           User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages       ChatMessage[]
+
+  @@index([userId])
+  @@index([lastMessageAt])
+}
+
+model ChatMessage {
+  id          String      @id @default(cuid())
+  sessionId   String
+  role        String      // "user" | "assistant"
+  content     String
+  createdAt   DateTime    @default(now())
+
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([createdAt])
 }

@@ -2,7 +2,8 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
@@ -23,16 +24,39 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatPage() {
+  return (
+    <Suspense>
+      <ChatPageInner />
+    </Suspense>
+  );
+}
+
+function ChatPageInner() {
+  const searchParams = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [aiError, setAiError] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [chatKey, setChatKey] = useState(0);
   const [inputValue, setInputValue] = useState('');
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   const sessionIdRef = useRef('');
+  const resumeChatIdRef = useRef('');
 
   useEffect(() => {
+    // Resume mode: ?resume=<sessionKey> restores a saved session
+    const resumeKey = searchParams.get('resume');
+    if (resumeKey) {
+      resumeChatIdRef.current = resumeKey;
+      const id = resumeKey;
+      localStorage.setItem('eve-session', id);
+      sessionIdRef.current = id;
+      setSessionId(id);
+      setIsReturningUser(true);
+      return;
+    }
+
     const existing = localStorage.getItem('eve-session');
     const id = existing ?? crypto.randomUUID();
     if (!existing) {
@@ -42,7 +66,7 @@ export default function ChatPage() {
     }
     sessionIdRef.current = id;
     setSessionId(id);
-  }, []);
+  }, [searchParams]);
 
   const transportRef = useRef(
     new DefaultChatTransport({
@@ -51,6 +75,9 @@ export default function ChatPage() {
         const fetchHeaders = new Headers(options?.headers || {});
         if (sessionIdRef.current) {
           fetchHeaders.set('x-eve-session', sessionIdRef.current);
+        }
+        if (resumeChatIdRef.current) {
+          fetchHeaders.set('x-eve-chat-id', resumeChatIdRef.current);
         }
         return fetch(url, { ...options, headers: fetchHeaders });
       },
@@ -64,6 +91,17 @@ export default function ChatPage() {
   });
 
   const isSubmitting = status === 'submitted' || status === 'streaming';
+
+  // Show auth prompt after first message in anonymous mode
+  useEffect(() => {
+    const userMsgs = messages.filter((m) => m.role === 'user');
+    if (userMsgs.length === 1 && !showAuthPrompt) {
+      // Check if user is already authenticated (has session cookie)
+      // If not, show the prompt after a short delay
+      const timer = setTimeout(() => setShowAuthPrompt(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, showAuthPrompt]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -93,6 +131,7 @@ export default function ChatPage() {
     if (!trimmed || isSubmitting) return;
     setInputValue('');
     setAiError('');
+    setShowAuthPrompt(false);
     sendMessage({ text: trimmed });
   }
 
@@ -103,6 +142,8 @@ export default function ChatPage() {
     setSessionId(id);
     setIsReturningUser(false);
     setAiError('');
+    setShowAuthPrompt(false);
+    resumeChatIdRef.current = '';
     setChatKey((k) => k + 1);
   }
 
@@ -135,6 +176,52 @@ export default function ChatPage() {
             <div className={styles.msgAvatar}>🤖</div>
             <div className={styles.typingBubble}>
               <TypingIndicator />
+            </div>
+          </div>
+        )}
+
+        {showAuthPrompt && (
+          <div className={styles.message} style={{ justifyContent: 'center' }}>
+            <div style={{
+              textAlign: 'center',
+              padding: '1rem 1.5rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(0, 217, 255, 0.3)',
+              background: 'rgba(0, 217, 255, 0.05)',
+              maxWidth: '400px',
+            }}>
+              <p style={{ color: 'var(--fg)', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+                Want to save this conversation?
+              </p>
+              <a
+                href="/api/auth/signin"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.5rem 1.5rem',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, var(--cyan), var(--coral))',
+                  color: 'white',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  fontSize: '0.85rem',
+                }}
+              >
+                Sign in to save
+              </a>
+              <button
+                onClick={() => setShowAuthPrompt(false)}
+                style={{
+                  display: 'block',
+                  margin: '0.5rem auto 0',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Continue without saving
+              </button>
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import { rollbackLatestDeploymentCommit } from '@/lib/github/rollback';
 import { orderStore } from '@/lib/order/store';
 import { generateHeroSection } from '@/lib/draft/generate';
 import { createDraft } from '@/lib/draft/store';
+import { chatStore } from '@/lib/chat/store';
 
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
 // Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
@@ -718,13 +719,42 @@ export async function POST(req: Request) {
       ? clientSession
       : `ip-${ip}`;
 
+  // ── Chat persistence: find-or-create session, save user message ──────────
+  let chatSessionId: string | null = null;
+  try {
+    const chatSession = await chatStore.findOrCreateSession({ sessionKey });
+    chatSessionId = chatSession.id;
+    await chatStore.addMessage({
+      sessionId: chatSession.id,
+      role: 'user',
+      content: lastUserMessage,
+    });
+  } catch (err) {
+    console.error('[chat] persist user message failed:', err);
+    // Non-fatal: chat works without persistence
+  }
+
+  // ── Resume context: if x-eve-chat-id header is present, prepend summary ──
+  const resumeChatId = req.headers.get('x-eve-chat-id');
+  let resumePrefix = '';
+  if (resumeChatId) {
+    try {
+      const resumeSession = await chatStore.findById(resumeChatId);
+      if (resumeSession?.summary) {
+        resumePrefix = `[Resuming previous conversation. Summary: ${resumeSession.summary}]\n\n`;
+      }
+    } catch (err) {
+      console.error('[chat] resume context load failed:', err);
+    }
+  }
+
   // Funnel tracking: first message = chat opened; second = qualifying underway.
   if (userMessageCount === 1) trackFunnelEvent('chat_opened', { sessionId: sessionKey });
   if (userMessageCount === 2) trackFunnelEvent('qualifying_started', { sessionId: sessionKey });
 
   let eveReply: string;
   try {
-    eveReply = await callOpenClaw(lastUserMessage, sessionKey);
+    eveReply = await callOpenClaw(resumePrefix + lastUserMessage, sessionKey);
   } catch (err) {
     console.error('OpenClaw proxy failed:', err);
     return new Response(
@@ -753,6 +783,19 @@ export async function POST(req: Request) {
 
   const finalText =
     actionBlocks.length > 0 ? `${text}\n\n${actionBlocks.join('\n\n')}` : text;
+
+  // ── Persist assistant reply ────────────────────────────────────────────────
+  if (chatSessionId) {
+    try {
+      await chatStore.addMessage({
+        sessionId: chatSessionId,
+        role: 'assistant',
+        content: text,
+      });
+    } catch (err) {
+      console.error('[chat] persist assistant message failed:', err);
+    }
+  }
 
   return textToUIMessageStreamResponse(finalText);
 }
