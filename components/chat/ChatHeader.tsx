@@ -32,6 +32,9 @@ export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
       <button className={styles.newChatBtn} onClick={onStartFresh} title="Start a new conversation">
         + New Chat
       </button>
+      <a href="/dashboard" style={{ fontSize: '0.8rem', color: 'var(--cyan)', fontWeight: 600, textDecoration: 'none', marginLeft: '0.5rem' }}>
+        Saved Chats
+      </a>
       <a href="/#support" style={{ fontSize: '0.8rem', color: 'var(--cyan)', fontWeight: 600, textDecoration: 'none', marginLeft: '0.5rem' }}>
         Support
       </a>
