@@ -48,14 +48,20 @@ console.log(`[auth] DATABASE_URL: ${process.env.DATABASE_URL || 'NOT SET'}`);
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers,
-  session: { strategy: 'database' },
+  session: { strategy: 'jwt' },
   trustHost: true,
   callbacks: {
-    session: async ({ session, user }) => {
-      if (session.user) {
-        session.user.id = user.id;
+    session: async ({ session, token }) => {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       return session;
+    },
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
     },
   },
 });
