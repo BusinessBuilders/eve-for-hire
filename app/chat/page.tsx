@@ -213,7 +213,7 @@ function ChatPageInner() {
                 Want to save this conversation?
               </p>
               <a
-                href="/api/auth/signin/github"
+                href="/api/auth/signin"
                 style={{
                   display: 'inline-block',
                   padding: '0.5rem 1.5rem',
@@ -279,7 +279,7 @@ function ChatPageInner() {
                   Get a website — $89/mo
                 </a>
                 <a
-                  href="/api/auth/signin/github"
+                  href="/api/auth/signin"
                   style={{
                     display: 'inline-block',
                     padding: '0.6rem 1.5rem',

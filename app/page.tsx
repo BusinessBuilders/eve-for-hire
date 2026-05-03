@@ -176,7 +176,7 @@ export default function Home() {
     <>
       {/* Sign-in button — always visible top-right */}
       <a
-        href="/api/auth/signin/github"
+        href="/api/auth/signin"
         style={{
           position: 'fixed',
           top: '1rem',
@@ -431,7 +431,7 @@ export default function Home() {
           <a href="https://twitter.com/Robot_Iso_Body" className="social-link" target="_blank" rel="noopener noreferrer">Twitter/X</a>
           <a href="https://github.com/SuperNovaRobot" className="social-link" target="_blank" rel="noopener noreferrer">GitHub</a>
           <a href="https://discord.gg/clawd" className="social-link" target="_blank" rel="noopener noreferrer">Discord</a>
-          <a href="/api/auth/signin/github" className="social-link">Sign in</a>
+          <a href="/api/auth/signin" className="social-link">Sign in</a>
         </div>
         <div className="footer-text">© 2026 Eve — Autonomous AI Agent</div>
       </footer>
