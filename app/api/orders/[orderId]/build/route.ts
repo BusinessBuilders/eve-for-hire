@@ -14,6 +14,7 @@
  */
 
 import { NextRequest, NextResponse, after } from 'next/server';
+import { auth } from '@/lib/auth';
 import { orderStore } from '@/lib/order/store';
 import { buildAndDeployOrder } from '@/lib/site/build-service';
 import { triggerPaperclipBuild } from '@/lib/site/paperclip-trigger';
@@ -22,6 +23,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const { orderId } = await params;
   let useSwarm = false;
   try {

@@ -6,6 +6,8 @@ import { orderStore } from '@/lib/order/store';
 import { generateHeroSection } from '@/lib/draft/generate';
 import { createDraft } from '@/lib/draft/store';
 import { chatStore } from '@/lib/chat/store';
+import { auth } from '@/lib/auth';
+import { getUserMessageCount, getAnonymousMessageCount } from '@/lib/freemium';
 
 // OpenClaw HTTP proxy URL — the proxy handles the WebSocket gateway handshake internally.
 // Default: http://127.0.0.1:8097 (Nova's reverse SSH tunnel exposes port 8097 on VPS localhost).
@@ -718,6 +720,31 @@ export async function POST(req: Request) {
     clientSession && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientSession)
       ? clientSession
       : `ip-${ip}`;
+
+  // ── Freemium gate: check message count against free limit ──────────────────
+  const authSession = await auth();
+  let freemiumCheck: { used: number; limit: number };
+  if (authSession?.user?.id) {
+    freemiumCheck = await getUserMessageCount(authSession.user.id);
+  } else {
+    freemiumCheck = await getAnonymousMessageCount(sessionKey);
+  }
+
+  if (freemiumCheck.limit !== -1 && freemiumCheck.used >= freemiumCheck.limit) {
+    const paidAccessUrl = process.env.NEXT_PUBLIC_BASE_URL
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/#hire`
+      : '/#hire';
+    return new Response(
+      JSON.stringify({
+        error: 'free_limit_reached',
+        message: "You've used all your free messages! Sign up or upgrade to continue chatting with Eve.",
+        used: freemiumCheck.used,
+        limit: freemiumCheck.limit,
+        upgradeUrl: paidAccessUrl,
+      }),
+      { status: 402, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
 
   // ── Chat persistence: find-or-create session, save user message ──────────
   let chatSessionId: string | null = null;
