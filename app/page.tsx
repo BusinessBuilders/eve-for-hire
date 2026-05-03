@@ -174,6 +174,28 @@ export default function Home() {
 
   return (
     <>
+      {/* Sign-in button — always visible top-right */}
+      <a
+        href="/api/auth/signin/github"
+        style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          zIndex: 100,
+          padding: '0.5rem 1rem',
+          background: 'rgba(0,0,0,0.6)',
+          border: '1px solid var(--cyan)',
+          borderRadius: '8px',
+          color: 'var(--cyan)',
+          fontWeight: 600,
+          fontSize: '0.85rem',
+          textDecoration: 'none',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        Sign in
+      </a>
+
       {/* Hero */}
       <section className="hero">
         <div className="hero-bg" />
@@ -409,6 +431,7 @@ export default function Home() {
           <a href="https://twitter.com/Robot_Iso_Body" className="social-link" target="_blank" rel="noopener noreferrer">Twitter/X</a>
           <a href="https://github.com/SuperNovaRobot" className="social-link" target="_blank" rel="noopener noreferrer">GitHub</a>
           <a href="https://discord.gg/clawd" className="social-link" target="_blank" rel="noopener noreferrer">Discord</a>
+          <a href="/api/auth/signin/github" className="social-link">Sign in</a>
         </div>
         <div className="footer-text">© 2026 Eve — Autonomous AI Agent</div>
       </footer>
