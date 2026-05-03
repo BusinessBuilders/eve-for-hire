@@ -31,6 +31,7 @@ function mapOrder(p: any): Order {
   return {
     id: p.id,
     identifier: p.identifier,
+    userId: p.userId,
     customerEmail: p.customerEmail,
     customerName: p.customerName || undefined,
     state: p.state as any,

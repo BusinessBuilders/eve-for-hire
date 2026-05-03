@@ -42,6 +42,10 @@ export async function POST(
     return NextResponse.json({ error: 'Order not found' }, { status: 404 });
   }
 
+  if (order.userId && order.userId !== session.user.id) {
+    return NextResponse.json({ error: 'You do not own this order' }, { status: 403 });
+  }
+
   // Accepted starting states. The build service handles all internal transitions:
   //   build_failed  → RETRY_BUILD → building → ... (full pipeline)
   //   deploy_failed → RETRY_DEPLOY → deploying → DNS + smoke test only
