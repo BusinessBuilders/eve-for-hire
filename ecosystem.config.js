@@ -21,8 +21,12 @@ if (fs.existsSync(envFile)) {
       const eq = trimmed.indexOf('=');
       if (eq === -1) return;
       const key = trimmed.slice(0, eq).trim();
-      const val = trimmed.slice(eq + 1).trim();
-      if (key) process.env[key] = val; // always re-read .env.production so pm2 reload picks up changes
+      let val = trimmed.slice(eq + 1).trim();
+      // Strip surrounding quotes (single or double) — common in .env files
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (key) process.env[key] = val;
     });
 }
 

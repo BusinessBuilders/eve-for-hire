@@ -8,6 +8,7 @@ import { prisma } from '@/lib/db';
 const providers = [];
 
 if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
+  console.log(`[auth] GitHub OAuth enabled — clientId: ${process.env.GITHUB_ID}, secret: ${process.env.GITHUB_SECRET.length} chars`);
   providers.push(
     GitHub({
       clientId: process.env.GITHUB_ID,
@@ -16,7 +17,7 @@ if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
     }),
   );
 } else {
-  console.warn('[auth] GitHub OAuth skipped — set GITHUB_ID and GITHUB_SECRET to enable.');
+  console.warn(`[auth] GitHub OAuth skipped — GITHUB_ID: ${process.env.GITHUB_ID ? 'set' : 'NOT SET'}, GITHUB_SECRET: ${process.env.GITHUB_SECRET ? 'set' : 'NOT SET'}`);
 }
 
 if (process.env.EMAIL_SERVER_HOST) {
@@ -40,6 +41,9 @@ if (process.env.EMAIL_SERVER_HOST) {
 if (providers.length === 0) {
   console.error('[auth] No providers configured! Set either GITHUB_ID/GITHUB_SECRET or EMAIL_SERVER_* env vars.');
 }
+
+console.log(`[auth] AUTH_SECRET: ${process.env.AUTH_SECRET ? `set (${process.env.AUTH_SECRET.length} chars)` : 'NOT SET'}`);
+console.log(`[auth] DATABASE_URL: ${process.env.DATABASE_URL || 'NOT SET'}`);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
