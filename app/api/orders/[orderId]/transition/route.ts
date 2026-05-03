@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { orderStore } from '@/lib/order/store';
 import type { TransitionInput, OrderEvent } from '@/lib/order/types';
 import { TRANSITIONS } from '@/lib/order/types';
@@ -17,6 +18,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   const { orderId } = await params;
 
   let body: unknown;

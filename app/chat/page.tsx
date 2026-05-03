@@ -40,6 +40,9 @@ function ChatPageInner() {
   const [chatKey, setChatKey] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [paywallHit, setPaywallHit] = useState<{ used: number; limit: number; upgradeUrl: string } | null>(null);
+  const [freeMessagesUsed, setFreeMessagesUsed] = useState(0);
+  const FREE_LIMIT = 10;
 
   const sessionIdRef = useRef('');
   const resumeChatIdRef = useRef('');
@@ -79,7 +82,17 @@ function ChatPageInner() {
         if (resumeChatIdRef.current) {
           fetchHeaders.set('x-eve-chat-id', resumeChatIdRef.current);
         }
-        return fetch(url, { ...options, headers: fetchHeaders });
+        const res = await fetch(url, { ...options, headers: fetchHeaders });
+        if (res.status === 402) {
+          const data = await res.json().catch(() => ({}));
+          setPaywallHit({
+            used: data.used ?? 0,
+            limit: data.limit ?? 10,
+            upgradeUrl: data.upgradeUrl ?? '/#hire',
+          });
+          throw new Error(data.message ?? 'Free message limit reached');
+        }
+        return res;
       },
     }),
   );
@@ -91,6 +104,11 @@ function ChatPageInner() {
   });
 
   const isSubmitting = status === 'submitted' || status === 'streaming';
+  const userMessageCount = messages.filter((m) => m.role === 'user').length;
+
+  useEffect(() => {
+    setFreeMessagesUsed(userMessageCount);
+  }, [userMessageCount]);
 
   // Show auth prompt after first message in anonymous mode
   useEffect(() => {
@@ -143,6 +161,7 @@ function ChatPageInner() {
     setIsReturningUser(false);
     setAiError('');
     setShowAuthPrompt(false);
+    setPaywallHit(null);
     resumeChatIdRef.current = '';
     setChatKey((k) => k + 1);
   }
@@ -226,6 +245,59 @@ function ChatPageInner() {
           </div>
         )}
 
+        {paywallHit && (
+          <div className={styles.message} style={{ justifyContent: 'center' }}>
+            <div style={{
+              textAlign: 'center',
+              padding: '1.5rem 2rem',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 107, 107, 0.4)',
+              background: 'rgba(255, 107, 107, 0.08)',
+              maxWidth: '420px',
+            }}>
+              <p style={{ color: 'var(--fg)', fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                Free messages used up
+              </p>
+              <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                You&apos;ve used all {paywallHit.limit} free messages with Eve.
+                Sign up or upgrade to keep building.
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a
+                  href={paywallHit.upgradeUrl}
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.6rem 1.5rem',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, var(--cyan), var(--coral))',
+                    color: 'white',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Get a website — $89/mo
+                </a>
+                <a
+                  href="/api/auth/signin"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.6rem 1.5rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(0, 217, 255, 0.4)',
+                    color: 'var(--cyan)',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  Sign in
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -245,6 +317,17 @@ function ChatPageInner() {
           onSubmit={submit}
           isSubmitting={isSubmitting}
         />
+
+        {!paywallHit && messages.length > 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '0.35rem 0',
+            fontSize: '0.7rem',
+            color: freeMessagesUsed >= FREE_LIMIT - 2 ? 'var(--coral)' : 'var(--muted)',
+          }}>
+            {freeMessagesUsed}/{FREE_LIMIT} free messages
+          </div>
+        )}
       </div>
     </div>
   );
