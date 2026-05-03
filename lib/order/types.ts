@@ -170,6 +170,8 @@ export interface Order {
   id: string;
   /** Human-readable identifier (e.g. EVE-0001) */
   identifier: string;
+  /** Owning user ID (null for pre-auth checkout orders) */
+  userId?: string | null;
   /** Customer email */
   customerEmail: string;
   /** Customer display name */

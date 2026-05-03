@@ -50,6 +50,15 @@ export async function POST(
 
   console.log(`[orders] transition orderId=${orderId} event=${event}`);
 
+  const order = await orderStore.findById(orderId);
+  if (!order) {
+    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+  }
+
+  if (order.userId && order.userId !== session.user.id) {
+    return NextResponse.json({ error: 'You do not own this order' }, { status: 403 });
+  }
+
   const result = await orderStore.transition(orderId, input);
 
   if (!result.ok) {
