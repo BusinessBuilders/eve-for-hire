@@ -63,7 +63,7 @@ export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
         </a>
       ) : (
         <a
-          href="/api/auth/signin"
+          href="/api/auth/signin/github"
           style={{
             fontSize: '0.8rem',
             color: 'var(--coral)',
