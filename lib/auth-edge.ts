@@ -14,8 +14,5 @@ if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
 
 export const { auth } = NextAuth({
   providers,
-  pages: {
-    signIn: '/chat',
-  },
   trustHost: true,
 });
