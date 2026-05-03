@@ -74,6 +74,13 @@ module.exports = {
 
         // Admin secret — used to protect GET /api/affiliates (set a strong random string)
         ADMIN_SECRET: process.env.ADMIN_SECRET || '',
+
+        // Auth — NextAuth v5 (loaded from .env.production)
+        AUTH_SECRET: process.env.AUTH_SECRET || '',
+        GITHUB_ID: process.env.GITHUB_ID || '',
+        GITHUB_SECRET: process.env.GITHUB_SECRET || '',
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'https://eve.center',
+        DATABASE_URL: process.env.DATABASE_URL || 'file:./data/eve-auth.db',
       },
     },
   ],
