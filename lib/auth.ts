@@ -5,25 +5,26 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 
 import { prisma } from '@/lib/db';
 
-const githubClientId = process.env.GITHUB_ID;
-const githubClientSecret = process.env.GITHUB_SECRET;
+const providers = [];
 
-if (!githubClientId || !githubClientSecret) {
-  console.warn('[auth] GitHub OAuth env vars are missing. Set GITHUB_ID and GITHUB_SECRET.');
-}
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [
+if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
+  providers.push(
     GitHub({
-      clientId: githubClientId ?? '',
-      clientSecret: githubClientSecret ?? '',
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
+  );
+} else {
+  console.warn('[auth] GitHub OAuth skipped — set GITHUB_ID and GITHUB_SECRET to enable.');
+}
+
+if (process.env.EMAIL_SERVER_HOST) {
+  providers.push(
     Nodemailer({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
-        port: Number(process.env.EMAIL_SERVER_PORT),
+        port: Number(process.env.EMAIL_SERVER_PORT) || 587,
         auth: {
           user: process.env.EMAIL_SERVER_USER,
           pass: process.env.EMAIL_SERVER_PASSWORD,
@@ -31,7 +32,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       from: process.env.EMAIL_FROM,
     }),
-  ],
+  );
+} else {
+  console.warn('[auth] Email sign-in skipped — set EMAIL_SERVER_HOST to enable.');
+}
+
+if (providers.length === 0) {
+  console.error('[auth] No providers configured! Set either GITHUB_ID/GITHUB_SECRET or EMAIL_SERVER_* env vars.');
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  providers,
   session: { strategy: 'database' },
   pages: {
     signIn: '/chat',
