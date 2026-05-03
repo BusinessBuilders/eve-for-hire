@@ -40,10 +40,7 @@ jobs:
             git pull origin main
             npm ci
             mkdir -p data
-            # Prisma migrate needs DATABASE_URL — extract just that var from .env.production
-            # (don't source the whole file — it may contain SSH keys with special chars)
-            export DATABASE_URL="$(grep '^DATABASE_URL=' .env.production 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || echo 'file:./data/eve-auth.db')"
-            npx prisma migrate deploy
+            npx prisma generate
             NODE_ENV=production npm run build
             pm2 reload ecosystem.config.js --env production
             pm2 save
