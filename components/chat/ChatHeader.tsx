@@ -22,7 +22,22 @@ export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
   useEffect(() => {
     fetch('/api/auth/session')
       .then((r) => r.json())
-      .then((d) => setLoggedIn(!!d?.user))
+      .then(async (d) => {
+        const isAuthed = !!d?.user;
+        setLoggedIn(isAuthed);
+        if (isAuthed) {
+          const sessionKey = localStorage.getItem('eve-session');
+          if (sessionKey) {
+            try {
+              await fetch('/api/chat/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionKeys: [sessionKey] }),
+              });
+            } catch {}
+          }
+        }
+      })
       .catch(() => setLoggedIn(false));
   }, []);
 
