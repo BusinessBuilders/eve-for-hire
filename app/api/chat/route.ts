@@ -152,12 +152,20 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+interface UserContext {
+  isAuthed: boolean;
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+}
+
 // Call Eve via the OpenClaw HTTP proxy at /api/chat.
 // The proxy handles the WebSocket gateway handshake internally and returns { content }.
 // Timeout: 60s (proxy invokes `openclaw agent` which may take time for complex responses).
 async function callOpenClaw(
   message: string,
   sessionKey: string,
+  userContext?: UserContext,
 ): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 60_000);
@@ -167,7 +175,7 @@ async function callOpenClaw(
     res = await fetch(`${OPENCLAW_PROXY_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, sessionId: sessionKey }),
+      body: JSON.stringify({ message, sessionId: sessionKey, userContext }),
       signal: controller.signal,
     });
   } finally {
@@ -769,7 +777,11 @@ export async function POST(req: Request) {
   let resumePrefix = '';
   if (resumeChatId) {
     try {
-      const resumeSession = await chatStore.findById(resumeChatId);
+      // Accept either database id or sessionKey (UUID)
+      let resumeSession = await chatStore.findById(resumeChatId);
+      if (!resumeSession) {
+        resumeSession = await chatStore.findBySessionKey(resumeChatId);
+      }
       if (resumeSession?.summary) {
         resumePrefix = `[Resuming previous conversation. Summary: ${resumeSession.summary}]\n\n`;
       }
@@ -784,7 +796,14 @@ export async function POST(req: Request) {
 
   let eveReply: string;
   try {
-    eveReply = await callOpenClaw(resumePrefix + lastUserMessage, sessionKey);
+    // Language enforcement: ensure Eve responds in English
+    const languagePrefix = '[System: Always respond in English.]\n';
+    eveReply = await callOpenClaw(languagePrefix + resumePrefix + lastUserMessage, sessionKey, {
+      isAuthed: !!authSession?.user?.id,
+      userId: authSession?.user?.id ?? undefined,
+      userName: authSession?.user?.name ?? undefined,
+      userEmail: authSession?.user?.email ?? undefined,
+    });
   } catch (err) {
     console.error('OpenClaw proxy failed:', err);
     return new Response(

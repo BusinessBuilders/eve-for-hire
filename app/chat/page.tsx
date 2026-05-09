@@ -43,6 +43,7 @@ function ChatPageInner() {
   const [paywallHit, setPaywallHit] = useState<{ used: number; limit: number; upgradeUrl: string } | null>(null);
   const [freeMessagesUsed, setFreeMessagesUsed] = useState(0);
   const FREE_LIMIT = 10;
+  const [resumeMessages, setResumeMessages] = useState<Array<{id: string; role: string; content: string}>>([]);
 
   const sessionIdRef = useRef('');
   const resumeChatIdRef = useRef('');
@@ -52,11 +53,21 @@ function ChatPageInner() {
     const resumeKey = searchParams.get('resume');
     if (resumeKey) {
       resumeChatIdRef.current = resumeKey;
-      const id = resumeKey;
-      localStorage.setItem('eve-session', id);
-      sessionIdRef.current = id;
-      setSessionId(id);
+      localStorage.setItem('eve-session', resumeKey);
+      sessionIdRef.current = resumeKey;
+      setSessionId(resumeKey);
       setIsReturningUser(true);
+
+      // Load previous messages for this session
+      fetch(`/api/chat/sessions/${encodeURIComponent(resumeKey)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.messages && Array.isArray(data.messages)) {
+            setResumeMessages(data.messages);
+          }
+        })
+        .catch(err => console.error('[chat] resume load failed:', err));
+
       return;
     }
 
@@ -163,6 +174,7 @@ function ChatPageInner() {
     setShowAuthPrompt(false);
     setPaywallHit(null);
     resumeChatIdRef.current = '';
+    setResumeMessages([]);
     setChatKey((k) => k + 1);
   }
 
@@ -172,22 +184,34 @@ function ChatPageInner() {
       <ChatHeader onStartFresh={startFresh} />
 
       <div className={styles.messages}>
-        {messages.length === 0 ? (
+        {messages.length === 0 && resumeMessages.length === 0 ? (
           <EmptyState
             isReturningUser={isReturningUser}
             onStartFresh={startFresh}
           />
         ) : (
-          messages.map((msg) => (
-            <ChatMessage
-              key={msg.id}
-              message={msg as any}
-              sessionId={sessionId}
-              onDomainSelect={(domain) => {
-                submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
-              }}
-            />
-          ))
+          <>
+            {resumeMessages.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                message={{ id: msg.id, role: msg.role, content: msg.content, parts: [{ type: 'text', text: msg.content }] } as any}
+                sessionId={sessionId}
+                onDomainSelect={(domain) => {
+                  submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
+                }}
+              />
+            ))}
+            {messages.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                message={msg as any}
+                sessionId={sessionId}
+                onDomainSelect={(domain) => {
+                  submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
+                }}
+              />
+            ))}
+          </>
         )}
 
         {status === 'submitted' && (
