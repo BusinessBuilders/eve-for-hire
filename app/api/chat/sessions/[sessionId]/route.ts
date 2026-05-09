@@ -10,7 +10,11 @@ export async function GET(
   const session = await auth();
 
   try {
-    const chatSession = await chatStore.findById(sessionId);
+    // Accept either database id or sessionKey (UUID) for resume URLs
+    let chatSession = await chatStore.findById(sessionId);
+    if (!chatSession) {
+      chatSession = await chatStore.findBySessionKey(sessionId);
+    }
     if (!chatSession) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
