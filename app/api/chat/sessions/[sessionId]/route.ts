@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const messages = await chatStore.getMessages(sessionId);
+    const messages = await chatStore.getMessages(chatSession.id);
     return NextResponse.json({ session: chatSession, messages });
   } catch (err) {
     console.error('[chat/sessions/:id] get error:', err);
