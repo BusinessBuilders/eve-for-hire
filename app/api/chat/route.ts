@@ -756,10 +756,14 @@ export async function POST(req: Request) {
 
   // ── Chat persistence: find-or-create session, save user message ──────────
   let chatSessionId: string | null = null;
+  const authUserId = authSession?.user?.id;
+  if (authSession?.user && !authUserId) {
+    console.warn('[chat] auth session present but userId is missing — session:', JSON.stringify(authSession.user));
+  }
   try {
     const chatSession = await chatStore.findOrCreateSession({
       sessionKey,
-      userId: authSession?.user?.id ?? undefined,
+      userId: authUserId ?? undefined,
     });
     chatSessionId = chatSession.id;
     await chatStore.addMessage({

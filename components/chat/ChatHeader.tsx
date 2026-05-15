@@ -28,13 +28,37 @@ export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
         if (isAuthed) {
           const sessionKey = localStorage.getItem('eve-session');
           if (sessionKey) {
-            try {
-              await fetch('/api/chat/claim', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionKeys: [sessionKey] }),
-              });
-            } catch {}
+            // Claim the anonymous session with retry logic.
+            // The session may not exist in the DB yet if the user logged in
+            // before sending any messages, so we retry up to 3 times.
+            const claimWithRetry = async (attempt = 0): Promise<void> => {
+              try {
+                const res = await fetch('/api/chat/claim', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionKeys: [sessionKey] }),
+                });
+                if (!res.ok) {
+                  const body = await res.json().catch(() => ({}));
+                  console.warn(
+                    `[ChatHeader] session claim failed (attempt ${attempt + 1}): ${res.status}`,
+                    body.error ?? '',
+                  );
+                  if (attempt < 2 && res.status !== 401) {
+                    // Retry with backoff, but don't retry auth errors
+                    await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+                    return claimWithRetry(attempt + 1);
+                  }
+                }
+              } catch (err) {
+                console.error('[ChatHeader] session claim network error:', err);
+                if (attempt < 2) {
+                  await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+                  return claimWithRetry(attempt + 1);
+                }
+              }
+            };
+            await claimWithRetry();
           }
         }
       })
