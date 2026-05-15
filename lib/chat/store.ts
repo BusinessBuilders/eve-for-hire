@@ -88,7 +88,19 @@ class PrismaChatStore implements ChatStore {
     const existing = await prisma.chatSession.findUnique({
       where: { sessionKey: input.sessionKey },
     });
-    if (existing) return mapSession(existing);
+    if (existing) {
+      // If the session exists but has no userId and one is now provided (user
+      // logged in since the session was created), associate it immediately.
+      // This prevents a race where the claim endpoint hasn't run yet or failed.
+      if (!existing.userId && input.userId) {
+        const updated = await prisma.chatSession.update({
+          where: { id: existing.id },
+          data: { userId: input.userId },
+        });
+        return mapSession(updated);
+      }
+      return mapSession(existing);
+    }
 
     const created = await prisma.chatSession.create({
       data: {

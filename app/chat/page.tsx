@@ -44,6 +44,7 @@ function ChatPageInner() {
   const [freeMessagesUsed, setFreeMessagesUsed] = useState(0);
   const FREE_LIMIT = 10;
   const [resumeMessages, setResumeMessages] = useState<Array<{id: string; role: string; content: string}>>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const sessionIdRef = useRef('');
   const resumeChatIdRef = useRef('');
@@ -81,6 +82,16 @@ function ChatPageInner() {
     sessionIdRef.current = id;
     setSessionId(id);
   }, [searchParams]);
+
+  // Check if user is already authenticated so we can skip the auth prompt
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((d) => {
+        setIsAuthenticated(!!d?.user);
+      })
+      .catch(() => setIsAuthenticated(false));
+  }, []);
 
   const transportRef = useRef(
     new DefaultChatTransport({
@@ -122,15 +133,15 @@ function ChatPageInner() {
   }, [userMessageCount]);
 
   // Show auth prompt after first message in anonymous mode
+  // Only show if the user is NOT already authenticated
   useEffect(() => {
+    if (isAuthenticated) return; // Already logged in — never show auth prompt
     const userMsgs = messages.filter((m) => m.role === 'user');
     if (userMsgs.length === 1 && !showAuthPrompt) {
-      // Check if user is already authenticated (has session cookie)
-      // If not, show the prompt after a short delay
       const timer = setTimeout(() => setShowAuthPrompt(true), 2000);
       return () => clearTimeout(timer);
     }
-  }, [messages, showAuthPrompt]);
+  }, [messages, showAuthPrompt, isAuthenticated]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
