@@ -84,14 +84,36 @@ function ChatPageInner() {
   }, [searchParams]);
 
   // Check if user is already authenticated so we can skip the auth prompt
+  // Also auto-resume previous messages for authenticated returning users
   useEffect(() => {
     fetch('/api/auth/session')
       .then((r) => r.json())
       .then((d) => {
-        setIsAuthenticated(!!d?.user);
+        const authed = !!d?.user;
+        setIsAuthenticated(authed);
+
+        // Auto-resume: if authenticated and has an existing session, load messages
+        // so returning users see their conversation history without needing ?resume=
+        if (authed && sessionIdRef.current && !searchParams.get('resume')) {
+          const key = sessionIdRef.current;
+          fetch(`/api/chat/sessions/${encodeURIComponent(key)}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+                setResumeMessages(data.messages);
+                resumeChatIdRef.current = key;
+              }
+            })
+            .catch(err => console.error('[chat] auto-resume failed:', err));
+        }
       })
       .catch(() => setIsAuthenticated(false));
   }, []);
+
+  // Hide auth prompt if auth check completes late and user IS authenticated
+  useEffect(() => {
+    if (isAuthenticated) setShowAuthPrompt(false);
+  }, [isAuthenticated]);
 
   const transportRef = useRef(
     new DefaultChatTransport({
@@ -192,7 +214,7 @@ function ChatPageInner() {
   return (
     <div className={styles.chatPage}>
       <CinematicBackground />
-      <ChatHeader onStartFresh={startFresh} />
+      <ChatHeader onStartFresh={startFresh} sessionId={sessionId} />
 
       <div className={styles.messages}>
         {messages.length === 0 && resumeMessages.length === 0 ? (
@@ -248,7 +270,7 @@ function ChatPageInner() {
                 Want to save this conversation?
               </p>
               <a
-                href="/api/auth/signin"
+                href={sessionId ? `/api/auth/signin?callbackUrl=${encodeURIComponent(`/chat?resume=${sessionId}`)}` : '/api/auth/signin'}
                 style={{
                   display: 'inline-block',
                   padding: '0.5rem 1.5rem',
@@ -314,7 +336,7 @@ function ChatPageInner() {
                   Get a website — $89/mo
                 </a>
                 <a
-                  href="/api/auth/signin"
+                  href={sessionId ? `/api/auth/signin?callbackUrl=${encodeURIComponent(`/chat?resume=${sessionId}`)}` : '/api/auth/signin'}
                   style={{
                     display: 'inline-block',
                     padding: '0.6rem 1.5rem',
