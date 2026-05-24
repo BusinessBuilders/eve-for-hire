@@ -5,9 +5,10 @@ import styles from '@/app/chat/chat.module.css';
 
 interface ChatHeaderProps {
   onStartFresh: () => void;
+  sessionId?: string;
 }
 
-export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
+export function ChatHeader({ onStartFresh, sessionId }: ChatHeaderProps) {
   const [raised, setRaised] = useState(0);
   const [loggedIn, setLoggedIn] = useState(false);
   const goal = 43000;
@@ -45,10 +46,12 @@ export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
                     body.error ?? '',
                   );
                   if (attempt < 2 && res.status !== 401) {
-                    // Retry with backoff, but don't retry auth errors
                     await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
                     return claimWithRetry(attempt + 1);
                   }
+                } else {
+                  const body = await res.json().catch(() => ({}));
+                  console.log(`[ChatHeader] session claim succeeded: ${body.claimed ?? 0} sessions claimed for key ${sessionKey.slice(0, 8)}…`);
                 }
               } catch (err) {
                 console.error('[ChatHeader] session claim network error:', err);
@@ -102,7 +105,7 @@ export function ChatHeader({ onStartFresh }: ChatHeaderProps) {
         </a>
       ) : (
         <a
-          href="/api/auth/signin"
+          href={sessionId ? `/api/auth/signin?callbackUrl=${encodeURIComponent(`/chat?resume=${sessionId}`)}` : '/api/auth/signin'}
           style={{
             fontSize: '0.8rem',
             color: 'var(--coral)',
