@@ -20,13 +20,27 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/chat/sessions')
-      .then((r) => r.json())
-      .then((data) => {
-        setSessions(data.sessions ?? []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // Claim any anonymous session from localStorage before fetching sessions.
+    // This ensures chats are associated with the user even if they navigated
+    // directly to /dashboard without going through /chat first.
+    const sessionKey = localStorage.getItem('eve-session');
+    const claimPromise = sessionKey
+      ? fetch('/api/chat/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionKeys: [sessionKey] }),
+        }).catch(() => null)
+      : Promise.resolve(null);
+
+    claimPromise.then(() => {
+      fetch('/api/chat/sessions')
+        .then((r) => r.json())
+        .then((data) => {
+          setSessions(data.sessions ?? []);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    });
   }, []);
 
   function formatDate(iso: string | null): string {

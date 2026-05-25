@@ -157,8 +157,10 @@ class PrismaChatStore implements ChatStore {
       }),
     ]);
 
-    // Auto-generate title from first user message
-    if (input.role === 'user' && session.messageCount === 0 && !session.title) {
+    // Auto-generate title from first user message.
+    // messageCount has already been incremented by the update above, so the
+    // first user message lands at count 1.
+    if (input.role === 'user' && session.messageCount === 1 && !session.title) {
       const title = input.content.slice(0, 80).replace(/\n/g, ' ').trim();
       await prisma.chatSession.update({
         where: { id: input.sessionId },
