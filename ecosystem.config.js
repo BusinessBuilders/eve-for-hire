@@ -81,6 +81,7 @@ module.exports = {
 
         // Auth — NextAuth v5 (loaded from .env.production)
         AUTH_SECRET: process.env.AUTH_SECRET || '',
+        AUTH_URL: process.env.AUTH_URL || 'https://eve.center',
         GITHUB_ID: process.env.GITHUB_ID || '',
         GITHUB_SECRET: process.env.GITHUB_SECRET || '',
         NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'https://eve.center',
