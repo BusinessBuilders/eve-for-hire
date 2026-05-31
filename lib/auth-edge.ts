@@ -23,5 +23,11 @@ export const { auth } = NextAuth({
       }
       return session;
     },
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
   },
 });

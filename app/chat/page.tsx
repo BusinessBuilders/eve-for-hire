@@ -45,6 +45,7 @@ function ChatPageInner() {
   const FREE_LIMIT = 10;
   const [resumeMessages, setResumeMessages] = useState<Array<{id: string; role: string; content: string}>>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showSignInBanner, setShowSignInBanner] = useState(false);
 
   const sessionIdRef = useRef('');
   const resumeChatIdRef = useRef('');
@@ -92,6 +93,12 @@ function ChatPageInner() {
         const authed = !!d?.user;
         setIsAuthenticated(authed);
 
+        // If redirected from a protected route with ?signIn=1 and user is NOT authenticated,
+        // show the sign-in banner immediately
+        if (!authed && searchParams.get('signIn') === '1') {
+          setShowSignInBanner(true);
+        }
+
         // Auto-resume: if authenticated and has an existing session, load messages
         // so returning users see their conversation history without needing ?resume=
         if (authed && sessionIdRef.current && !searchParams.get('resume')) {
@@ -108,7 +115,7 @@ function ChatPageInner() {
         }
       })
       .catch(() => setIsAuthenticated(false));
-  }, []);
+  }, [searchParams]);
 
   // Hide auth prompt if auth check completes late and user IS authenticated
   useEffect(() => {
@@ -215,6 +222,50 @@ function ChatPageInner() {
     <div className={styles.chatPage}>
       <CinematicBackground />
       <ChatHeader onStartFresh={startFresh} sessionId={sessionId} />
+
+      {showSignInBanner && !isAuthenticated && (
+        <div style={{
+          textAlign: 'center',
+          padding: '0.75rem 1rem',
+          background: 'rgba(0, 217, 255, 0.08)',
+          borderBottom: '1px solid rgba(0, 217, 255, 0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1rem',
+        }}>
+          <span style={{ color: 'var(--fg)', fontSize: '0.85rem' }}>
+            Sign in to access your saved conversations and dashboard.
+          </span>
+          <a
+            href={sessionId ? `/api/auth/signin?callbackUrl=${encodeURIComponent(`/chat?resume=${sessionId}`)}` : '/api/auth/signin'}
+            style={{
+              display: 'inline-block',
+              padding: '0.35rem 1rem',
+              borderRadius: '6px',
+              background: 'linear-gradient(135deg, var(--cyan), var(--coral))',
+              color: 'white',
+              fontWeight: 600,
+              textDecoration: 'none',
+              fontSize: '0.8rem',
+            }}
+          >
+            Sign in
+          </a>
+          <button
+            onClick={() => setShowSignInBanner(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--muted)',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className={styles.messages}>
         {messages.length === 0 && resumeMessages.length === 0 ? (
