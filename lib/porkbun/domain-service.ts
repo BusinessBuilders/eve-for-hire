@@ -49,30 +49,66 @@ export type DomainProcessResult =
 
 // ─── Domain search / suggestions ─────────────────────────────────────────────
 
+// Porkbun availability is rate-limited to ~1 req/10s, so a 3-TLD sweep costs
+// ~20s. Cache sweeps for a while and dedupe concurrent sweeps so the chat
+// turn, the results card fetch, and any retry all share one Porkbun pass.
+const SEARCH_CACHE_TTL_MS = 10 * 60 * 1000;
+const searchCache = new Map<string, { at: number; results: DomainSearchResult[] }>();
+const inFlightSearches = new Map<string, Promise<DomainSearchResult[]>>();
+
+function keywordToSlug(keyword: string): string {
+  return keyword
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 63);
+}
+
 /**
  * Generate candidate domain names from a business keyword and check
  * their availability against Porkbun.
  *
  * Used by Eve during the qualifying phase to suggest domains.
+ * Results are cached (10 min) and concurrent searches for the same
+ * keyword share a single Porkbun sweep.
  */
 export async function suggestAvailableDomains(
   keyword: string,
   // Default to 3 TLDs — Porkbun checks are rate-limited to 1/10s, so 3 checks ≈ 20s max.
   tlds = ['.com', '.co', '.io'],
 ): Promise<DomainSearchResult[]> {
-  const slug = keyword
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 63);
+  const slug = keywordToSlug(keyword);
+  const cacheKey = `${slug}|${tlds.join(',')}`;
 
-  const candidates = tlds.map((tld) => `${slug}${tld}`);
+  const cached = searchCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < SEARCH_CACHE_TTL_MS) {
+    return cached.results;
+  }
 
-  const client = createPorkbunClient();
-  const results = await client.checkDomains(candidates);
-  return results
-    .filter((r) => r.available)
-    .map((r) => ({ domain: r.domain, available: r.available, price: r.price }));
+  const pending = inFlightSearches.get(cacheKey);
+  if (pending) return pending;
+
+  const sweep = (async () => {
+    const candidates = tlds.map((tld) => `${slug}${tld}`);
+    const client = createPorkbunClient();
+    const results = await client.checkDomains(candidates);
+    // Return taken domains too — the results card renders them with a
+    // "Taken" badge, which reads much better than a silently empty card.
+    const mapped = results.map((r) => ({
+      domain: r.domain,
+      available: r.available,
+      price: r.price,
+    }));
+    searchCache.set(cacheKey, { at: Date.now(), results: mapped });
+    return mapped;
+  })();
+
+  inFlightSearches.set(cacheKey, sweep);
+  try {
+    return await sweep;
+  } finally {
+    inFlightSearches.delete(cacheKey);
+  }
 }
 
 /**

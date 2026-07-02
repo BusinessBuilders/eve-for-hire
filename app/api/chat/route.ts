@@ -421,33 +421,20 @@ async function resolveActionSignals(
     text = text.replace(m[0], '');
     const keyword = m[1].trim();
     domainKeywords.push(keyword);
-    try {
-      const results = await suggestAvailableDomains(keyword);
-      actionBlocks.push(
-        '```json-action\n' +
-          JSON.stringify({ type: 'domain-results', keyword, results }) +
-          '\n```',
-      );
-    } catch (err) {
-      console.error('[chat] domain search failed for', keyword, err);
-      // Surface the failure as a visible error card rather than silently dropping it.
-      // Silent failures leave users confused about why no domain card appeared.
-      const error =
-        err instanceof Error && err.name === 'AbortError'
-          ? 'Domain search timed out — please try again in a moment.'
-          : 'Domain search is temporarily unavailable — please try again in a moment.';
 
-      actionBlocks.push(
-        '```json-action\n' +
-          JSON.stringify({
-            type: 'domain-results',
-            keyword,
-            results: [],
-            error,
-          }) +
-          '\n```',
-      );
-    }
+    // Don't block the chat turn on Porkbun's 1-req/10s rate limit (a 3-TLD
+    // sweep is ~20s and used to stall the whole response). Emit a pending
+    // card immediately; the client fetches /api/domains/search which joins
+    // the warm-up sweep started here via the in-flight dedupe cache.
+    suggestAvailableDomains(keyword).catch((err) => {
+      console.error('[chat] domain search warm-up failed for', keyword, err);
+    });
+
+    actionBlocks.push(
+      '```json-action\n' +
+        JSON.stringify({ type: 'domain-search-pending', keyword }) +
+        '\n```',
+    );
   }
 
   // ── [DRAFT_PREVIEW:{...}] ────────────────────────────────────────────────

@@ -29,6 +29,9 @@ interface Props {
 const PAID_OR_LATER: ReadonlySet<OrderState> = new Set([
   'paid',
   'domain_purchasing',
+  // domain_failed is still a paid order — showing it as "verifying payment"
+  // read as a stuck/lost order. The SwarmVisualizer explains the domain issue.
+  'domain_failed',
   'building',
   'deploying',
   'live',

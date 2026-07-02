@@ -54,6 +54,35 @@ export class PorkbunApiError extends Error {
   }
 }
 
+// ─── Availability-check rate gate ───────────────────────────────────────────
+//
+// Porkbun allows ~1 availability check per 10s PER API KEY — the limit is
+// global, not per keyword. Two concurrent sweeps (two chat users, or a chat
+// warm-up plus a card fetch for different keywords) would trip 400s and
+// produce empty result cards. This queue serializes every check in the
+// process and spaces them out by the rate window.
+
+const AVAILABILITY_WINDOW_MS = 10_500;
+let availabilityQueue: Promise<void> = Promise.resolve();
+let lastAvailabilityCheckAt = 0;
+
+function scheduleAvailabilityCheck<T>(fn: () => Promise<T>): Promise<T> {
+  const run = availabilityQueue.then(async () => {
+    const wait = lastAvailabilityCheckAt + AVAILABILITY_WINDOW_MS - Date.now();
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    try {
+      return await fn();
+    } finally {
+      lastAvailabilityCheckAt = Date.now();
+    }
+  });
+  availabilityQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 // ─── Client ─────────────────────────────────────────────────────────────────
 
 export class PorkbunClient {
@@ -89,8 +118,14 @@ export class PorkbunClient {
     }
 
     if (!res.ok) {
+      // Porkbun returns errors (including rate-limit rejections) as 4xx with
+      // a JSON message — surface it instead of a bare status code.
+      const detail = await res
+        .json()
+        .then((d: { message?: string }) => d.message)
+        .catch(() => undefined);
       throw new PorkbunApiError(
-        `HTTP ${res.status} from Porkbun at ${path}`,
+        `HTTP ${res.status} from Porkbun at ${path}${detail ? ` — ${detail}` : ''}`,
         `HTTP_${res.status}`,
       );
     }
@@ -121,10 +156,25 @@ export class PorkbunClient {
    * Returns `ttlRemaining` (seconds) so callers can pace sequential checks.
    */
   async checkDomain(domain: string): Promise<PorkbunDomainAvailability & { ttlRemaining?: number }> {
-    const data = await this.post<{
-      response: { avail: string; price?: string; regularPrice?: string };
-      ttlRemaining?: number;
-    }>(`/domain/checkDomain/${encodeURIComponent(domain)}`);
+    const runCheck = () =>
+      this.post<{
+        response: { avail: string; price?: string; regularPrice?: string };
+        ttlRemaining?: number;
+      }>(`/domain/checkDomain/${encodeURIComponent(domain)}`);
+
+    let data: Awaited<ReturnType<typeof runCheck>>;
+    try {
+      data = await scheduleAvailabilityCheck(runCheck);
+    } catch (err) {
+      // Rate-limit rejections can still slip through (e.g. another process or
+      // an external consumer sharing the key) — wait one window and retry once.
+      const rateLimited =
+        err instanceof PorkbunApiError &&
+        (err.message.includes('checks within') || err.status === 'HTTP_400');
+      if (!rateLimited) throw err;
+      await new Promise((r) => setTimeout(r, AVAILABILITY_WINDOW_MS));
+      data = await scheduleAvailabilityCheck(runCheck);
+    }
 
     return {
       domain,
@@ -144,29 +194,18 @@ export class PorkbunClient {
    */
   async checkDomains(domains: string[]): Promise<PorkbunDomainAvailability[]> {
     const results: PorkbunDomainAvailability[] = [];
-    for (let i = 0; i < domains.length; i++) {
+    for (const domain of domains) {
       try {
-        const result = await this.checkDomain(domains[i]);
+        // Pacing is handled by the global availability-check queue.
+        const result = await this.checkDomain(domain);
         results.push({
           domain: result.domain,
           available: result.available,
           price: result.price,
         });
-
-        // Sleep between successful checks using the rate-limit window from the response.
-        if (i < domains.length - 1) {
-          const sleepMs = ((result.ttlRemaining ?? 10) + 0.5) * 1000;
-          await new Promise((resolve) => setTimeout(resolve, sleepMs));
-        }
       } catch (err) {
         // Log individual failures but don't crash the whole search.
-        console.error(`[porkbun] checkDomain failed for ${domains[i]}:`, err);
-
-        // If we have more domains to check, sleep before the next one to avoid
-        // cascading rate-limit errors. Use standard 10.5s window.
-        if (i < domains.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 10500));
-        }
+        console.error(`[porkbun] checkDomain failed for ${domain}:`, err);
       }
     }
     return results;

@@ -24,6 +24,11 @@ export function DomainResultsCard({
       <div className={styles.actionCardTitle}>Domains matching &ldquo;{keyword}&rdquo;</div>
       {error ? (
         <div className={styles.domainSearchError}>{error}</div>
+      ) : results.length === 0 ? (
+        <div className={styles.domainSearchError}>
+          The quick availability check didn&apos;t return any options for this name — tell Eve
+          another name or a specific domain and she&apos;ll check it directly.
+        </div>
       ) : (
         <div className={styles.domainRows}>
           {results.map((r) => (

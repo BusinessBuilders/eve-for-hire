@@ -1,9 +1,11 @@
 import { DomainResultsCard, type DomainResult } from './DomainResultsCard';
+import { DomainSearchCard } from './DomainSearchCard';
 import { CheckoutCard, type CheckoutData } from './CheckoutCard';
 import { DraftPreviewCard, type DraftPreviewData } from './DraftPreviewCard';
 
 export type ActionData =
   | { type: 'domain-results'; keyword: string; results: DomainResult[]; error?: string }
+  | { type: 'domain-search-pending'; keyword: string }
   | ({ type: 'checkout-ready' } & CheckoutData)
   | ({ type: 'draft-preview' } & DraftPreviewData);
 
@@ -25,6 +27,9 @@ export function ActionBlock({
     return null; // malformed — render nothing
   }
 
+  if (data.type === 'domain-search-pending') {
+    return <DomainSearchCard keyword={data.keyword} onSelect={onDomainSelect} />;
+  }
   if (data.type === 'domain-results') {
     return (
       <DomainResultsCard
