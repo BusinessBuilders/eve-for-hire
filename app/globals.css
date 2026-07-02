@@ -407,3 +407,42 @@ footer { padding: 4rem 2rem; background: var(--surface); border-top: 1px solid v
   .tip-jar { flex-direction: column; align-items: center; }
   .tip-btn { width: 100%; max-width: 280px; }
 }
+
+/* ── EVE Design System tokens (DESIGN.md — seeded from eve-app tokens.json) ── */
+:root {
+  --surface-canvas: #0B0F14;
+  --surface-sunken: #060A0E;
+  --surface-raised: #11161D;
+  --surface-raised-2: #161D26;
+  --surface-overlay: #1E2630;
+  --border-subtle: #94A3B81A;
+  --border-default: #1E293B;
+  --border-strong: #24303C;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-on-accent: #04201C;
+  --text-link: #5EEAD4;
+  --accent: #2DD4BF;
+  --accent-hover: #5EEAD4;
+  --accent-pressed: #14B8A6;
+  --accent-soft: #2DD4BF1F;
+  --accent-line: #2DD4BF4D;
+  --accent-2: #6366F1;
+  --accent-2-soft: #6366F124;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  --glow-accent: 0 8px 30px rgba(45, 212, 191, 0.16);
+  --glow-accent-strong: 0 0 44px rgba(45, 212, 191, 0.3);
+  --ring-focus: 0 0 0 3px rgba(45, 212, 191, 0.35);
+  --dur-instant: 90ms;
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 340ms;
+  --dur-deliberate: 520ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.9, 0.1, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

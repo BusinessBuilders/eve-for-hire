@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { Bebas_Neue, DM_Mono, Outfit } from 'next/font/google';
+import { Bebas_Neue, DM_Mono, JetBrains_Mono, Manrope, Outfit } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 
 const bebasNeue = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas' });
 const dmMono = DM_Mono({ weight: ['400', '500'], subsets: ['latin'], variable: '--font-dm-mono' });
 const outfit = Outfit({ weight: ['300', '400', '600', '700'], subsets: ['latin'], variable: '--font-outfit' });
+// EVE brand fonts (DESIGN.md) — Manrope for UI/display, JetBrains Mono for figures
+const manrope = Manrope({ weight: ['300', '400', '500', '600', '700', '800'], subsets: ['latin'], variable: '--font-manrope' });
+const jetbrainsMono = JetBrains_Mono({ weight: ['400', '500', '700'], subsets: ['latin'], variable: '--font-jetbrains' });
 
 export const metadata: Metadata = {
   title: 'Eve — The First Agentic Web Agency',
@@ -60,7 +63,7 @@ const websiteSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bebasNeue.variable} ${dmMono.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${bebasNeue.variable} ${dmMono.variable} ${outfit.variable} ${manrope.variable} ${jetbrainsMono.variable}`}>
       <body>
         {children}
         <Script
