@@ -133,3 +133,9 @@ Goal: register hireeve.com the customer way. Two blocking issues found:
 
 **Status:** hireeve.com NOT registered. Flow proven to work up to checkout; checkout + payment-
 method are the two gaps to close before a customer (or a test) can complete a purchase.
+
+**UPDATE (later 2026-07-02):** gap #1 is **FIXED and prod-verified** (commit `3685a74`) — the
+paywall now recovers the pending domain from chat history and renders the real checkout card;
+a live run created Stripe test session `cs_test_b1cFQWTs…` and order `b42ac8c2` in
+`payment_pending` with `desiredDomain: hireeve.com`. Only gap #2 (Porkbun payment method,
+William) remains before the purchase can complete and the domain registers.
