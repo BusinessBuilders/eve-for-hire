@@ -106,3 +106,30 @@ Each unit is independently testable:
   throwaway TLD, or stub Porkbun in test mode).
 - B/D: create a repo for a test order, push, open PR, confirm CI runs and blocks on failure,
   merge, confirm deploy-on-merge brings the test site live, then tear down.
+
+---
+
+## Live test findings (2026-07-02) — customer purchase flow on prod
+
+Drove the real customer flow on eve.center (logged in), Stripe confirmed in **test mode**.
+Goal: register hireeve.com the customer way. Two blocking issues found:
+
+1. **Checkout handoff is broken (revenue-blocking).** Chat → domain search → select
+   hireeve.com → requirements all work. But the **freemium "10 free messages" wall triggers
+   during qualifying, before Eve emits the checkout card**, and the paywall's
+   "Build your site — $89 + $29/mo" button links to `https://eve.center/#hire` (the homepage),
+   **not** to a Stripe checkout that creates the pending order (with `desiredDomain=hireeve.com`).
+   Net: a customer who configures a site+domain then hits the wall has **no path to pay** for it,
+   and the domain never registers.
+   - Fix: paywall CTA (and a real "Checkout" affordance) must `POST /api/orders/checkout` to
+     create the Stripe session for the in-progress order; and the free-message gate should let a
+     ready-to-buy customer reach checkout.
+
+2. **Porkbun account cannot register (no payment method).** Direct `POST /domain/create` for
+   hireeve.com returns **HTTP 500 (empty body)** — Porkbun's failure mode when the account has no
+   card/funds on file (matches William's "not sure I have a card there"). hireeve.com confirmed
+   **still available, no charge, nothing registered.** Blocked until William adds a payment method
+   to Porkbun. (Claude cannot add card details — hard rule.)
+
+**Status:** hireeve.com NOT registered. Flow proven to work up to checkout; checkout + payment-
+method are the two gaps to close before a customer (or a test) can complete a purchase.
