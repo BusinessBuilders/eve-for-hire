@@ -135,6 +135,40 @@ function injectCategorySignalIfMissing(userMessage: string, eveReply: string): s
   return `${eveReply}\n[DOMAIN_SEARCH: ${keyword}]`;
 }
 
+// Matches the deterministic message the domain-results card submits on click:
+// "I'd like to use {domain}. What else do you need to know ..."
+const DOMAIN_SELECT_RE = /\bI'd like to use ([a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+)/i;
+// Fallback: a bare domain the user typed themselves ("let's go with hireeve.com").
+// The lookbehind excludes email addresses; eve.center itself is filtered out below.
+const BARE_DOMAIN_RE = /(?<![\w@.-])([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.(?:com|net|org|io|co|ai|app|dev|shop|biz|info|us|center))\b/i;
+
+/**
+ * Recover the domain a customer already chose during qualifying, so the freemium
+ * paywall can hand them straight to checkout for the order they configured.
+ * Scans persisted user messages newest-first: the click-path selection message
+ * first (deterministic), then any bare domain they typed.
+ */
+async function findPendingDomain(sessionKey: string): Promise<string | null> {
+  try {
+    const chatSession = await chatStore.findBySessionKey(sessionKey);
+    if (!chatSession) return null;
+    const history = await chatStore.getMessages(chatSession.id);
+    const userMessages = history.filter((m) => m.role === 'user').reverse();
+
+    for (const m of userMessages) {
+      const selected = m.content.match(DOMAIN_SELECT_RE);
+      if (selected) return selected[1].toLowerCase();
+    }
+    for (const m of userMessages) {
+      const typed = m.content.match(BARE_DOMAIN_RE);
+      if (typed && typed[1].toLowerCase() !== 'eve.center') return typed[1].toLowerCase();
+    }
+  } catch (err) {
+    console.error('[chat] pending-domain lookup failed:', err);
+  }
+  return null;
+}
+
 // Simple in-memory rate limiter: 20 requests per IP per minute
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 20;
@@ -729,6 +763,10 @@ export async function POST(req: Request) {
     const paidAccessUrl = process.env.NEXT_PUBLIC_BASE_URL
       ? `${process.env.NEXT_PUBLIC_BASE_URL}/#hire`
       : '/#hire';
+    // A customer who already picked a domain mid-qualifying must be able to pay
+    // from the paywall itself — recover their chosen domain from chat history so
+    // the client can render a live checkout instead of a dead link to the homepage.
+    const pendingDomain = await findPendingDomain(sessionKey);
     return new Response(
       JSON.stringify({
         error: 'free_limit_reached',
@@ -736,6 +774,7 @@ export async function POST(req: Request) {
         used: freemiumCheck.used,
         limit: freemiumCheck.limit,
         upgradeUrl: paidAccessUrl,
+        ...(pendingDomain ? { checkout: { desiredDomain: pendingDomain } } : {}),
       }),
       { status: 402, headers: { 'Content-Type': 'application/json' } },
     );

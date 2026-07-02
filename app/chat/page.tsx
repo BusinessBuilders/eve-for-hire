@@ -11,6 +11,7 @@ import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { CinematicBackground } from '@/components/chat/CinematicBackground';
 import { EmptyState } from '@/components/chat/EmptyState';
 import { Suggestions } from '@/components/chat/Suggestions';
+import { CheckoutCard } from '@/components/chat/CheckoutCard';
 import styles from './chat.module.css';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,7 +41,7 @@ function ChatPageInner() {
   const [chatKey, setChatKey] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-  const [paywallHit, setPaywallHit] = useState<{ used: number; limit: number; upgradeUrl: string } | null>(null);
+  const [paywallHit, setPaywallHit] = useState<{ used: number; limit: number; upgradeUrl: string; desiredDomain?: string } | null>(null);
   const [freeMessagesUsed, setFreeMessagesUsed] = useState(0);
   const FREE_LIMIT = 10;
   const [resumeMessages, setResumeMessages] = useState<Array<{id: string; role: string; content: string}>>([]);
@@ -49,6 +50,10 @@ function ChatPageInner() {
 
   const sessionIdRef = useRef('');
   const resumeChatIdRef = useRef('');
+  // Last domain the user picked from a domain-results card. A ref (not state)
+  // because the chat transport below is created once and closes over it; the
+  // paywall uses it as a fallback when the server can't recover the domain.
+  const selectedDomainRef = useRef('');
 
   useEffect(() => {
     // Resume mode: ?resume=<sessionKey> restores a saved session
@@ -140,6 +145,7 @@ function ChatPageInner() {
             used: data.used ?? 0,
             limit: data.limit ?? 10,
             upgradeUrl: data.upgradeUrl ?? '/#hire',
+            desiredDomain: data.checkout?.desiredDomain || selectedDomainRef.current || undefined,
           });
           throw new Error(data.message ?? 'Free message limit reached');
         }
@@ -281,6 +287,7 @@ function ChatPageInner() {
                 message={{ id: msg.id, role: msg.role, content: msg.content, parts: [{ type: 'text', text: msg.content }] } as any}
                 sessionId={sessionId}
                 onDomainSelect={(domain) => {
+                  selectedDomainRef.current = domain;
                   submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
                 }}
               />
@@ -291,6 +298,7 @@ function ChatPageInner() {
                 message={msg as any}
                 sessionId={sessionId}
                 onDomainSelect={(domain) => {
+                  selectedDomainRef.current = domain;
                   submit(`I'd like to use ${domain}. What else do you need to know before you can start building my site?`);
                 }}
               />
@@ -366,26 +374,45 @@ function ChatPageInner() {
               <p style={{ color: 'var(--fg)', fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 Free messages used up
               </p>
-              <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                You&apos;ve used all {paywallHit.limit} free messages with Eve.
-                Sign up or upgrade to keep building.
-              </p>
+              {paywallHit.desiredDomain ? (
+                <>
+                  <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                    You&apos;ve used all {paywallHit.limit} free messages — but your site is
+                    ready to order. Check out below and Eve will register{' '}
+                    <strong style={{ color: 'var(--fg)' }}>{paywallHit.desiredDomain}</strong>{' '}
+                    and start building.
+                  </p>
+                  <div style={{ textAlign: 'left', marginBottom: '0.75rem' }}>
+                    <CheckoutCard
+                      data={{ domain: paywallHit.desiredDomain }}
+                      sessionId={sessionId}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  You&apos;ve used all {paywallHit.limit} free messages with Eve.
+                  Sign up or upgrade to keep building.
+                </p>
+              )}
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <a
-                  href={paywallHit.upgradeUrl}
-                  style={{
-                    display: 'inline-block',
-                    padding: '0.6rem 1.5rem',
-                    borderRadius: '8px',
-                    background: 'linear-gradient(135deg, var(--cyan), var(--coral))',
-                    color: 'white',
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    fontSize: '0.85rem',
-                  }}
-                >
-                  Build your site — $89 + $29/mo
-                </a>
+                {!paywallHit.desiredDomain && (
+                  <a
+                    href={paywallHit.upgradeUrl}
+                    style={{
+                      display: 'inline-block',
+                      padding: '0.6rem 1.5rem',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, var(--cyan), var(--coral))',
+                      color: 'white',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    Build your site — $89 + $29/mo
+                  </a>
+                )}
                 <a
                   href={sessionId ? `/api/auth/signin?callbackUrl=${encodeURIComponent(`/chat?resume=${sessionId}`)}` : '/api/auth/signin'}
                   style={{
