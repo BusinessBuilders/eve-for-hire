@@ -47,10 +47,9 @@ jobs:
             npm ci
             mkdir -p data
             npx prisma generate
-            # The prod DB predates the repo's chat/draft migration but already
-            # has identical tables (created server-side as 20260503192855_init),
-            # so mark the repo migration applied before deploying the rest.
-            npx prisma migrate resolve --applied 20260531000000_add_chat_and_draft_models || true
+            # Prod was baselined 2026-07-02 (all historical migrations marked
+            # applied after a server-side full-schema init) — from here on,
+            # plain `migrate deploy` applies only genuinely new migrations.
             npx prisma migrate deploy
             NODE_ENV=production npm run build
             pm2 reload ecosystem.config.js --env production
