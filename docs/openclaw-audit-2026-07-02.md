@@ -92,7 +92,8 @@ the live data dir (harmless but confusing — consider pruning).
       no-net/read-only/non-root jail + allow-deny tool policy + node deny-list), not prompt-only.
 - [~] Secret hygiene: file perms are correct, but **F1 (hardcoded token) must be fixed +
       token rotated** before this box is checked. F2/F3 reduce blast radius.
-- [ ] Upgrade: **deferred** — see plan below. William's call.
+- [x] Upgrade: **completed** to openclaw@2026.6.11 with backup + all safeguards re-verified
+      post-upgrade (see "Upgrade — COMPLETED" below). Rollback point retained.
 
 ## Upgrade plan (deferred — do not run without go-ahead)
 
@@ -133,23 +134,34 @@ sandboxed `eve-public-chat` agent → gateway) after each step. Backup:
   confirm no intermittent tailnet consumer (mobile hold-to-approve app / avatar) without risk
   to Eve's approval path. Flip to loopback once consumers are confirmed.
 
-### Upgrade — ATTEMPTED then ROLLED BACK
+### Upgrade — COMPLETED (2026.4.2 → 2026.6.11)
 Installed version was actually **2026.4.2** (the systemd unit's "v2026.3.28" description is
-stale). Upgraded to **2026.6.11**; `doctor --fix` + manual edits migrated two schema changes
-(`telegram.streaming` scalar→object, `groupPolicy` enum). The gateway started cleanly and
-**the sandbox safeguards survived intact** (container still no-net / read-only / non-root, tool
-deny-list preserved). **However**, 2026.6.x changed per-agent auth resolution to a per-agent
-SQLite auth store, and its one-time migration only populated agents whose legacy
-`auth-profiles.json` was non-empty at upgrade time. `eve-public-chat` had an empty profile
-(it previously inherited shared auth), so post-upgrade it failed with
-`No API key found for provider "zai"` — breaking the funnel. Copying the zai profile into its
-`auth-profiles.json` did not help (the new version reads the migrated store, not the legacy
-file). To honor "never break the funnel," I **rolled back to 2026.4.2** (reverting the
-`streaming` field to the old scalar schema); the funnel was re-verified working. The migration
-had "left legacy state in place," so rollback was clean.
+stale). First upgrade attempt to **2026.6.11** started cleanly and **the sandbox safeguards
+survived intact**, but 2026.6.x changed per-agent auth resolution: its one-time migration only
+seeded a per-agent auth store for agents whose legacy `auth-profiles.json` was non-empty at
+upgrade time. `eve-public-chat` had an empty profile (it had been inheriting shared auth), so it
+failed with `No API key found for provider "zai"` — breaking the funnel. I **rolled back to
+2026.4.2** to restore the funnel immediately (clean, because the migration "left legacy state in
+place").
 
-**To complete the upgrade later:** before cutover, pre-seed each agent's auth in the 2026.6
-store (likely `openclaw configure` / `openclaw secrets apply`, or add `models.providers.zai.apiKey`
-inline so all agents inherit it) so no agent relies on shared-auth fallback, then upgrade and
-verify the funnel + `agent --agent eve-public-chat` before declaring done. The security fixes
-above are version-independent and remain in place on 2026.4.2.
+**Root cause fixed, then re-upgraded successfully.** The fix: add the zai key **inline** to
+`models.providers.zai.apiKey` in `openclaw.json` (matching how `nova`/`novarig` already carry
+their keys), so every agent inherits provider auth instead of depending on the per-agent
+shared-auth fallback the new version removed. Verified the funnel still worked on 2026.4.2 with
+the inline key, then re-installed **2026.6.11** (migrating `telegram.streaming` scalar→object).
+
+**Post-upgrade verification on 2026.6.11 (all pass):**
+- Funnel end-to-end from the VPS/prod path → `PROD_FINAL_OK`.
+- Sandbox container: `Privileged=false`, `NetworkMode=none`, `ReadonlyRootfs=true`, `CapAdd=[]`,
+  `User=1000:1000` — unchanged.
+- `eve-public-chat` tool deny-list (13 entries) + `sandbox.mode=all`/`workspaceAccess=none` intact.
+- Gateway auth still enforced (unauthenticated RPC rejected); `openclaw.json`, proxy `.env`,
+  `server.js` all chmod 600; proxy bound to 127.0.0.1.
+
+Current running version: **openclaw@2026.6.11**. Rollback point retained at
+`/mnt/ssd/openclaw-audit-backup-20260702-114530` (openclaw@2026.4.2 + `openclaw.json.secured-preupgrade`).
+
+**Pre-existing (not introduced here), low priority:** stale plugin config entries
+(`lossless-claw`, `memory-lancedb`, `brave`) log warnings; `codex-acp` binary has an EACCES perm
+issue; `memorySearch.provider=ollama` has no embedding provider (falls back to keyword search).
+None affect the funnel or safeguards.
