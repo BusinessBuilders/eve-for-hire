@@ -107,3 +107,49 @@ Current: v2026.3.28 (npm global `openclaw`). Before any upgrade:
 ## Recommended fix order
 F1 (rotate + de-hardcode the token) → F2 (proxy auth + loopback) → F3 (bind loopback) → F4.
 All are low-effort config/source edits; none require an upgrade.
+
+---
+
+## Remediation applied (2026-07-02, authorized by William)
+
+All changes verified against the live $89 funnel (VPS → reverse tunnel → nova proxy →
+sandboxed `eve-public-chat` agent → gateway) after each step. Backup:
+`/mnt/ssd/openclaw-audit-backup-20260702-114530`.
+
+- **F1 — DONE.** Gateway token **rotated** to a fresh 48-char value (`openssl rand -hex 24`).
+  Hardcoded fallback removed from `server.js` (now env-only, fail-fast). Token moved out of
+  the world-readable source and out of the inline systemd unit into
+  `/mnt/ssd/openclaw-proxy/.env` (chmod 600) loaded via `EnvironmentFile=`. `openclaw.json`
+  `auth.token` + `remote.token` updated to the new value (file chmod 600). `server.js` chmod
+  600. New token also synced to the VPS `.env.production` (chmod 600, PM2 reloaded). The old
+  exposed token is now invalid everywhere.
+- **F2 + F3 (proxy) — DONE.** `openclaw-http-proxy` now binds **127.0.0.1:8097** only (was
+  `*:8097`, tailnet-exposed). The VPS reaches it through the existing reverse SSH tunnel to
+  nova's loopback, so the funnel is unaffected — verified end-to-end from the VPS.
+- **F4 — DONE.** Telegram `groupPolicy` set to `disabled` (open groups closed). DMs remain
+  `pairing`.
+- **F3 (gateway / MCP 9500-9502 / `.py` 18790 loopback) — DEFERRED, deliberate.** Left on
+  `lan` because the rotated + file-protected token now guards the gateway, and I could not
+  confirm no intermittent tailnet consumer (mobile hold-to-approve app / avatar) without risk
+  to Eve's approval path. Flip to loopback once consumers are confirmed.
+
+### Upgrade — ATTEMPTED then ROLLED BACK
+Installed version was actually **2026.4.2** (the systemd unit's "v2026.3.28" description is
+stale). Upgraded to **2026.6.11**; `doctor --fix` + manual edits migrated two schema changes
+(`telegram.streaming` scalar→object, `groupPolicy` enum). The gateway started cleanly and
+**the sandbox safeguards survived intact** (container still no-net / read-only / non-root, tool
+deny-list preserved). **However**, 2026.6.x changed per-agent auth resolution to a per-agent
+SQLite auth store, and its one-time migration only populated agents whose legacy
+`auth-profiles.json` was non-empty at upgrade time. `eve-public-chat` had an empty profile
+(it previously inherited shared auth), so post-upgrade it failed with
+`No API key found for provider "zai"` — breaking the funnel. Copying the zai profile into its
+`auth-profiles.json` did not help (the new version reads the migrated store, not the legacy
+file). To honor "never break the funnel," I **rolled back to 2026.4.2** (reverting the
+`streaming` field to the old scalar schema); the funnel was re-verified working. The migration
+had "left legacy state in place," so rollback was clean.
+
+**To complete the upgrade later:** before cutover, pre-seed each agent's auth in the 2026.6
+store (likely `openclaw configure` / `openclaw secrets apply`, or add `models.providers.zai.apiKey`
+inline so all agents inherit it) so no agent relies on shared-auth fallback, then upgrade and
+verify the funnel + `agent --agent eve-public-chat` before declaring done. The security fixes
+above are version-independent and remain in place on 2026.4.2.
