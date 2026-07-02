@@ -37,10 +37,21 @@ jobs:
             root@167.86.70.138 << 'ENDSSH'
             set -e
             cd /var/www/eve-for-hire-app
-            git pull origin main
+            # fetch + reset instead of pull: survives force-pushed history
+            # (a May 2026 history rewrite broke `git pull` with "refusing to
+            # merge unrelated histories" and silently stalled every deploy).
+            # reset --hard only touches tracked files; .env.production and
+            # other server-local untracked files are preserved.
+            git fetch origin main
+            git reset --hard origin/main
             npm ci
             mkdir -p data
             npx prisma generate
+            # The prod DB predates the repo's chat/draft migration but already
+            # has identical tables (created server-side as 20260503192855_init),
+            # so mark the repo migration applied before deploying the rest.
+            npx prisma migrate resolve --applied 20260531000000_add_chat_and_draft_models || true
+            npx prisma migrate deploy
             NODE_ENV=production npm run build
             pm2 reload ecosystem.config.js --env production
             pm2 save

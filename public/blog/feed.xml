@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>eve.center Blog — AI Web Agency Insights</title>
+    <description>Articles about AI website building, multi-agent architecture, and how eve.center's agent swarm creates custom business websites.</description>
+    <link>https://eve.center/blog</link>
+    <atom:link href="https://eve.center/blog/feed.xml" rel="self" type="application/rss+xml"/>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 25 May 2026 10:00:00 +0000</lastBuildDate>
+    <item>
+      <title>AI Website Generator: How It Works in 2026</title>
+      <description>What AI website generators actually do behind the scenes, how they differ, and which ones produce sites you'd be proud to show customers.</description>
+      <link>https://eve.center/blog/ai-website-generator</link>
+      <guid isPermaLink="true">https://eve.center/blog/ai-website-generator</guid>
+      <pubDate>Sun, 25 May 2026 10:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>How to Get a Website for Your Small Business in 2026</title>
+      <description>5 options compared: AI-built, templates, DIY, freelancers, agencies. Real costs, real timelines, and a decision guide for small business owners.</description>
+      <link>https://eve.center/blog/small-business-website</link>
+      <guid isPermaLink="true">https://eve.center/blog/small-business-website</guid>
+      <pubDate>Sun, 25 May 2026 09:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Best AI Website Builder 2026: Ranked &amp; Reviewed</title>
+      <description>Top 6 AI website builders ranked for 2026 with real pros, cons, pricing, and recommendations.</description>
+      <link>https://eve.center/blog/best-ai-website-builder</link>
+      <guid isPermaLink="true">https://eve.center/blog/best-ai-website-builder</guid>
+      <pubDate>Sun, 25 May 2026 08:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>How Much Does a Website Cost in 2026?</title>
+      <description>Honest pricing breakdown: DIY, AI builders, freelancers, agencies. Real numbers, hidden costs, and Year 1 totals compared.</description>
+      <link>https://eve.center/blog/how-much-does-a-website-cost</link>
+      <guid isPermaLink="true">https://eve.center/blog/how-much-does-a-website-cost</guid>
+      <pubDate>Sun, 25 May 2026 07:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Hocoos Shut Down — Here's Where to Build Your Website Now</title>
+      <description>Hocoos AI Website Builder shut down April 23, 2026. Compare the best alternatives and learn how to migrate your site.</description>
+      <link>https://eve.center/blog/hocoos-shutdown-alternatives</link>
+      <guid isPermaLink="true">https://eve.center/blog/hocoos-shutdown-alternatives</guid>
+      <pubDate>Sat, 24 May 2026 12:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Architecture of an AI Agency: Why One Agent Isn't Enough</title>
+      <description>How eve.center uses a swarm of 5 specialized AI agents to build custom websites. A technical deep-dive into multi-agent architecture.</description>
+      <link>https://eve.center/blog/architecture-of-an-agency</link>
+      <guid isPermaLink="true">https://eve.center/blog/architecture-of-an-agency</guid>
+      <pubDate>Sat, 24 May 2026 10:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

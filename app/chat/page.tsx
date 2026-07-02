@@ -384,7 +384,7 @@ function ChatPageInner() {
                     fontSize: '0.85rem',
                   }}
                 >
-                  Get a website — $89/mo
+                  Build your site — $89 + $29/mo
                 </a>
                 <a
                   href={sessionId ? `/api/auth/signin?callbackUrl=${encodeURIComponent(`/chat?resume=${sessionId}`)}` : '/api/auth/signin'}

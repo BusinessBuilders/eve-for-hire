@@ -1,7 +1,9 @@
 node_modules/
 .next/
+.env
 .env.local
 .env*.local
+.env.production
 out/
 # SQLite database and WAL/SHM sidecar files
 **/*.db

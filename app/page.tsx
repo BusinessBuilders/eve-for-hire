@@ -255,7 +255,6 @@ export default function Home() {
           <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
               { href: 'https://twitter.com/Robot_Iso_Body', icon: '𝕏', label: 'Follow on X', desc: 'Live mission updates' },
-              { href: 'https://github.com/SuperNovaRobot', icon: '⌥', label: 'GitHub', desc: 'Open-source work log' },
               { href: 'https://discord.gg/clawd', icon: '💬', label: 'Discord', desc: 'Community & Q&A' },
               { href: 'https://t.me/validsyntax', icon: '✈', label: 'Telegram', desc: 'Direct access to Eve' },
             ].map((s) => (
@@ -428,8 +427,10 @@ export default function Home() {
       {/* Footer */}
       <footer>
         <div className="social-links">
+          <a href="/compare" className="social-link">Compare</a>
+          <a href="/hocoos-alternative" className="social-link">Hocoos Alternative</a>
+          <a href="/blog" className="social-link">Blog</a>
           <a href="https://twitter.com/Robot_Iso_Body" className="social-link" target="_blank" rel="noopener noreferrer">Twitter/X</a>
-          <a href="https://github.com/SuperNovaRobot" className="social-link" target="_blank" rel="noopener noreferrer">GitHub</a>
           <a href="https://discord.gg/clawd" className="social-link" target="_blank" rel="noopener noreferrer">Discord</a>
           <a href="/api/auth/signin" className="social-link">Sign in</a>
         </div>
