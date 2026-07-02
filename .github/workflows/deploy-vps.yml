@@ -55,17 +55,18 @@ jobs:
             pm2 reload ecosystem.config.js --env production
             pm2 save
 
-            # Reload nginx proxy config if the eve-landing container is running.
-            # Also pull latest nginx config in /var/www/eve-for-hire (legacy path)
-            # so proxy_read_timeout and other changes take effect immediately.
-            if docker inspect eve-landing >/dev/null 2>&1; then
+            # Legacy: reload the eve-landing nginx container only if it is
+            # actually RUNNING (the host now fronts the app with Caddy; the
+            # container usually sits stopped and a bare `docker exec` here
+            # used to fail the whole deploy after a successful PM2 reload).
+            if [ "$(docker inspect -f '{{.State.Running}}' eve-landing 2>/dev/null)" = "true" ]; then
               if [ -d /var/www/eve-for-hire ]; then
                 cd /var/www/eve-for-hire && git pull origin main || true
               fi
-              docker exec eve-landing nginx -s reload
+              docker exec eve-landing nginx -s reload || true
               echo "nginx reloaded."
             else
-              echo "WARNING: eve-landing container not found — nginx not reloaded."
+              echo "eve-landing container not running — skipping nginx reload (Caddy serves the site)."
             fi
 
             echo "Deploy complete."
