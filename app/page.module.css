@@ -379,6 +379,81 @@
   font-weight: 600;
 }
 
+/* ── Agent hosting (multi-agent orchestration) ──────────────────────── */
+
+.hostingWrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: center;
+}
+
+.hostingMesh {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 40%, rgba(45, 212, 191, 0.06) 0%, transparent 70%),
+    var(--surface-raised);
+  padding: 8px;
+}
+
+.hostingPoints {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hostingPoint {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.hostingCheck {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hostingPointTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.hostingPointDesc {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.hostingCta {
+  margin-top: 8px;
+}
+
+.hostingTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-tertiary);
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+}
+
 /* ── How it works ───────────────────────────────────────────────────── */
 
 .howGrid {
@@ -1008,6 +1083,10 @@
   .storyWrap {
     grid-template-columns: 1.1fr 0.9fr;
     align-items: start;
+  }
+
+  .hostingWrap {
+    grid-template-columns: 1.15fr 0.85fr;
   }
 
   .heroOrb {

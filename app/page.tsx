@@ -51,6 +51,14 @@ function GlyphChat() {
   );
 }
 
+function GlyphCheck() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+      <path d="M2.5 7 5 9.5 10.5 3.5" stroke="#2DD4BF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ── Tip Jar Button (preserves /api/checkout flow) ────────────────────────────
 
 function TipButton({ amount, label }: { amount: number; label: string }) {
@@ -163,6 +171,7 @@ export default function Home() {
           EVE
         </a>
         <nav className={styles.nav} aria-label="Primary">
+          <a href="#hosting" className={styles.navLink}>Agent hosting</a>
           <a href="#capabilities" className={styles.navLink}>Capabilities</a>
           <a href="#build" className={styles.navLink}>$89 Website</a>
           <a href="#story" className={styles.navLink}>Story</a>
@@ -182,12 +191,12 @@ export default function Home() {
           Self-hosted AI agent — live
         </div>
         <h1 className={styles.heroTitle}>
-          Meet Eve. One AI that <span className={styles.heroTitleAccent}>actually does the work.</span>
+          Host your own AI agent that <span className={styles.heroTitleAccent}>commands a team.</span>
         </h1>
         <p className={styles.heroSub}>
-          A voice assistant that runs on private hardware and takes real action — she answers the
-          phone, builds and ships websites, drafts invoices, schedules, and researches. Not another
-          chat window: an agent with hands.
+          Eve is a hosted, always-on agent that runs on private hardware and takes real action — she
+          answers the phone, delegates to other agents like Hermes, builds and ships websites, drafts
+          invoices, schedules, and researches. Not another chat window: an agent with hands.
         </p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -198,12 +207,70 @@ export default function Home() {
           height={720}
         />
         <div className={styles.heroCtas}>
-          <a href="/chat" className={styles.btnPrimary}>Start a task</a>
+          <a href="#hosting" className={styles.btnPrimary}>Host your agent</a>
           <a href="/chat" className={styles.btnSecondary}>Get your $89 site</a>
         </div>
         <p className={styles.heroCapabilityLine}>
-          Voice · Websites · Invoices · Scheduling · Research
+          Orchestrates Hermes · Voice · Websites · Invoices · Scheduling · Research
         </p>
+      </section>
+
+      {/* ── Agent hosting: multi-agent orchestration ── */}
+      <section className={styles.section} id="hosting">
+        <div className={styles.reveal}>
+          <p className={styles.eyebrow}>Full agent hosting</p>
+          <h2 className={styles.sectionTitle}>One hosted agent. A whole team.</h2>
+          <p className={styles.sectionLead}>
+            You don&apos;t rent a chatbot — you host Eve, an always-on agent on private hardware that
+            plans work and delegates it to other agents over a secured agent-to-agent fabric. She
+            hands research and long-running jobs to Hermes, spins up the specialized swarm to build
+            sites, and drives voice and real-world actions — then reports back to you.
+          </p>
+        </div>
+        <div className={styles.hostingWrap}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/agent-mesh.svg"
+            alt="Eve the orchestrator delegating to Hermes, the build swarm, the voice line, and real-action tools over an agent-to-agent fabric"
+            className={`${styles.hostingMesh} ${styles.reveal}`}
+            width={900}
+            height={520}
+          />
+          <div className={`${styles.hostingPoints} ${styles.reveal}`}>
+            <div className={styles.hostingPoint}>
+              <span className={styles.hostingCheck}><GlyphCheck /></span>
+              <div>
+                <div className={styles.hostingPointTitle}>Eve orchestrates other agents</div>
+                <div className={styles.hostingPointDesc}>
+                  She delegates tasks to Hermes and the build swarm over an authenticated A2A
+                  protocol, and they can call back into Eve mid-task. One agent runs a team.
+                </div>
+              </div>
+            </div>
+            <div className={styles.hostingPoint}>
+              <span className={styles.hostingCheck}><GlyphCheck /></span>
+              <div>
+                <div className={styles.hostingPointTitle}>Runs on hardware you control</div>
+                <div className={styles.hostingPointDesc}>
+                  Private GPU inference, your data on your machines. Always on — reachable by phone,
+                  SMS, and chat, not just when a browser tab is open.
+                </div>
+              </div>
+            </div>
+            <div className={styles.hostingPoint}>
+              <span className={styles.hostingCheck}><GlyphCheck /></span>
+              <div>
+                <div className={styles.hostingPointTitle}>Safe by construction</div>
+                <div className={styles.hostingPointDesc}>
+                  Every dangerous action passes a code-enforced approval gate, and delegated agents
+                  run in locked-down sandboxes — no network, no filesystem, non-root.
+                </div>
+              </div>
+            </div>
+            <a href="/chat" className={`${styles.btnPrimary} ${styles.hostingCta}`}>Talk to Eve about hosting</a>
+            <span className={styles.hostingTag}>eve + hermes · agent-to-agent fabric</span>
+          </div>
+        </div>
       </section>
 
       {/* ── Capabilities ── */}

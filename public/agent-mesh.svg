@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" width="900" height="520" role="img" aria-label="Eve, the orchestrator, delegating to Hermes, the website build swarm, and voice and action tools over an agent-to-agent fabric">
+  <defs>
+    <radialGradient id="eveCore" cx="42%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#5EEAD4"/>
+      <stop offset="42%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </radialGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2DD4BF" stop-opacity=".6"/>
+      <stop offset="100%" stop-color="#2DD4BF" stop-opacity=".12"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#02060A" flood-opacity=".5"/>
+    </filter>
+    <style>
+      @keyframes mesh-pulse { 0%,100% { opacity:.5 } 50% { opacity:1 } }
+      @keyframes mesh-dash { to { stroke-dashoffset: -24 } }
+      .flow { stroke-dasharray: 5 7; animation: mesh-dash 1.4s linear infinite; }
+      .evebreathe { animation: mesh-pulse 3.6s ease-in-out infinite; transform-origin:center; }
+      @media (prefers-reduced-motion: reduce){ .flow,.evebreathe{ animation:none } }
+    </style>
+  </defs>
+
+  <!-- edges (orchestrator → agents) -->
+  <g fill="none" stroke-width="2">
+    <path d="M 450 260 C 320 210, 230 180, 150 158" stroke="url(#edge)"/>
+    <path d="M 450 260 C 320 300, 230 330, 150 360" stroke="url(#edge)"/>
+    <path d="M 450 260 C 590 210, 680 180, 760 158" stroke="url(#edge)"/>
+    <path d="M 450 260 C 590 300, 680 330, 760 360" stroke="url(#edge)"/>
+    <path class="flow" d="M 450 260 C 590 210, 680 180, 760 158" stroke="#2DD4BF" stroke-opacity=".85"/>
+    <path class="flow" d="M 450 260 C 320 210, 230 180, 150 158" stroke="#2DD4BF" stroke-opacity=".55"/>
+  </g>
+
+  <!-- center: Eve orchestrator -->
+  <g class="evebreathe">
+    <circle cx="450" cy="260" r="70" fill="url(#eveCore)" filter="url(#soft)"/>
+    <circle cx="450" cy="260" r="70" fill="none" stroke="#5EEAD4" stroke-opacity=".5"/>
+    <ellipse cx="430" cy="238" rx="30" ry="18" fill="#FFFFFF" opacity=".14"/>
+    <g fill="#04201C">
+      <rect x="428" y="248" width="7" height="24" rx="3.5"/>
+      <rect x="439" y="242" width="7" height="36" rx="3.5"/>
+      <rect x="450" y="236" width="7" height="48" rx="3.5"/>
+      <rect x="461" y="242" width="7" height="36" rx="3.5"/>
+      <rect x="472" y="248" width="7" height="24" rx="3.5"/>
+    </g>
+  </g>
+  <text x="450" y="360" text-anchor="middle" fill="#F8FAFC" font-family="Manrope, sans-serif" font-size="18" font-weight="700">Eve</text>
+  <text x="450" y="380" text-anchor="middle" fill="#94A3B8" font-family="'JetBrains Mono', monospace" font-size="12">orchestrator</text>
+
+  <!-- node: Hermes (top-left) -->
+  <g filter="url(#soft)">
+    <rect x="40" y="108" width="200" height="96" rx="18" fill="#11161D" stroke="#2DD4BF" stroke-opacity=".45"/>
+    <text x="62" y="150" fill="#F8FAFC" font-family="Manrope, sans-serif" font-size="18" font-weight="700">Hermes</text>
+    <text x="62" y="174" fill="#94A3B8" font-family="Manrope, sans-serif" font-size="13">delegated agent · GLM-4.7</text>
+  </g>
+  <text x="300" y="150" fill="#5EEAD4" font-family="'JetBrains Mono', monospace" font-size="11">A2A</text>
+
+  <!-- node: build swarm (bottom-left) -->
+  <g filter="url(#soft)">
+    <rect x="40" y="316" width="200" height="96" rx="18" fill="#11161D" stroke="#24303C"/>
+    <text x="62" y="358" fill="#F8FAFC" font-family="Manrope, sans-serif" font-size="18" font-weight="700">Build swarm</text>
+    <text x="62" y="382" fill="#94A3B8" font-family="Manrope, sans-serif" font-size="13">content · design · deploy · QA</text>
+  </g>
+
+  <!-- node: voice + actions (top-right) -->
+  <g filter="url(#soft)">
+    <rect x="660" y="108" width="200" height="96" rx="18" fill="#11161D" stroke="#24303C"/>
+    <text x="682" y="150" fill="#F8FAFC" font-family="Manrope, sans-serif" font-size="18" font-weight="700">Voice line</text>
+    <text x="682" y="174" fill="#94A3B8" font-family="Manrope, sans-serif" font-size="13">phone · SMS · hold-to-approve</text>
+  </g>
+
+  <!-- node: real actions (bottom-right) -->
+  <g filter="url(#soft)">
+    <rect x="660" y="316" width="200" height="96" rx="18" fill="#11161D" stroke="#24303C"/>
+    <text x="682" y="358" fill="#F8FAFC" font-family="Manrope, sans-serif" font-size="18" font-weight="700">Real actions</text>
+    <text x="682" y="382" fill="#94A3B8" font-family="Manrope, sans-serif" font-size="13">invoices · calendar · research</text>
+  </g>
+
+  <!-- caption -->
+  <text x="450" y="470" text-anchor="middle" fill="#64748B" font-family="Manrope, sans-serif" font-size="13">One hosted agent, always on — it plans, delegates to other agents, and reports back.</text>
+</svg>
